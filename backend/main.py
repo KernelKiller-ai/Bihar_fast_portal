@@ -53,17 +53,23 @@ if UPSTASH_URL and UPSTASH_TOKEN:
 # FastAPI App Engine
 app = FastAPI(title="BiharFast API Engine", version="2.3")
 
-# Robust CORS Setup with Vercel Subdomain Support
-raw_origins = os.getenv(
-    "ALLOWED_ORIGINS", 
-    "http://localhost:5173,http://localhost:3000,http://127.0.0.1:5173,https://bihar-fast-portal.vercel.app"
-)
-allowed_origins = [o.strip() for o in raw_origins.split(",") if o.strip()]
+# Production-safe CORS: Defaults + Custom Env Support
+default_origins = [
+    "http://localhost:5173",
+    "http://localhost:3000",
+    "http://127.0.0.1:5173",
+    "https://biharfast.in",
+    "https://www.biharfast.in",
+    "https://bihar-fast-portal.vercel.app"
+]
+env_origins = [o.strip() for o in os.getenv("ALLOWED_ORIGINS", "").split(",") if o.strip()]
+allowed_origins = list(set(default_origins + env_origins))
 
 app.add_middleware(
     CORSMiddleware,
     allow_origins=allowed_origins,
-    allow_origin_regex=r"https://bihar-fast-portal.*\.vercel\.app",
+    # Regex covers root domain, www, and any Vercel preview/branch deployments
+    allow_origin_regex=r"^https?://(.*\.)?biharfast\.in$|^https://bihar-fast-portal.*\.vercel\.app$",
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
