@@ -84,7 +84,7 @@ export default function App() {
             if (cat === "rtps" || cat === "bihar_bhumi" || cat === "land") cat = "services";
 
             return {
-              ...item, // Preserve all specialized schema fields
+              ...item,
               id: item.id || item.slug,
               slug: item.slug || generateSlug(item),
               title: item.title,
@@ -302,6 +302,9 @@ export default function App() {
                           <img 
                             src="/hero-students.png" 
                             alt="Bihar Aspirants" 
+                            fetchPriority="high"
+                            loading="eager"
+                            decoding="async"
                             className="w-full h-auto max-h-87.5 sm:max-h-97.5 object-contain relative z-10 block drop-shadow-md select-none pointer-events-none"
                           />
                         </div>
@@ -550,7 +553,7 @@ export default function App() {
                           <Sparkles size={14} className="text-amber-600" /> Bihar&apos;s Cleanest Job Portal
                         </p>
                         <p className="text-amber-800 leading-relaxed text-[11px] font-medium">
-                          We do not host clickbait redirects or third-party ads. Every single link points directly to government NIC servers.
+                          Authentic updates and direct links pointing straight to official government departments and commission servers.
                         </p>
                       </div>
                     </aside>
