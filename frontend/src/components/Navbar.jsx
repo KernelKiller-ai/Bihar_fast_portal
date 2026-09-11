@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import { Bell, ShieldCheck, Users } from "lucide-react";
+import { ShieldCheck, Users } from "lucide-react";
 
 export default function Navbar() {
   return (
@@ -40,7 +40,7 @@ export default function Navbar() {
             </div>
           </Link>
 
-          {/* Center: Vibrant Cyan & Emerald Status Pill */}
+          {/* Center: Live Feed Pill */}
           <div className="hidden lg:flex items-center gap-2.5 bg-black/25 border border-sky-400/30 backdrop-blur-md rounded-full px-4 py-1.5 text-xs text-sky-100 shadow-sm">
             <span className="relative flex h-2 w-2">
               <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
@@ -63,15 +63,20 @@ export default function Navbar() {
               <span className="text-[10.5px] text-sky-200 font-normal">Active</span>
             </div>
 
-            {/* Premium Gold-Orange Button */}
+            {/* Official WhatsApp Channel Join Button */}
             <a
-              href="https://t.me/biharfast_official"
+              href="https://whatsapp.com/channel/0029VbDwc7KLNSa91goX3m1B"
               target="_blank"
-              rel="noreferrer"
-              className="flex items-center gap-1.5 bg-linear-to-r from-[#FF9933] to-[#F97316] hover:from-amber-400 hover:to-orange-500 text-slate-950 font-black text-xs sm:text-sm px-4 py-2 rounded-xl transition shadow-md hover:shadow-orange-500/30 cursor-pointer group active:scale-95"
+              rel="noopener noreferrer"
+              className="flex items-center gap-1.5 bg-[#25D366] hover:bg-[#20ba59] text-slate-950 font-black text-xs sm:text-sm px-3.5 sm:px-4 py-2 rounded-xl transition shadow-md hover:shadow-emerald-500/30 cursor-pointer group active:scale-95"
             >
-              <Bell size={15} className="fill-slate-950 group-hover:rotate-12 transition-transform" />
-              <span>Get Alerts</span>
+              <svg 
+                className="w-4 h-4 fill-slate-950 group-hover:scale-110 transition-transform shrink-0" 
+                viewBox="0 0 24 24"
+              >
+                <path d="M12.031 6.172c-3.181 0-5.767 2.586-5.768 5.766-.001 1.298.38 2.27 1.019 3.287l-.582 2.128 2.182-.573c.978.58 1.911.928 3.145.929 3.178 0 5.767-2.587 5.768-5.766.001-3.187-2.575-5.77-5.764-5.771zm3.392 8.244c-.144.405-.837.774-1.17.824-.312.045-.694.067-1.11-.067-.291-.093-.667-.234-1.144-.442-1.999-.871-3.308-2.909-3.41-3.045-.098-.135-.809-1.077-.809-2.054 0-.977.511-1.456.693-1.656.182-.2.398-.25.531-.25.132 0 .265.002.38.008.123.006.287-.047.45.344.167.398.571 1.393.622 1.497.051.103.085.224.017.359-.068.135-.102.22-.204.34-.102.119-.215.266-.307.358-.103.103-.21.215-.091.42.119.205.53.874 1.137 1.414.781.696 1.44.912 1.645 1.015.205.103.324.086.444-.051.12-.137.513-.598.65-.804.137-.206.273-.172.461-.103.188.069 1.196.564 1.401.667.205.103.342.155.393.24.051.086.051.499-.093.904z" />
+              </svg>
+              <span>व्हाट्सएप चैनल</span>
             </a>
           </div>
 
