@@ -4,15 +4,10 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
-    <!-- Google tag (gtag.js) - Google Analytics 4 -->
-    <script async src="https://www.googletagmanager.com/gtag/js?id=G-2N03Q64SX9"></script>
-    <script>
-      window.dataLayer = window.dataLayer || [];
-      function gtag(){dataLayer.push(arguments);}
-      gtag('js', new Date());
-
-      gtag('config', 'G-2N03Q64SX9');
-    </script>
+    <!-- Performance: Preconnect to critical domains -->
+    <link rel="preconnect" href="https://www.googletagmanager.com" crossorigin />
+    <link rel="preconnect" href="https://pagead2.googlesyndication.com" crossorigin />
+    <link rel="dns-prefetch" href="https://www.google-analytics.com" />
 
     <!-- Google Search Console Verification -->
     <meta name="google-site-verification" content="RhyfIw9DUa6uWANx7uPwIKkUPOEs1FZ-zlZUAymGXzs" />
@@ -20,13 +15,6 @@
     <title>BiharFast - बिहार सरकारी नौकरी, एडमिट कार्ड व परिणाम</title>
     <meta name="description" content="बिहार की सभी सरकारी नौकरियां, एडमिट कार्ड, परीक्षा परिणाम और सरकारी योजनाओं की सबसे तेज और सटीक जानकारी।" />
     
-    <!-- Google AdSense Verification Code -->
-    <script 
-      async 
-      src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-9958508128722430"
-      crossorigin="anonymous"
-    ></script>
-
     <!-- PWA & Mobile Theme Settings -->
     <meta name="mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-status-bar-style" content="default" />
@@ -37,6 +25,22 @@
     <link rel="shortcut icon" type="image/png" href="/logo-192.png" />
     <link rel="apple-touch-icon" href="/logo-192.png" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+
+    <!-- Non-blocking Analytics & AdSense scripts (loaded after page parse) -->
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+      gtag('config', 'G-2N03Q64SX9');
+    </script>
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-2N03Q64SX9"></script>
+    
+    <!-- Google AdSense Verification Code -->
+    <script 
+      async 
+      src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-9958508128722430"
+      crossorigin="anonymous"
+    ></script>
   </head>
   <body class="bg-slate-50 text-slate-900 antialiased selection:bg-[#0B4F8A] selection:text-white">
     <div id="root"></div>
