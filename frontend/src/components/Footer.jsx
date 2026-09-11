@@ -410,7 +410,7 @@ export default function Footer({ onOpenTool }) {
 
             {/* WhatsApp Community Box */}
             <a
-              href="https://whatsapp.com"
+              href="https://whatsapp.com/channel/0029VbDwc7KLNSa91goX3m1B"
               target="_blank"
               rel="noreferrer"
               className="flex items-center justify-between p-2.5 rounded-2xl bg-[#E8F8F0] border border-[#25D366]/50 hover:border-[#25D366] transition group shadow-2xs cursor-pointer"
