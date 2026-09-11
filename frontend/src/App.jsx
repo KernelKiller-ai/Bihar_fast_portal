@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { Routes, Route, Link } from "react-router-dom";
 import Navbar from "./components/Navbar";
-import JobCard from "./components/JobCard";
+import NotificationCard from "./components/NotificationCard";
 import ImageResizer from "./components/ImageResizer";
 import AgeCalculator from "./components/AgeCalculator";
 import Footer from "./components/Footer";
@@ -15,7 +15,6 @@ import {
 } from "lucide-react";
 import { generateSlug } from "./utils/slug";
 
-// Policy & Forecast Pages (Exact lowercase disk paths)
 // Policy & Forecast Pages
 // @ts-ignore
 import About from "./pages/about";
@@ -78,12 +77,14 @@ export default function App() {
 
         if (Array.isArray(rawData) && rawData.length > 0) {
           const normalized = rawData.map((item) => {
-            let cat = item.category || "jobs";
-            if (cat === "job" || cat === "notice") cat = "jobs";
-            if (cat === "scheme") cat = "schemes";
+            let cat = (item.category || "jobs").toLowerCase().trim();
+            if (cat === "job" || cat === "notice" || cat === "latest-jobs") cat = "jobs";
+            if (cat === "scheme" || cat === "yojana" || cat === "udyami") cat = "schemes";
             if (cat === "result") cat = "results";
+            if (cat === "rtps" || cat === "bihar_bhumi" || cat === "land") cat = "services";
 
             return {
+              ...item, // Preserve all specialized schema fields
               id: item.id || item.slug,
               slug: item.slug || generateSlug(item),
               title: item.title,
@@ -93,13 +94,15 @@ export default function App() {
               totalPosts: item.total_posts || item.totalPosts || "विभागीय सूचना देखें",
               last_date: item.last_date || item.lastDate || "सक्रिय सूचना",
               lastDate: item.last_date || item.lastDate || "सक्रिय सूचना",
-              eligibility: item.eligibility || "विज्ञापन पीडीएफ देखें",
+              eligibility: item.eligibility || "विज्ञापन देखें",
               qualification_details: item.qualification_details,
               pdf_url: item.pdf_url || item.pdfUrl,
               pdfUrl: item.pdf_url || item.pdfUrl,
               apply_url: item.apply_url || item.applyUrl || item.pdf_url,
               applyUrl: item.apply_url || item.applyUrl || item.pdf_url,
-              link: item.apply_url || item.pdf_url
+              link: item.apply_url || item.pdf_url,
+              fees: item.fees || item.fee || "निःशुल्क (₹0)",
+              processing_time: item.processing_time || item.delivery_time || "10-14 कार्य दिवस"
             };
           });
 
@@ -108,7 +111,7 @@ export default function App() {
           setPortalItems(PERMANENT_SERVICES);
         }
       } catch (err) {
-        console.warn("Backend connection fallback active:", err.message);
+        console.warn("Backend fallback active:", err.message);
         setPortalItems(PERMANENT_SERVICES);
       } finally {
         setLoading(false);
@@ -119,11 +122,21 @@ export default function App() {
   }, []);
 
   const filteredData = portalItems.filter((item) => {
-    const matchesTab = 
-      activeTab === "all" || 
-      item.category === activeTab ||
-      (activeTab === "jobs" && item.category === "job") ||
-      (activeTab === "results" && (item.category === "result" || item.category === "results"));
+    const cat = (item.category || "").toLowerCase();
+    const slug = (item.slug || "").toLowerCase();
+
+    let matchesTab = false;
+    if (activeTab === "all") {
+      matchesTab = true;
+    } else if (activeTab === "services") {
+      matchesTab = cat === "services" || cat === "rtps" || cat === "bihar_bhumi" || slug.includes("rtps") || slug.includes("bhumi");
+    } else if (activeTab === "schemes") {
+      matchesTab = cat === "schemes" || cat === "yojana" || slug.includes("udyami") || slug.includes("scheme");
+    } else if (activeTab === "results") {
+      matchesTab = cat === "results" || cat === "result" || item.isResult;
+    } else {
+      matchesTab = cat === activeTab;
+    }
       
     const q = searchQuery.toLowerCase().trim();
     const matchesSearch = 
@@ -131,6 +144,7 @@ export default function App() {
       item.title?.toLowerCase().includes(q) ||
       item.department?.toLowerCase().includes(q) ||
       (item.eligibility && item.eligibility.toLowerCase().includes(q));
+
     return matchesTab && matchesSearch;
   });
 
@@ -452,9 +466,9 @@ export default function App() {
 
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                           {filteredData.map((item) => (
-                            <JobCard
+                            <NotificationCard
                               key={item.id || item.slug}
-                              post={item}
+                              item={item}
                             />
                           ))}
                         </div>
