@@ -13,9 +13,9 @@ const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "http://localhost:5000
 
 export default function PostDetail({ notices = [] }) {
   const { slug } = useParams();
-  
+
   // Notice array me check karein
-  const localPost = notices.find((item) => item.slug === slug || item.id === slug) || null;
+  const localPost = notices.find((item) => item.slug === slug || String(item.id) === String(slug)) || null;
   const [fetchedPost, setFetchedPost] = useState(null);
   const [loading, setLoading] = useState(!localPost && Boolean(slug && slug !== "undefined"));
 
@@ -31,18 +31,20 @@ export default function PostDetail({ notices = [] }) {
         const json = await res.json();
         if (isMounted && json.success && json.data) {
           const item = json.data;
+          // ...item se layout specific (steps, docs, rules) saari fields preserve hongi
           setFetchedPost({
+            ...item,
             id: item.id || item.slug,
             slug: item.slug,
             title: item.title,
             department: item.department,
             category: item.category,
-            totalPosts: item.total_posts || "अधिसूचना देखें",
-            lastDate: item.last_date || "सक्रिय सूचना",
+            totalPosts: item.total_posts || item.totalPosts || "अधिसूचना देखें",
+            lastDate: item.last_date || item.lastDate || "सक्रिय सूचना",
             eligibility: item.eligibility || "विज्ञापन देखें",
             qualification_details: item.qualification_details,
-            pdfUrl: item.pdf_url,
-            applyUrl: item.apply_url || item.pdf_url
+            pdfUrl: item.pdf_url || item.pdfUrl,
+            applyUrl: item.apply_url || item.applyUrl || item.pdf_url || item.pdfUrl
           });
         }
       } catch (err) {
@@ -82,29 +84,58 @@ export default function PostDetail({ notices = [] }) {
     );
   }
 
-  const category = (post.category || "").toLowerCase();
-  const currentSlug = (post.slug || "").toLowerCase();
+  const category = (post.category || post.type || "").toLowerCase().trim();
+  const currentSlug = (post.slug || "").toLowerCase().trim();
 
-  if (category === "services" || currentSlug.includes("rtps") || currentSlug.includes("certificate")) {
+  // RTPS Services Layout
+  if (
+    category === "services" ||
+    category === "rtps" ||
+    currentSlug.includes("rtps") ||
+    currentSlug.includes("certificate") ||
+    currentSlug.includes("aay-praman") ||
+    currentSlug.includes("niwas-praman")
+  ) {
     return <RtpsLayout post={post} />;
   }
 
-  if (category === "schemes" || currentSlug.includes("udyami") || currentSlug.includes("subsidy")) {
+  // Schemes / Udyami Layout
+  if (
+    category === "schemes" ||
+    category === "yojana" ||
+    category === "udyami" ||
+    currentSlug.includes("udyami") ||
+    currentSlug.includes("subsidy") ||
+    currentSlug.includes("yojana")
+  ) {
     return <UdyamiLayout post={post} />;
   }
 
-  if (currentSlug.includes("bhumi") || currentSlug.includes("lagan") || currentSlug.includes("jamabandi")) {
+  // Bihar Bhumi / Land Records Layout
+  if (
+    category === "bihar_bhumi" ||
+    category === "bhoomi" ||
+    category === "land" ||
+    currentSlug.includes("bhumi") ||
+    currentSlug.includes("lagan") ||
+    currentSlug.includes("jamabandi") ||
+    currentSlug.includes("dakhil-kharij")
+  ) {
     return <BiharBhumiLayout post={post} />;
   }
 
+  // Core Job and Examination Layouts
   switch (category) {
     case "admit_card":
+    case "admitcard":
+    case "admit-card":
       return <AdmitCardLayout post={post} />;
     case "result":
     case "results":
       return <ResultLayout post={post} />;
     case "jobs":
     case "job":
+    case "latest-jobs":
     default:
       return <JobLayout post={post} />;
   }
