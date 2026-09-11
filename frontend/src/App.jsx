@@ -15,13 +15,13 @@ import {
 } from "lucide-react";
 import { generateSlug } from "./utils/slug";
 
-// Policy & Forecast Pages
-import About from "./pages/about";
-import Contact from "./pages/contact";
-import Disclaimer from "./pages/disclaimer";
-import PrivacyPolicy from "./pages/privacyPolicy";
-import Terms from "./pages/terms";
-import Upcoming2026 from "./pages/upcoming";
+// Policy & Forecast Pages (Standard Casing)
+import About from "./pages/about.jsx";
+import Contact from "./pages/Contact.jsx";
+import Disclaimer from "./pages/Disclaimer.jsx";
+import PrivacyPolicy from "./pages/PrivacyPolicy.jsx";
+import Terms from "./pages/Terms.jsx";
+import Upcoming2026 from "./pages/upcoming.jsx";
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "http://localhost:5000";
 
@@ -318,7 +318,7 @@ export default function App() {
                         key={tag}
                         type="button"
                         onClick={() => setSearchQuery(tag)}
-                        className="px-2.5 py-0.5 rounded-full bg-white hover:bg-blue-50 text-slate-700 hover:text-blue-700 text-[11px] font-semibold border border-slate-200 transition cursor-pointer shadow-2xs"
+                        className="px-2.5 py-0.5 rounded-full bg-white hover:bg-blue-50 text-slate-700 hover:text-blue-700 text-[11px] font-semibold border border-slate-200 transition cursor-pointer shadow-xs"
                       >
                         #{tag}
                       </button>
@@ -437,7 +437,7 @@ export default function App() {
                             <TrendingUp size={18} className="text-blue-600" />
                             Active Official Circulars
                           </span>
-                          <span className="bg-white border border-slate-200 text-slate-800 px-3 py-1 rounded-full font-black flex items-center gap-1.5 shadow-2xs">
+                          <span className="bg-white border border-slate-200 text-slate-800 px-3 py-1 rounded-full font-black flex items-center gap-1.5 shadow-xs">
                             {loading && <Loader2 size={13} className="animate-spin text-blue-600" />}
                             {filteredData.length} Live Notices
                           </span>
@@ -461,6 +461,7 @@ export default function App() {
                     </div>
 
                     <aside className="lg:col-span-4 space-y-6">
+                      {/* Community Action Card */}
                       <div className="bg-slate-900 text-white rounded-2xl p-5 shadow-sm border border-slate-800">
                         <div className="flex items-center gap-2 mb-2">
                           <Zap className="text-amber-400 fill-amber-400" size={20} />
@@ -472,20 +473,21 @@ export default function App() {
                         
                         <div className="space-y-2.5">
                           <a
+                            href="https://whatsapp.com/channel/0029VbDwc7KLNSa91goX3m1B"
+                            target="_blank"
+                            rel="noreferrer"
+                            className="w-full bg-[#25D366] hover:bg-[#20ba5a] text-slate-950 font-black text-xs py-2.5 px-4 rounded-xl flex items-center justify-center gap-2 transition shadow-xs active:scale-95"
+                          >
+                            <MessageSquare size={15} className="fill-slate-950" /> Join Official WhatsApp Channel
+                          </a>
+
+                          <a
                             href="https://t.me/biharfast_official"
                             target="_blank"
                             rel="noreferrer"
-                            className="w-full bg-[#229ED9] hover:bg-[#1e8bc0] text-white font-bold text-xs py-2.5 px-4 rounded-xl flex items-center justify-center gap-2 transition shadow-xs"
+                            className="w-full bg-[#229ED9] hover:bg-[#1e8bc0] text-white font-bold text-xs py-2.5 px-4 rounded-xl flex items-center justify-center gap-2 transition shadow-xs active:scale-95"
                           >
                             <Send size={15} /> Join Telegram Channel (Free)
-                          </a>
-                          <a
-                            href="https://whatsapp.com"
-                            target="_blank"
-                            rel="noreferrer"
-                            className="w-full bg-[#25D366] hover:bg-[#20ba5a] text-slate-950 font-black text-xs py-2.5 px-4 rounded-xl flex items-center justify-center gap-2 transition shadow-xs"
-                          >
-                            <MessageSquare size={15} className="fill-slate-950" /> Follow WhatsApp Channel
                           </a>
                         </div>
                       </div>
@@ -524,7 +526,7 @@ export default function App() {
 
                       <div className="bg-amber-50 border border-amber-200 rounded-2xl p-4 text-xs">
                         <p className="font-black text-amber-900 mb-1 flex items-center gap-1">
-                          <Sparkles size={14} className="text-amber-600" /> Bihar's Cleanest Job Portal
+                          <Sparkles size={14} className="text-amber-600" /> Bihar&apos;s Cleanest Job Portal
                         </p>
                         <p className="text-amber-800 leading-relaxed text-[11px] font-medium">
                           We do not host clickbait redirects or third-party ads. Every single link points directly to government NIC servers.
@@ -538,11 +540,17 @@ export default function App() {
           />
 
           <Route path="/post/:slug" element={<PostDetail notices={portalItems} />} />
+          
+          {/* Policy & Compliance Dual Routing */}
           <Route path="/about" element={<About />} />
+          <Route path="/about-us" element={<About />} />
           <Route path="/contact" element={<Contact />} />
+          <Route path="/contact-us" element={<Contact />} />
           <Route path="/disclaimer" element={<Disclaimer />} />
           <Route path="/privacy-policy" element={<PrivacyPolicy />} />
           <Route path="/terms" element={<Terms />} />
+          <Route path="/terms-and-conditions" element={<Terms />} />
+          
           <Route path="/upcoming-2026" element={<Upcoming2026 />} />
         </Routes>
       </div>
