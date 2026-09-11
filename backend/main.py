@@ -17,7 +17,6 @@ from telegram_bot import send_telegram_alert
 logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
 logger = logging.getLogger("biharfast")
 
-# Do not overwrite system environment variables in production
 load_dotenv(override=False)
 
 SUPABASE_URL = os.getenv("SUPABASE_URL")
@@ -29,8 +28,6 @@ SUPABASE_KEY = (
 
 UPSTASH_URL = os.getenv("UPSTASH_REDIS_REST_URL")
 UPSTASH_TOKEN = os.getenv("UPSTASH_REDIS_REST_TOKEN")
-
-# Strict sync secret (No hardcoded fallback allowed)
 INTERNAL_SYNC_SECRET = os.getenv("INTERNAL_SYNC_SECRET")
 
 # Supabase Client Initialization
@@ -56,14 +53,19 @@ if UPSTASH_URL and UPSTASH_TOKEN:
 # FastAPI App Engine
 app = FastAPI(title="BiharFast API Engine", version="2.3")
 
-raw_origins = os.getenv("ALLOWED_ORIGINS", "http://localhost:5173,http://localhost:3000,http://127.0.0.1:5173")
+# Robust CORS Setup with Vercel Subdomain Support
+raw_origins = os.getenv(
+    "ALLOWED_ORIGINS", 
+    "http://localhost:5173,http://localhost:3000,http://127.0.0.1:5173,https://bihar-fast-portal.vercel.app"
+)
 allowed_origins = [o.strip() for o in raw_origins.split(",") if o.strip()]
 
 app.add_middleware(
     CORSMiddleware,
     allow_origins=allowed_origins,
+    allow_origin_regex=r"https://bihar-fast-portal.*\.vercel\.app",
     allow_credentials=True,
-    allow_methods=["GET", "POST", "OPTIONS"],
+    allow_methods=["*"],
     allow_headers=["*"],
 )
 
@@ -112,7 +114,6 @@ def slugify(title: str, dept: str) -> str:
     return re.sub(r"[\s_-]+", "-", slug)[:90]
 
 def is_url_whitelisted(url: Optional[str]) -> bool:
-    """Strict Hostname & Scheme Validation"""
     if not url or url.strip() == "#":
         return True
     try:
@@ -165,7 +166,6 @@ def get_posts():
             cached = redis.get(cache_key)
             if cached:
                 parsed_data = safe_json_parse(cached)
-                parsed_data = safe_json_parse(parsed_data)
                 return {"success": True, "source": "redis_cache", "data": parsed_data}
         except Exception as e:
             logger.warning(f"Redis lookup error: {e}")
@@ -194,18 +194,15 @@ def get_posts():
 def get_post_detail(slug: str):
     cache_key = f"post:{slug}"
 
-    # 1. Fetch from Redis Cache
     if redis:
         try:
             cached = redis.get(cache_key)
             if cached:
                 parsed_post = safe_json_parse(cached)
-                parsed_post = safe_json_parse(parsed_post)
                 return {"success": True, "source": "redis_cache", "data": parsed_post}
         except Exception as e:
             logger.warning(f"Redis lookup error: {e}")
 
-    # 2. Database Fetch
     if not supabase:
         raise HTTPException(status_code=500, detail="Database service unavailable")
 
@@ -220,7 +217,6 @@ def get_post_detail(slug: str):
 
     post_data = res.data[0]
 
-    # 3. Cache Post Detail (30 mins TTL)
     if redis:
         try:
             redis.set(cache_key, json.dumps(post_data, ensure_ascii=False), ex=1800)
@@ -235,7 +231,6 @@ def sync_post(
     bg: BackgroundTasks, 
     x_sync_secret: Optional[str] = Header(None)
 ):
-    # Strict Secret Guard: Enforces configured env variable without insecure defaults
     if not INTERNAL_SYNC_SECRET or x_sync_secret != INTERNAL_SYNC_SECRET:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
@@ -270,7 +265,6 @@ def sync_post(
         logger.error(f"Database upsert error: {err}")
         raise HTTPException(status_code=500, detail="Failed to store notification")
 
-    # Background Tasks
     bg.add_task(flush_cache, slug=slug)
     bg.add_task(send_telegram_alert, record)
 
