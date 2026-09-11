@@ -15,13 +15,20 @@ import {
 } from "lucide-react";
 import { generateSlug } from "./utils/slug";
 
-// Policy & Forecast Pages (Standard Casing)
-import About from "./pages/about.jsx";
-import Contact from "./pages/Contact.jsx";
-import Disclaimer from "./pages/Disclaimer.jsx";
-import PrivacyPolicy from "./pages/PrivacyPolicy.jsx";
-import Terms from "./pages/Terms.jsx";
-import Upcoming2026 from "./pages/upcoming.jsx";
+// Policy & Forecast Pages (Exact lowercase disk paths)
+// Policy & Forecast Pages
+// @ts-ignore
+import About from "./pages/about";
+// @ts-ignore
+import Contact from "./pages/contact";
+// @ts-ignore
+import Disclaimer from "./pages/disclaimer";
+// @ts-ignore
+import PrivacyPolicy from "./pages/privacyPolicy";
+// @ts-ignore
+import Terms from "./pages/terms";
+// @ts-ignore
+import Upcoming2026 from "./pages/upcoming";
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "http://localhost:5000";
 
