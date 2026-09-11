@@ -19,45 +19,45 @@ import { generateSlug } from "../utils/slug";
 
 const DEPT_CONFIG = {
   BPSC: {
-    badge: "bg-emerald-600 text-white",
-    bar: "bg-emerald-600",
-    borderHover: "hover:border-emerald-500",
-    btn: "bg-emerald-600 hover:bg-emerald-700 text-white"
+    badge: "bg-emerald-700 text-white",
+    bar: "bg-emerald-700",
+    borderHover: "hover:border-emerald-600",
+    btn: "bg-emerald-700 hover:bg-emerald-800 text-white"
   },
   CSBC: {
     badge: "bg-blue-700 text-white",
     bar: "bg-blue-700",
-    borderHover: "hover:border-blue-500",
+    borderHover: "hover:border-blue-600",
     btn: "bg-blue-700 hover:bg-blue-800 text-white"
   },
   "BPSSC (दारोगा)": {
-    badge: "bg-rose-600 text-white",
-    bar: "bg-rose-600",
-    borderHover: "hover:border-rose-500",
-    btn: "bg-rose-600 hover:bg-rose-700 text-white"
+    badge: "bg-rose-700 text-white",
+    bar: "bg-rose-700",
+    borderHover: "hover:border-rose-600",
+    btn: "bg-rose-700 hover:bg-rose-800 text-white"
   },
   "BTSC तकनीकी आयोग": {
     badge: "bg-teal-700 text-white",
     bar: "bg-teal-700",
-    borderHover: "hover:border-teal-500",
+    borderHover: "hover:border-teal-600",
     btn: "bg-teal-700 hover:bg-teal-800 text-white"
   },
   "RTPS BIHAR": {
-    badge: "bg-indigo-600 text-white",
-    bar: "bg-indigo-600",
-    borderHover: "hover:border-indigo-500",
-    btn: "bg-indigo-600 hover:bg-indigo-700 text-white"
+    badge: "bg-indigo-700 text-white",
+    bar: "bg-indigo-700",
+    borderHover: "hover:border-indigo-600",
+    btn: "bg-indigo-700 hover:bg-indigo-800 text-white"
   },
   "BIHAR BHUMI": {
-    badge: "bg-amber-600 text-white",
-    bar: "bg-amber-600",
-    borderHover: "hover:border-amber-500",
-    btn: "bg-amber-600 hover:bg-amber-700 text-white"
+    badge: "bg-amber-700 text-white",
+    bar: "bg-amber-700",
+    borderHover: "hover:border-amber-600",
+    btn: "bg-amber-700 hover:bg-amber-800 text-white"
   },
   DEFAULT: {
     badge: "bg-slate-800 text-white",
     bar: "bg-[#0B4F8A]",
-    borderHover: "hover:border-blue-500",
+    borderHover: "hover:border-blue-600",
     btn: "bg-[#0B4F8A] hover:bg-[#073863] text-white"
   }
 };
@@ -83,8 +83,8 @@ export default function NotificationCard({ item }) {
   const renderStatusBadge = () => {
     if (isCitizenService) {
       return (
-        <span className="inline-flex items-center gap-1 bg-emerald-100 text-emerald-800 text-[11px] font-bold px-2.5 py-1 rounded-md border border-emerald-300">
-          <ShieldCheck size={13} className="text-emerald-700" />
+        <span className="inline-flex items-center gap-1 bg-emerald-100 text-emerald-900 text-[11px] font-bold px-2.5 py-1 rounded-md border border-emerald-300">
+          <ShieldCheck size={13} className="text-emerald-800" />
           Active Service
         </span>
       );
@@ -92,8 +92,8 @@ export default function NotificationCard({ item }) {
 
     if (item.isResult || category === "results" || category === "result") {
       return (
-        <span className="inline-flex items-center gap-1 bg-purple-100 text-purple-800 text-[11px] font-bold px-2.5 py-1 rounded-md border border-purple-200">
-          <Award size={13} className="text-purple-700" />
+        <span className="inline-flex items-center gap-1 bg-purple-100 text-purple-900 text-[11px] font-bold px-2.5 py-1 rounded-md border border-purple-300">
+          <Award size={13} className="text-purple-800" />
           Result Declared
         </span>
       );
@@ -101,8 +101,8 @@ export default function NotificationCard({ item }) {
 
     if (category === "admit_card") {
       return (
-        <span className="inline-flex items-center gap-1 bg-amber-100 text-amber-900 text-[11px] font-bold px-2.5 py-1 rounded-md border border-amber-300">
-          <CheckCircle2 size={13} className="text-amber-800" />
+        <span className="inline-flex items-center gap-1 bg-amber-100 text-amber-950 text-[11px] font-black px-2.5 py-1 rounded-md border border-amber-400">
+          <CheckCircle2 size={13} className="text-amber-900" />
           Admit Card Out
         </span>
       );
@@ -111,7 +111,7 @@ export default function NotificationCard({ item }) {
     if (item.hasRealDate && item.daysLeft !== null && item.daysLeft !== undefined) {
       if (item.daysLeft < 0) {
         return (
-          <span className="inline-flex items-center gap-1 bg-slate-100 text-slate-600 text-[11px] font-bold px-2.5 py-1 rounded-md border border-slate-200">
+          <span className="inline-flex items-center gap-1 bg-slate-100 text-slate-700 text-[11px] font-bold px-2.5 py-1 rounded-md border border-slate-300">
             Closed
           </span>
         );
@@ -119,15 +119,15 @@ export default function NotificationCard({ item }) {
 
       if (item.daysLeft <= 3) {
         return (
-          <span className="inline-flex items-center gap-1 bg-red-100 text-red-700 text-[11px] font-black px-2.5 py-1 rounded-md border border-red-300 animate-pulse">
-            <AlertCircle size={13} className="text-red-600" />
+          <span className="inline-flex items-center gap-1 bg-red-100 text-red-800 text-[11px] font-black px-2.5 py-1 rounded-md border border-red-300 animate-pulse">
+            <AlertCircle size={13} className="text-red-700" />
             Last {item.daysLeft} Days!
           </span>
         );
       }
 
       return (
-        <span className="inline-flex items-center gap-1 bg-emerald-50 text-emerald-700 text-[11px] font-bold px-2.5 py-1 rounded-md border border-emerald-200">
+        <span className="inline-flex items-center gap-1 bg-emerald-50 text-emerald-800 text-[11px] font-bold px-2.5 py-1 rounded-md border border-emerald-300">
           <Clock3 size={13} />
           {item.daysLeft} Days Left
         </span>
@@ -135,8 +135,8 @@ export default function NotificationCard({ item }) {
     }
 
     return (
-      <span className="inline-flex items-center gap-1 bg-sky-50 text-sky-700 text-[11px] font-bold px-2.5 py-1 rounded-md border border-sky-200">
-        <Sparkles size={12} />
+      <span className="inline-flex items-center gap-1 bg-sky-100 text-sky-900 text-[11px] font-bold px-2.5 py-1 rounded-md border border-sky-300">
+        <Sparkles size={12} className="text-sky-800" />
         Live Circular
       </span>
     );
@@ -169,44 +169,44 @@ export default function NotificationCard({ item }) {
         {/* Dynamic Metric Grid based on Category */}
         {isCitizenService ? (
           <div className="grid grid-cols-2 gap-2 text-xs">
-            <div className="bg-emerald-50/50 border border-emerald-100 rounded-xl p-2.5">
-              <div className="text-[10px] uppercase font-bold text-slate-400 flex items-center gap-1 mb-0.5">
-                <IndianRupee size={11} className="text-emerald-600" />
+            <div className="bg-emerald-50/70 border border-emerald-200 rounded-xl p-2.5">
+              <div className="text-[10px] uppercase font-black text-slate-700 flex items-center gap-1 mb-0.5">
+                <IndianRupee size={11} className="text-emerald-700" />
                 सरकारी शुल्क
               </div>
-              <div className="font-bold truncate text-emerald-700">
+              <div className="font-extrabold truncate text-emerald-800">
                 {item.fees || item.fee || "निःशुल्क (₹0)"}
               </div>
             </div>
 
-            <div className="bg-slate-50 border border-slate-200/80 rounded-xl p-2.5">
-              <div className="text-[10px] uppercase font-bold text-slate-400 flex items-center gap-1 mb-0.5">
-                <Timer size={12} className="text-slate-500" />
+            <div className="bg-slate-50 border border-slate-200 rounded-xl p-2.5">
+              <div className="text-[10px] uppercase font-black text-slate-700 flex items-center gap-1 mb-0.5">
+                <Timer size={12} className="text-slate-600" />
                 समय सीमा
               </div>
-              <div className="font-bold text-slate-700 truncate">
+              <div className="font-bold text-slate-800 truncate">
                 {item.processing_time || item.delivery_time || "10-14 कार्य दिवस"}
               </div>
             </div>
           </div>
         ) : (
           <div className="grid grid-cols-2 gap-2 text-xs">
-            <div className="bg-slate-50 border border-slate-200/80 rounded-xl p-2.5">
-              <div className="text-[10px] uppercase font-bold text-slate-400 flex items-center gap-1 mb-0.5">
-                <Calendar size={11} className="text-slate-500" />
+            <div className="bg-slate-50 border border-slate-200 rounded-xl p-2.5">
+              <div className="text-[10px] uppercase font-black text-slate-700 flex items-center gap-1 mb-0.5">
+                <Calendar size={11} className="text-slate-600" />
                 {item.hasRealDate ? "Last Date" : "Status"}
               </div>
-              <div className={`font-bold truncate ${item.hasRealDate ? "text-rose-600" : "text-slate-700"}`}>
+              <div className={`font-bold truncate ${item.hasRealDate ? "text-rose-700" : "text-slate-800"}`}>
                 {item.hasRealDate ? (item.lastDate || item.last_date) : "Active Circular"}
               </div>
             </div>
 
-            <div className="bg-slate-50 border border-slate-200/80 rounded-xl p-2.5">
-              <div className="text-[10px] uppercase font-bold text-slate-400 flex items-center gap-1 mb-0.5">
-                <GraduationCap size={12} className="text-slate-500" />
+            <div className="bg-slate-50 border border-slate-200 rounded-xl p-2.5">
+              <div className="text-[10px] uppercase font-black text-slate-700 flex items-center gap-1 mb-0.5">
+                <GraduationCap size={12} className="text-slate-600" />
                 {item.isResult ? "Category" : "Eligibility"}
               </div>
-              <div className="font-bold text-slate-700 truncate">
+              <div className="font-bold text-slate-800 truncate">
                 {item.isResult ? "Merit / Score" : (item.eligibility || "Refer PDF")}
               </div>
             </div>
@@ -214,14 +214,14 @@ export default function NotificationCard({ item }) {
         )}
       </div>
 
-      <div className="px-5 py-3 bg-slate-50/80 border-t border-slate-100 flex items-center justify-between gap-2">
+      <div className="px-5 py-3 bg-slate-50/90 border-t border-slate-200 flex items-center justify-between gap-2">
         <a 
           href={item.pdfUrl || item.applyUrl || item.link || "#"} 
           target="_blank" 
           rel="noreferrer"
-          className="text-xs font-semibold text-slate-600 hover:text-slate-900 bg-white border border-slate-200 px-3 py-1.5 rounded-lg flex items-center gap-1.5 transition hover:bg-slate-100 shadow-2xs"
+          className="text-xs font-bold text-slate-700 hover:text-slate-900 bg-white border border-slate-300 px-3 py-1.5 rounded-lg flex items-center gap-1.5 transition hover:bg-slate-100 shadow-2xs"
         >
-          <FileText size={13} className="text-slate-400" />
+          <FileText size={13} className="text-slate-600" />
           {isCitizenService ? "Direct Portal" : "Official PDF"}
         </a>
 

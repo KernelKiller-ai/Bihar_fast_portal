@@ -184,7 +184,7 @@ export default function App() {
                           <p className="text-xs sm:text-sm font-black text-slate-800 mt-1.5 tracking-wide">
                             Jobs &nbsp;|&nbsp; Welfare &nbsp;|&nbsp; Information
                           </p>
-                          <p className="text-[10.5px] sm:text-xs text-slate-500 font-semibold tracking-wider">
+                          <p className="text-[10.5px] sm:text-xs text-slate-600 font-bold tracking-wider">
                             — सही जानकारी, बेहतर बिहार —
                           </p>
                         </div>
@@ -192,31 +192,31 @@ export default function App() {
                         <div className="space-y-1">
                           <h1 className="text-2xl sm:text-4xl lg:text-[38px] font-black text-[#0B3B66] tracking-tight leading-tight">
                             Bihar Government <br className="hidden sm:block" />
-                            Opportunities, <span className="text-[#F97316]">Now Faster.</span>
+                            Opportunities, <span className="text-[#C2410C]">Now Faster.</span>
                           </h1>
-                          <p className="text-xs sm:text-sm text-slate-600 font-bold pt-1">
+                          <p className="text-xs sm:text-sm text-slate-700 font-bold pt-1">
                             Latest Jobs &nbsp;|&nbsp; Welfare Schemes &nbsp;|&nbsp; Useful Tools &nbsp;|&nbsp; All in One Place
                           </p>
-                          <p className="text-[11px] text-slate-400 font-medium">
+                          <p className="text-[11px] text-slate-600 font-semibold">
                             Trusted • Simple • Fast • For a Brighter Bihar
                           </p>
                         </div>
 
                         <div className="pt-1 max-w-xl mx-auto lg:mx-0">
                           <div className="relative flex items-center bg-white border-2 border-[#0B4F8A] rounded-2xl shadow-md overflow-hidden p-1 focus-within:ring-2 focus-within:ring-blue-400 transition-all">
-                            <Search className="text-slate-400 ml-3 shrink-0" size={19} />
+                            <Search className="text-slate-600 ml-3 shrink-0" size={19} />
                             <input
                               type="text"
                               placeholder="Search jobs, schemes, results, notifications..."
                               value={searchQuery}
                               onChange={(e) => setSearchQuery(e.target.value)}
-                              className="w-full py-2 px-3 text-xs sm:text-sm text-slate-800 placeholder:text-slate-400 font-semibold focus:outline-none"
+                              className="w-full py-2 px-3 text-xs sm:text-sm text-slate-900 placeholder:text-slate-500 font-semibold focus:outline-none"
                             />
                             {searchQuery && (
                               <button
                                 type="button"
                                 onClick={() => setSearchQuery("")}
-                                className="text-xs text-slate-400 hover:text-slate-700 font-bold px-2 cursor-pointer"
+                                className="text-xs text-slate-600 hover:text-slate-900 font-bold px-2 cursor-pointer"
                               >
                                 ✕
                               </button>
@@ -243,7 +243,7 @@ export default function App() {
                             <div className="w-10 h-10 sm:w-11 sm:h-11 rounded-full bg-[#0B5C9E] text-white flex items-center justify-center shadow-xs group-hover:scale-105 transition">
                               <Briefcase size={18} />
                             </div>
-                            <span className="text-[10px] sm:text-[11px] font-bold text-slate-800 mt-1 leading-tight">Government<br />Jobs</span>
+                            <span className="text-[10px] sm:text-[11px] font-bold text-slate-900 mt-1 leading-tight">Government<br />Jobs</span>
                           </button>
 
                           <button
@@ -254,17 +254,17 @@ export default function App() {
                             <div className="w-10 h-10 sm:w-11 sm:h-11 rounded-full bg-[#10B981] text-white flex items-center justify-center shadow-xs group-hover:scale-105 transition">
                               <Users size={18} />
                             </div>
-                            <span className="text-[10px] sm:text-[11px] font-bold text-slate-800 mt-1 leading-tight">Welfare<br />Schemes</span>
+                            <span className="text-[10px] sm:text-[11px] font-bold text-slate-900 mt-1 leading-tight">Welfare<br />Schemes</span>
                           </button>
 
                           <Link
                             to="/upcoming-2026"
                             className="flex flex-col items-center justify-center p-1.5 rounded-xl hover:bg-amber-50/80 transition group cursor-pointer text-center"
                           >
-                            <div className="w-10 h-10 sm:w-11 sm:h-11 rounded-full bg-[#F59E0B] text-white flex items-center justify-center shadow-xs group-hover:scale-105 transition">
+                            <div className="w-10 h-10 sm:w-11 sm:h-11 rounded-full bg-[#D97706] text-white flex items-center justify-center shadow-xs group-hover:scale-105 transition">
                               <GraduationCap size={18} />
                             </div>
-                            <span className="text-[10px] sm:text-[11px] font-bold text-slate-800 mt-1 leading-tight">Scholarships<br />& Upcoming</span>
+                            <span className="text-[10px] sm:text-[11px] font-bold text-slate-900 mt-1 leading-tight">Scholarships<br />& Upcoming</span>
                           </Link>
 
                           <button
@@ -272,10 +272,10 @@ export default function App() {
                             onClick={() => { setActiveTab("results"); setSearchQuery(""); }}
                             className="flex flex-col items-center justify-center p-1.5 rounded-xl hover:bg-purple-50/80 transition group cursor-pointer text-center"
                           >
-                            <div className="w-10 h-10 sm:w-11 sm:h-11 rounded-full bg-[#8B5CF6] text-white flex items-center justify-center shadow-xs group-hover:scale-105 transition">
+                            <div className="w-10 h-10 sm:w-11 sm:h-11 rounded-full bg-[#7C3AED] text-white flex items-center justify-center shadow-xs group-hover:scale-105 transition">
                               <Award size={18} />
                             </div>
-                            <span className="text-[10px] sm:text-[11px] font-bold text-slate-800 mt-1 leading-tight">Exam<br />Results</span>
+                            <span className="text-[10px] sm:text-[11px] font-bold text-slate-900 mt-1 leading-tight">Exam<br />Results</span>
                           </button>
 
                           <button
@@ -283,10 +283,10 @@ export default function App() {
                             onClick={() => handleOpenTool("resizer")}
                             className="flex flex-col items-center justify-center p-1.5 rounded-xl hover:bg-rose-50/80 transition group cursor-pointer text-center"
                           >
-                            <div className="w-10 h-10 sm:w-11 sm:h-11 rounded-full bg-[#EF4444] text-white flex items-center justify-center shadow-xs group-hover:scale-105 transition">
+                            <div className="w-10 h-10 sm:w-11 sm:h-11 rounded-full bg-[#DC2626] text-white flex items-center justify-center shadow-xs group-hover:scale-105 transition">
                               <Wrench size={18} />
                             </div>
-                            <span className="text-[10px] sm:text-[11px] font-bold text-slate-800 mt-1 leading-tight">Useful<br />Tools</span>
+                            <span className="text-[10px] sm:text-[11px] font-bold text-slate-900 mt-1 leading-tight">Useful<br />Tools</span>
                           </button>
                         </div>
                       </div>
@@ -294,7 +294,7 @@ export default function App() {
                       <div className="lg:col-span-5 flex flex-col items-center lg:items-end justify-end relative h-full">
                         <div className="text-center lg:text-right mb-2 w-full pr-2">
                           <span className="text-xl sm:text-2xl font-serif italic font-extrabold text-[#0B4F8A] block">
-                            बढ़ता बिहार, <span className="text-[#F97316]">बनता भविष्य</span>
+                            बढ़ता बिहार, <span className="text-[#C2410C]">बनता भविष्य</span>
                           </span>
                         </div>
 
@@ -316,33 +316,33 @@ export default function App() {
                         <div className="flex items-center gap-6 sm:gap-8 flex-wrap font-bold text-[11px] text-white">
                           <span className="flex items-center gap-2">
                             <ShieldCheck size={16} className="text-cyan-300" />
-                            <span>Verified Sources <span className="font-normal opacity-80 block text-[9.5px]">Direct Official Portals</span></span>
+                            <span>Verified Sources <span className="font-medium opacity-90 block text-[9.5px]">Direct Official Portals</span></span>
                           </span>
                           <span className="flex items-center gap-2">
                             <Zap size={16} className="text-amber-300 fill-amber-300" />
-                            <span>Fast & Lightweight <span className="font-normal opacity-80 block text-[9.5px]">Works on 2G/3G too</span></span>
+                            <span>Fast & Lightweight <span className="font-medium opacity-90 block text-[9.5px]">Works on 2G/3G too</span></span>
                           </span>
                           <span className="flex items-center gap-2">
                             <Users size={16} className="text-emerald-200" />
-                            <span>Bilingual <span className="font-normal opacity-80 block text-[9.5px]">English | हिंदी</span></span>
+                            <span>Bilingual <span className="font-medium opacity-90 block text-[9.5px]">English | हिंदी</span></span>
                           </span>
                           <span className="flex items-center gap-2">
                             <Sparkles size={16} className="text-rose-200" />
-                            <span>Empowering Bihar <span className="font-normal opacity-80 block text-[9.5px]">Real-Time Vacancy Alerts</span></span>
+                            <span>Empowering Bihar <span className="font-medium opacity-90 block text-[9.5px]">Real-Time Vacancy Alerts</span></span>
                           </span>
                         </div>
                       </div>
                     </div>
                   </div>
 
-                  <div className="bg-slate-50 border-t border-slate-200/80 py-2 px-4 flex items-center justify-center gap-1.5 flex-wrap text-xs text-slate-600 font-medium">
-                    <span className="font-bold text-slate-500 text-[11px]">Trending:</span>
+                  <div className="bg-slate-50 border-t border-slate-200/80 py-2 px-4 flex items-center justify-center gap-1.5 flex-wrap text-xs text-slate-700 font-medium">
+                    <span className="font-bold text-slate-700 text-[11px]">Trending:</span>
                     {["BPSC", "BPSSC", "CSBC पुलिस", "BCECEB", "BTSC", "BSSC Inter", "Udyami"].map((tag) => (
                       <button
                         key={tag}
                         type="button"
                         onClick={() => setSearchQuery(tag)}
-                        className="px-2.5 py-0.5 rounded-full bg-white hover:bg-blue-50 text-slate-700 hover:text-blue-700 text-[11px] font-semibold border border-slate-200 transition cursor-pointer shadow-xs"
+                        className="px-2.5 py-0.5 rounded-full bg-white hover:bg-blue-50 text-slate-800 hover:text-blue-800 text-[11px] font-bold border border-slate-300 transition cursor-pointer shadow-xs"
                       >
                         #{tag}
                       </button>
@@ -363,7 +363,7 @@ export default function App() {
                       </div>
                       <Link 
                         to={`/post/${generateSlug(topAlertItem)}`}
-                        className="bg-white text-red-600 font-black text-xs px-4 py-2 rounded-xl shadow-md hover:bg-amber-50 transition shrink-0 flex items-center gap-1.5 cursor-pointer"
+                        className="bg-white text-red-700 font-black text-xs px-4 py-2 rounded-xl shadow-md hover:bg-amber-50 transition shrink-0 flex items-center gap-1.5 cursor-pointer"
                       >
                         View Notice <ArrowRight size={14} />
                       </Link>
@@ -375,14 +375,14 @@ export default function App() {
                       <div id="cyber-tools-section" className="bg-white rounded-2xl p-5 shadow-sm border border-slate-200">
                         <div className="flex items-center justify-between mb-4">
                           <div>
-                            <span className="text-[10px] font-black uppercase tracking-wider bg-emerald-100 text-emerald-800 border border-emerald-300 px-2.5 py-0.5 rounded-full">
+                            <span className="text-[10px] font-black uppercase tracking-wider bg-emerald-100 text-emerald-900 border border-emerald-300 px-2.5 py-0.5 rounded-full">
                               100% Free Online Utilities
                             </span>
-                            <h3 className="text-base sm:text-lg font-black text-slate-900 mt-1">
+                            <h2 className="text-base sm:text-lg font-black text-slate-900 mt-1">
                               Smart Cyber Tools (Instant Self-Apply)
-                            </h3>
+                            </h2>
                           </div>
-                          <span className="text-xs bg-slate-100 text-slate-700 font-bold px-2.5 py-1 rounded-lg border border-slate-200">
+                          <span className="text-xs bg-slate-100 text-slate-800 font-bold px-2.5 py-1 rounded-lg border border-slate-300">
                             Private & Fast
                           </span>
                         </div>
@@ -393,16 +393,16 @@ export default function App() {
                             onClick={() => setActiveTool(activeTool === "resizer" ? null : "resizer")}
                             className={`p-4 rounded-xl border-2 flex items-center gap-3.5 transition-all text-left cursor-pointer ${
                               activeTool === "resizer"
-                                ? "bg-amber-50 border-amber-400 shadow-sm"
+                                ? "bg-amber-50 border-amber-500 shadow-sm"
                                 : "bg-slate-50 hover:bg-slate-100/80 border-slate-200"
                             }`}
                           >
-                            <div className="p-3 rounded-xl bg-blue-600 text-white shadow-xs shrink-0">
+                            <div className="p-3 rounded-xl bg-blue-700 text-white shadow-xs shrink-0">
                               <Camera size={22} />
                             </div>
                             <div>
                               <p className="text-xs sm:text-sm font-black text-slate-900 leading-tight">Photo & Sign Resizer</p>
-                              <p className="text-[11px] text-slate-500 font-medium mt-0.5">
+                              <p className="text-[11px] text-slate-600 font-semibold mt-0.5">
                                 Compress to 20–50 KB for official forms
                               </p>
                             </div>
@@ -413,16 +413,16 @@ export default function App() {
                             onClick={() => setActiveTool(activeTool === "calculator" ? null : "calculator")}
                             className={`p-4 rounded-xl border-2 flex items-center gap-3.5 transition-all text-left cursor-pointer ${
                               activeTool === "calculator"
-                                ? "bg-amber-50 border-amber-400 shadow-sm"
+                                ? "bg-amber-50 border-amber-500 shadow-sm"
                                 : "bg-slate-50 hover:bg-slate-100/80 border-slate-200"
                             }`}
                           >
-                            <div className="p-3 rounded-xl bg-emerald-600 text-white shadow-xs shrink-0">
+                            <div className="p-3 rounded-xl bg-emerald-700 text-white shadow-xs shrink-0">
                               <Calculator size={22} />
                             </div>
                             <div>
                               <p className="text-xs sm:text-sm font-black text-slate-900 leading-tight">Age Eligibility Calculator</p>
-                              <p className="text-[11px] text-slate-500 font-medium mt-0.5">
+                              <p className="text-[11px] text-slate-600 font-semibold mt-0.5">
                                 Calculate cutoff age & category relaxation
                               </p>
                             </div>
@@ -445,10 +445,10 @@ export default function App() {
                               className={`text-xs font-black px-4 py-2.5 rounded-xl whitespace-nowrap transition-all flex items-center gap-2 border cursor-pointer ${
                                 isActive
                                   ? "bg-slate-900 text-white border-slate-900 shadow-md scale-[1.02]"
-                                  : "bg-white text-slate-700 border-slate-200 hover:bg-slate-50"
+                                  : "bg-white text-slate-800 border-slate-300 hover:bg-slate-50"
                               }`}
                             >
-                              <Icon size={15} className={isActive ? "text-amber-400" : "text-slate-400"} />
+                              <Icon size={15} className={isActive ? "text-amber-400" : "text-slate-600"} />
                               {tab.label}
                             </button>
                           );
@@ -456,13 +456,13 @@ export default function App() {
                       </div>
 
                       <div id="active-circulars-section" className="space-y-4">
-                        <div className="flex items-center justify-between text-xs font-black text-slate-700 px-1">
-                          <span className="flex items-center gap-1.5 text-slate-900 text-sm font-extrabold">
-                            <TrendingUp size={18} className="text-blue-600" />
+                        <div className="flex items-center justify-between text-xs font-black text-slate-800 px-1">
+                          <h2 className="flex items-center gap-1.5 text-slate-900 text-sm font-extrabold">
+                            <TrendingUp size={18} className="text-blue-700" />
                             Active Official Circulars
-                          </span>
-                          <span className="bg-white border border-slate-200 text-slate-800 px-3 py-1 rounded-full font-black flex items-center gap-1.5 shadow-xs">
-                            {loading && <Loader2 size={13} className="animate-spin text-blue-600" />}
+                          </h2>
+                          <span className="bg-white border border-slate-300 text-slate-900 px-3 py-1 rounded-full font-black flex items-center gap-1.5 shadow-xs">
+                            {loading && <Loader2 size={13} className="animate-spin text-blue-700" />}
                             {filteredData.length} Live Notices
                           </span>
                         </div>
@@ -477,7 +477,7 @@ export default function App() {
                         </div>
 
                         {!loading && filteredData.length === 0 && (
-                          <div className="bg-white border border-slate-200 rounded-2xl p-10 text-center text-slate-400 text-sm font-bold shadow-xs">
+                          <div className="bg-white border border-slate-200 rounded-2xl p-10 text-center text-slate-600 text-sm font-bold shadow-xs">
                             No notifications matched your search query. Try another keyword.
                           </div>
                         )}
@@ -485,13 +485,12 @@ export default function App() {
                     </div>
 
                     <aside className="lg:col-span-4 space-y-6">
-                      {/* Community Action Card */}
                       <div className="bg-slate-900 text-white rounded-2xl p-5 shadow-sm border border-slate-800">
                         <div className="flex items-center gap-2 mb-2">
                           <Zap className="text-amber-400 fill-amber-400" size={20} />
-                          <h3 className="font-extrabold text-base">Get Real-Time Alerts</h3>
+                          <h2 className="font-extrabold text-base">Get Real-Time Alerts</h2>
                         </div>
-                        <p className="text-xs text-slate-300 mb-4 leading-relaxed font-medium">
+                        <p className="text-xs text-slate-200 mb-4 leading-relaxed font-medium">
                           Never miss an admit card, result or application deadline. Join our official community channels.
                         </p>
                         
@@ -500,16 +499,16 @@ export default function App() {
                             href="https://whatsapp.com/channel/0029VbDwc7KLNSa91goX3m1B"
                             target="_blank"
                             rel="noreferrer"
-                            className="w-full bg-[#25D366] hover:bg-[#20ba5a] text-slate-950 font-black text-xs py-2.5 px-4 rounded-xl flex items-center justify-center gap-2 transition shadow-xs active:scale-95"
+                            className="w-full bg-[#1da851] hover:bg-[#189246] text-white font-black text-xs py-2.5 px-4 rounded-xl flex items-center justify-center gap-2 transition shadow-xs active:scale-95"
                           >
-                            <MessageSquare size={15} className="fill-slate-950" /> Join Official WhatsApp Channel
+                            <MessageSquare size={15} className="fill-white" /> Join Official WhatsApp Channel
                           </a>
 
                           <a
                             href="https://t.me/biharfast_official"
                             target="_blank"
                             rel="noreferrer"
-                            className="w-full bg-[#229ED9] hover:bg-[#1e8bc0] text-white font-bold text-xs py-2.5 px-4 rounded-xl flex items-center justify-center gap-2 transition shadow-xs active:scale-95"
+                            className="w-full bg-[#0088cc] hover:bg-[#0077b5] text-white font-bold text-xs py-2.5 px-4 rounded-xl flex items-center justify-center gap-2 transition shadow-xs active:scale-95"
                           >
                             <Send size={15} /> Join Telegram Channel (Free)
                           </a>
@@ -519,10 +518,10 @@ export default function App() {
                       <div className="bg-white rounded-2xl p-5 border border-slate-200 shadow-sm">
                         <div className="flex items-center justify-between border-b border-slate-100 pb-3 mb-3">
                           <div className="flex items-center gap-1.5">
-                            <ShieldCheck className="text-emerald-600" size={18} />
-                            <h3 className="font-extrabold text-sm text-slate-900">Official Govt Portals</h3>
+                            <ShieldCheck className="text-emerald-700" size={18} />
+                            <h2 className="font-extrabold text-sm text-slate-900">Official Govt Portals</h2>
                           </div>
-                          <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Direct Link</span>
+                          <span className="text-[10px] font-bold text-slate-600 uppercase tracking-wider">Direct Link</span>
                         </div>
 
                         <div className="divide-y divide-slate-100 text-xs">
@@ -532,27 +531,27 @@ export default function App() {
                               href={link.url}
                               target="_blank"
                               rel="noreferrer"
-                              className="py-2.5 flex items-center justify-between group hover:text-blue-700 transition"
+                              className="py-2.5 flex items-center justify-between group hover:text-blue-800 transition"
                             >
                               <div>
-                                <p className="font-bold text-slate-800 group-hover:text-blue-700 transition">
+                                <p className="font-bold text-slate-900 group-hover:text-blue-800 transition">
                                   {link.name}
                                 </p>
-                                <span className="text-[10px] text-slate-400 font-medium">
+                                <span className="text-[10px] text-slate-600 font-semibold">
                                   {link.tag}
                                 </span>
                               </div>
-                              <ExternalLink size={13} className="text-slate-400 group-hover:text-blue-700 transition" />
+                              <ExternalLink size={13} className="text-slate-600 group-hover:text-blue-800 transition" />
                             </a>
                           ))}
                         </div>
                       </div>
 
-                      <div className="bg-amber-50 border border-amber-200 rounded-2xl p-4 text-xs">
-                        <p className="font-black text-amber-900 mb-1 flex items-center gap-1">
-                          <Sparkles size={14} className="text-amber-600" /> Bihar&apos;s Cleanest Job Portal
+                      <div className="bg-amber-50 border border-amber-300 rounded-2xl p-4 text-xs">
+                        <p className="font-black text-amber-950 mb-1 flex items-center gap-1">
+                          <Sparkles size={14} className="text-amber-700" /> Bihar&apos;s Cleanest Job Portal
                         </p>
-                        <p className="text-amber-800 leading-relaxed text-[11px] font-medium">
+                        <p className="text-amber-900 leading-relaxed text-[11px] font-semibold">
                           Authentic updates and direct links pointing straight to official government departments and commission servers.
                         </p>
                       </div>
