@@ -14,7 +14,8 @@ import {
   AlertTriangle 
 } from "lucide-react";
 import { Link } from "react-router-dom";
-import ShareAlertBar from "../ShareAlertBar";
+// ✅ With this:
+import ShareAlertBar from "./ShareAlertBar";
 
 export default function UdyamiLayout({ post }) {
   const portalUrl = post?.applyUrl || "https://udyami.bihar.gov.in";
