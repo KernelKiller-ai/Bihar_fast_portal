@@ -16,17 +16,11 @@ import {
 import { generateSlug } from "./utils/slug";
 
 // Policy & Forecast Pages
-// @ts-ignore
 import About from "./pages/about";
-// @ts-ignore
 import Contact from "./pages/contact";
-// @ts-ignore
 import Disclaimer from "./pages/disclaimer";
-// @ts-ignore
 import PrivacyPolicy from "./pages/privacyPolicy";
-// @ts-ignore
 import Terms from "./pages/terms";
-// @ts-ignore
 import Upcoming2026 from "./pages/upcoming";
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "https://bihar-fast-portal.onrender.com";
@@ -66,7 +60,7 @@ export default function App() {
         if (!response.ok) throw new Error(`HTTP error ${response.status}`);
         const json = await response.json();
 
-        let rawData = json.data;
+        let rawData = json?.data;
         if (typeof rawData === "string") {
           try {
             rawData = JSON.parse(rawData);
@@ -82,7 +76,6 @@ export default function App() {
             const titleLower = (item.title || "").toLowerCase();
             let cat = "jobs";
 
-            // Strict category classification
             if (rawCat.includes("admit") || titleLower.includes("admit card") || titleLower.includes("call letter") || titleLower.includes("hall ticket")) {
               cat = "admit_card";
             } else if (rawCat.includes("result") || titleLower.includes("result") || titleLower.includes("merit list") || titleLower.includes("score card") || titleLower.includes("cut-off") || titleLower.includes("cutoff")) {
@@ -118,7 +111,6 @@ export default function App() {
             };
           });
 
-          // Prevent duplicate permanent services if already scraped
           const existingSlugs = new Set(normalized.map((n) => n.slug));
           const uniquePermServices = (PERMANENT_SERVICES || []).filter((p) => !existingSlugs.has(p.slug));
 
