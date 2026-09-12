@@ -17,6 +17,7 @@ import {
   Scale
 } from "lucide-react";
 import { Link } from "react-router-dom";
+import ShareAlertBar from "./ShareAlertBar";
 
 export default function JobLayout({ post }) {
   const title = post.title || "बिहार राज्य सरकारी रोजगार अधिसूचना";
@@ -55,7 +56,10 @@ export default function JobLayout({ post }) {
         </div>
       </header>
 
-      <div className="p-5 sm:p-8 space-y-8">
+      <div className="p-5 sm:p-8 space-y-6">
+        {/* Dynamic WhatsApp & Telegram Share Bar */}
+        <ShareAlertBar title={title} dept={dept} />
+
         {/* Core Metrics Grid */}
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 text-xs">
           <div className="p-4 rounded-xl bg-slate-50 border border-slate-200 shadow-xs">
@@ -157,7 +161,7 @@ export default function JobLayout({ post }) {
           </p>
         </div>
 
-        {/* In-Depth Comprehensive Guide Sections (1,000+ Wordcount Engine) */}
+        {/* In-Depth Comprehensive Guide Sections */}
         <div className="space-y-8 text-xs md:text-sm text-slate-700 leading-relaxed border-t border-slate-200 pt-8">
           
           {/* Detailed Overview */}
