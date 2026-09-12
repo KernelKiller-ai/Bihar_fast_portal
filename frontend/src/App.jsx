@@ -1,3 +1,4 @@
+import Admin from "./pages/Admin";
 import { useState, useEffect } from "react";
 import { Routes, Route, Link } from "react-router-dom";
 import Navbar from "./components/Navbar";
@@ -584,6 +585,7 @@ export default function App() {
           <Route path="/privacy-policy" element={<PrivacyPolicy />} />
           <Route path="/terms" element={<Terms />} />
           <Route path="/terms-and-conditions" element={<Terms />} />
+          <Route path="/admin-portal" element={<Admin />} />
           
           <Route path="/upcoming-2026" element={<Upcoming2026 />} />
         </Routes>
