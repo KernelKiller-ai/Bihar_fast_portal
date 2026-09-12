@@ -29,7 +29,7 @@ import Terms from "./pages/terms";
 // @ts-ignore
 import Upcoming2026 from "./pages/upcoming";
 
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "http://localhost:5000";
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "https://bihar-fast-portal.onrender.com";
 
 const CATEGORY_TABS = [
   { id: "all", label: "All Updates", icon: Sparkles },
@@ -63,6 +63,7 @@ export default function App() {
     async function fetchLiveNotices() {
       try {
         const response = await fetch(`${API_BASE_URL}/api/notices`);
+        if (!response.ok) throw new Error(`HTTP error ${response.status}`);
         const json = await response.json();
 
         let rawData = json.data;
@@ -77,42 +78,57 @@ export default function App() {
 
         if (Array.isArray(rawData) && rawData.length > 0) {
           const normalized = rawData.map((item) => {
-            let cat = (item.category || "jobs").toLowerCase().trim();
-            if (cat === "job" || cat === "notice" || cat === "latest-jobs") cat = "jobs";
-            if (cat === "scheme" || cat === "yojana" || cat === "udyami") cat = "schemes";
-            if (cat === "result") cat = "results";
-            if (cat === "rtps" || cat === "bihar_bhumi" || cat === "land") cat = "services";
+            const rawCat = (item.category || item.type || "").toLowerCase().trim();
+            const titleLower = (item.title || "").toLowerCase();
+            let cat = "jobs";
+
+            // Strict category classification
+            if (rawCat.includes("admit") || titleLower.includes("admit card") || titleLower.includes("call letter") || titleLower.includes("hall ticket")) {
+              cat = "admit_card";
+            } else if (rawCat.includes("result") || titleLower.includes("result") || titleLower.includes("merit list") || titleLower.includes("score card") || titleLower.includes("cut-off") || titleLower.includes("cutoff")) {
+              cat = "results";
+            } else if (rawCat.includes("scheme") || rawCat.includes("yojana") || titleLower.includes("yojana") || titleLower.includes("udyami") || titleLower.includes("mukhyamantri")) {
+              cat = "schemes";
+            } else if (rawCat.includes("service") || rawCat.includes("rtps") || rawCat.includes("bhumi") || titleLower.includes("dakhil kharij") || titleLower.includes("lpc") || titleLower.includes("certificate")) {
+              cat = "services";
+            } else {
+              cat = "jobs";
+            }
 
             return {
               ...item,
               id: item.id || item.slug,
               slug: item.slug || generateSlug(item),
               title: item.title,
-              department: item.department,
+              department: item.department || "BIHAR GOVT",
               category: cat,
-              total_posts: item.total_posts || item.totalPosts || "विभागीय सूचना देखें",
-              totalPosts: item.total_posts || item.totalPosts || "विभागीय सूचना देखें",
+              total_posts: item.total_posts || item.totalPosts || item.benefit_amount || item.processing_time || "अधिसूचना देखें",
+              totalPosts: item.total_posts || item.totalPosts || item.benefit_amount || item.processing_time || "अधिसूचना देखें",
               last_date: item.last_date || item.lastDate || "सक्रिय सूचना",
               lastDate: item.last_date || item.lastDate || "सक्रिय सूचना",
               eligibility: item.eligibility || "विज्ञापन देखें",
               qualification_details: item.qualification_details,
               pdf_url: item.pdf_url || item.pdfUrl,
               pdfUrl: item.pdf_url || item.pdfUrl,
-              apply_url: item.apply_url || item.applyUrl || item.pdf_url,
-              applyUrl: item.apply_url || item.applyUrl || item.pdf_url,
-              link: item.apply_url || item.pdf_url,
+              apply_url: item.apply_url || item.applyUrl || item.download_url || item.pdf_url,
+              applyUrl: item.apply_url || item.applyUrl || item.download_url || item.pdf_url,
+              link: item.apply_url || item.applyUrl || item.download_url || item.pdf_url,
               fees: item.fees || item.fee || "निःशुल्क (₹0)",
               processing_time: item.processing_time || item.delivery_time || "10-14 कार्य दिवस"
             };
           });
 
-          setPortalItems([...normalized, ...PERMANENT_SERVICES]);
+          // Prevent duplicate permanent services if already scraped
+          const existingSlugs = new Set(normalized.map((n) => n.slug));
+          const uniquePermServices = (PERMANENT_SERVICES || []).filter((p) => !existingSlugs.has(p.slug));
+
+          setPortalItems([...normalized, ...uniquePermServices]);
         } else {
-          setPortalItems(PERMANENT_SERVICES);
+          setPortalItems(PERMANENT_SERVICES || []);
         }
       } catch (err) {
         console.warn("Backend fallback active:", err.message);
-        setPortalItems(PERMANENT_SERVICES);
+        setPortalItems(PERMANENT_SERVICES || []);
       } finally {
         setLoading(false);
       }
@@ -123,17 +139,20 @@ export default function App() {
 
   const filteredData = portalItems.filter((item) => {
     const cat = (item.category || "").toLowerCase();
-    const slug = (item.slug || "").toLowerCase();
 
     let matchesTab = false;
     if (activeTab === "all") {
       matchesTab = true;
-    } else if (activeTab === "services") {
-      matchesTab = cat === "services" || cat === "rtps" || cat === "bihar_bhumi" || slug.includes("rtps") || slug.includes("bhumi");
-    } else if (activeTab === "schemes") {
-      matchesTab = cat === "schemes" || cat === "yojana" || slug.includes("udyami") || slug.includes("scheme");
+    } else if (activeTab === "jobs") {
+      matchesTab = cat === "jobs" || cat === "job";
     } else if (activeTab === "results") {
-      matchesTab = cat === "results" || cat === "result" || item.isResult;
+      matchesTab = cat === "results" || cat === "result";
+    } else if (activeTab === "admit_card") {
+      matchesTab = cat === "admit_card" || cat === "admit";
+    } else if (activeTab === "services") {
+      matchesTab = cat === "services" || cat === "service" || cat === "rtps";
+    } else if (activeTab === "schemes") {
+      matchesTab = cat === "schemes" || cat === "scheme";
     } else {
       matchesTab = cat === activeTab;
     }
@@ -157,7 +176,7 @@ export default function App() {
   };
 
   const liveScrapedItems = portalItems.filter(
-    (i) => i.department === "BPSC" || i.department === "CSBC" || i.department?.includes("BPSSC") || i.department === "BCECEB"
+    (i) => i.department === "BPSC" || i.department === "CSBC" || i.department?.includes("BPSSC") || i.department === "BCECEB" || i.department === "BSSC"
   );
   const topAlertItem = liveScrapedItems.length > 0 ? liveScrapedItems[0] : portalItems[0] || null;
 
