@@ -49,7 +49,7 @@ if UPSTASH_URL and UPSTASH_TOKEN:
     except Exception as e:
         logger.error(f"Redis connection failed: {e}")
 
-app = FastAPI(title="BiharFast Multi-Table API Engine", version="3.0")
+app = FastAPI(title="BiharFast Multi-Table API Engine", version="3.1")
 
 # CORS Setup
 default_origins = [
@@ -66,7 +66,7 @@ allowed_origins = list(set(default_origins + env_origins))
 app.add_middleware(
     CORSMiddleware,
     allow_origins=allowed_origins,
-    allow_origin_regex=r"^https?://(.*\.)?biharfast\.in$|^https://bihar-fast-portal.*\.vercel\.app$",
+    allow_origin_regex=r"^https?://(.*\.)?biharfast\.in$|^https://.*\.vercel\.app$",
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -96,11 +96,10 @@ OFFICIAL_ALLOWED_DOMAINS = {
     "indiapostgdsonline.gov.in"
 }
 
-# Payloads
 class PostPayload(BaseModel):
     title: str
     department: str
-    category: Optional[str] = "job"          # job | scheme | service | admission | result | admit_card
+    category: Optional[str] = "job"
     total_posts: Optional[str] = "अधिसूचना देखें"
     last_date: Optional[str] = "सक्रिय सूचना"
     eligibility: Optional[str] = "विज्ञापन पीडीएफ देखें"
@@ -138,18 +137,17 @@ def safe_json_parse(data: Any) -> Any:
             return data
     return data
 
-def flush_cache(table_name: str, slug: Optional[str] = None):
+def flush_cache(table_name: Optional[str] = None, slug: Optional[str] = None):
     if redis:
         try:
-            redis.delete(f"feed:{table_name}")
             redis.delete("home:latest_posts")
+            if table_name:
+                redis.delete(f"feed:{table_name}")
             if slug:
-                redis.delete(f"detail:{table_name}:{slug}")
                 redis.delete(f"post:{slug}")
         except Exception as e:
-            logger.error(f"Redis cache flush error: {e}")
+            logger.error(f"Redis flush error: {e}")
 
-# Helper: Generalized Cached Fetch for Dedicated Tables
 def fetch_table_data(table_name: str, limit: int = 30):
     cache_key = f"feed:{table_name}"
     if redis:
@@ -158,10 +156,10 @@ def fetch_table_data(table_name: str, limit: int = 30):
             if cached:
                 return {"success": True, "source": "redis_cache", "data": safe_json_parse(cached)}
         except Exception as e:
-            logger.warning(f"Redis get failed: {e}")
+            logger.warning(f"Redis read error: {e}")
 
     if not supabase:
-        raise HTTPException(status_code=500, detail="Database service unavailable")
+        raise HTTPException(status_code=500, detail="Database not configured")
 
     try:
         res = (
@@ -174,14 +172,14 @@ def fetch_table_data(table_name: str, limit: int = 30):
         )
         data = res.data or []
     except Exception as err:
-        logger.error(f"Error fetching from {table_name}: {err}")
+        logger.error(f"Error reading {table_name}: {err}")
         raise HTTPException(status_code=500, detail=f"Failed to fetch {table_name}")
 
     if redis and data:
         try:
-            redis.set(cache_key, json.dumps(data, ensure_ascii=False), ex=600)
+            redis.set(cache_key, json.dumps(data, ensure_ascii=False), ex=300)
         except Exception as e:
-            logger.warning(f"Redis set failed: {e}")
+            logger.warning(f"Redis write error: {e}")
 
     return {"success": True, "source": "database", "data": data}
 
@@ -191,12 +189,11 @@ def fetch_table_data(table_name: str, limit: int = 30):
 def health_check():
     return {
         "status": "active",
-        "portal": "BiharFast Dedicated Architecture API",
+        "portal": "BiharFast High-Speed Dedicated API",
         "supabase_connected": supabase is not None,
         "redis_connected": redis is not None
     }
 
-# 1. DEDICATED TABLE ROUTES
 @app.get("/api/jobs")
 def get_jobs(limit: int = Query(30, ge=1, le=100)):
     return fetch_table_data("jobs", limit)
@@ -217,40 +214,108 @@ def get_admissions(limit: int = Query(30, ge=1, le=100)):
 def get_results(limit: int = Query(30, ge=1, le=100)):
     return fetch_table_data("results_admit_cards", limit)
 
-# 2. BACKWARD COMPATIBLE POSTS FEED
+# FRONTEND MAIN FEED: Merges jobs, results, schemes & services
 @app.get("/api/notices")
 @app.get("/api/posts")
-def get_legacy_posts():
+def get_all_posts():
     cache_key = "home:latest_posts"
+
     if redis:
         try:
             cached = redis.get(cache_key)
             if cached:
                 return {"success": True, "source": "redis_cache", "data": safe_json_parse(cached)}
         except Exception as e:
-            logger.warning(f"Redis lookup error: {e}")
+            logger.warning(f"Redis error: {e}")
 
     if not supabase:
-        return {"success": False, "message": "Database not configured", "data": []}
+        return {"success": False, "message": "Database not initialized", "data": []}
 
+    combined_data = []
+
+    # 1. Fetch from jobs
     try:
-        # Pulls aggregated view from public_notifications or jobs
-        res = supabase.table("public_notifications").select("*").order("created_at", desc=True).limit(40).execute()
-        data = res.data or []
-    except Exception:
-        # Fallback to jobs table if view isn't queried
-        res = supabase.table("jobs").select("*").eq("is_active", True).order("created_at", desc=True).limit(40).execute()
-        data = res.data or []
+        j_res = supabase.table("jobs").select("*").eq("is_active", True).order("created_at", desc=True).limit(20).execute()
+        for j in (j_res.data or []):
+            j["category"] = "job"
+            combined_data.append(j)
+    except Exception as e:
+        logger.warning(f"Jobs query warning: {e}")
 
-    if redis and data:
+    # 2. Fetch from results_admit_cards
+    try:
+        r_res = supabase.table("results_admit_cards").select("*").eq("is_active", True).order("created_at", desc=True).limit(20).execute()
+        for r in (r_res.data or []):
+            cat_val = (r.get("type") or "RESULT").lower()
+            combined_data.append({
+                "id": r.get("id"),
+                "slug": r.get("slug"),
+                "title": r.get("title"),
+                "department": r.get("department"),
+                "category": cat_val,
+                "total_posts": "सूचना देखें",
+                "last_date": "घोषित",
+                "eligibility": "विवरण देखें",
+                "pdf_url": r.get("pdf_url"),
+                "apply_url": r.get("download_url"),
+                "created_at": r.get("created_at"),
+                "is_active": True
+            })
+    except Exception as e:
+        logger.warning(f"Results/Admit query warning: {e}")
+
+    # 3. Fetch from schemes
+    try:
+        s_res = supabase.table("schemes").select("*").eq("is_active", True).order("created_at", desc=True).limit(10).execute()
+        for s in (s_res.data or []):
+            combined_data.append({
+                "id": s.get("id"),
+                "slug": s.get("slug"),
+                "title": s.get("title"),
+                "department": s.get("department"),
+                "category": "scheme",
+                "total_posts": s.get("benefit_amount") or "अनुदान",
+                "last_date": s.get("last_date") or "सक्रिय",
+                "eligibility": s.get("eligibility") or "बिहार निवासी",
+                "pdf_url": s.get("guideline_pdf"),
+                "apply_url": s.get("apply_url"),
+                "created_at": s.get("created_at"),
+                "is_active": True
+            })
+    except Exception as e:
+        logger.warning(f"Schemes query warning: {e}")
+
+    # 4. Fetch from citizen_services
+    try:
+        c_res = supabase.table("citizen_services").select("*").eq("is_active", True).order("created_at", desc=True).limit(10).execute()
+        for c in (c_res.data or []):
+            combined_data.append({
+                "id": c.get("id"),
+                "slug": c.get("slug"),
+                "title": c.get("title"),
+                "department": c.get("department"),
+                "category": "service",
+                "total_posts": c.get("processing_time") or "ऑनलाइन सेवा",
+                "last_date": "सक्रिय सेवा",
+                "eligibility": "नागरिक सेवा",
+                "apply_url": c.get("portal_url"),
+                "created_at": c.get("created_at"),
+                "is_active": True
+            })
+    except Exception as e:
+        logger.warning(f"Services query warning: {e}")
+
+    # Sort combined notices by created_at desc
+    combined_data.sort(key=lambda x: str(x.get("created_at", "")), reverse=True)
+
+    if redis and combined_data:
         try:
-            redis.set(cache_key, json.dumps(data, ensure_ascii=False), ex=600)
+            redis.set(cache_key, json.dumps(combined_data, ensure_ascii=False), ex=300)
         except Exception as e:
-            logger.warning(f"Redis write error: {e}")
+            logger.warning(f"Redis write cache failed: {e}")
 
-    return {"success": True, "source": "database", "data": data}
+    return {"success": True, "source": "database", "data": combined_data}
 
-# 3. UNIFIED DETAIL ENDPOINT BY SLUG
 @app.get("/api/posts/{slug}")
 def get_post_detail(slug: str):
     cache_key = f"post:{slug}"
@@ -265,7 +330,7 @@ def get_post_detail(slug: str):
     if not supabase:
         raise HTTPException(status_code=500, detail="Database service unavailable")
 
-    tables_to_check = ["jobs", "schemes", "citizen_services", "admissions", "results_admit_cards", "posts"]
+    tables_to_check = ["jobs", "results_admit_cards", "schemes", "citizen_services", "admissions", "posts"]
     post_data = None
 
     for tbl in tables_to_check:
@@ -289,7 +354,6 @@ def get_post_detail(slug: str):
 
     return {"success": True, "source": "database", "data": post_data}
 
-# 4. SECURE MULTI-TABLE SYNC ENDPOINT
 @app.post("/api/posts/sync")
 def sync_post(
     payload: PostPayload, 
@@ -311,8 +375,7 @@ def sync_post(
     slug = slugify(payload.title, payload.department)
     cat = (payload.category or "job").lower()
 
-    # Dynamic target table routing
-    if "scheme" in cat or "yojana" in cat:
+    if "scheme" in cat:
         target_table = "schemes"
         record = {
             "slug": slug,
@@ -323,27 +386,15 @@ def sync_post(
             "apply_url": payload.apply_url or "#",
             "is_active": True
         }
-    elif "service" in cat or "rtps" in cat or "bhumi" in cat:
+    elif "service" in cat or "rtps" in cat:
         target_table = "citizen_services"
         record = {
             "slug": slug,
             "title": payload.title,
             "department": payload.department,
-            "service_type": "rtps" if "rtps" in cat else "citizen_service",
+            "service_type": "rtps" if "rtps" in cat else "service",
             "portal_url": payload.apply_url or "#",
             "procedure_guide": payload.qualification_details,
-            "is_active": True
-        }
-    elif "admission" in cat or "ofss" in cat:
-        target_table = "admissions"
-        record = {
-            "slug": slug,
-            "title": payload.title,
-            "board_university": payload.department,
-            "course_name": payload.title,
-            "eligibility": payload.eligibility,
-            "prospectus_pdf": payload.pdf_url,
-            "apply_url": payload.apply_url or "#",
             "is_active": True
         }
     elif "result" in cat or "admit" in cat:
@@ -364,7 +415,6 @@ def sync_post(
             "title": payload.title,
             "department": payload.department,
             "total_posts": payload.total_posts,
-            "last_date": None,
             "eligibility": payload.eligibility,
             "qualification_details": payload.qualification_details,
             "pdf_url": payload.pdf_url,
@@ -383,7 +433,6 @@ def sync_post(
 
     return {"success": True, "table": target_table, "slug": slug, "data": res.data}
 
-# 5. NEWSLETTER SUBSCRIPTION
 @app.post("/api/subscribe")
 def subscribe_newsletter(payload: SubscribePayload):
     email = payload.email.strip().lower()
