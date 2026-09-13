@@ -55,6 +55,25 @@ def fetch_notice_by_slug(slug: str) -> Optional[Dict[str, Any]]:
     res = supabase.table("notices").select("*").eq("slug", slug).limit(1).execute()
     return res.data[0] if res.data else None
 
+def fetch_all_slugs_for_sitemap() -> List[Dict[str, Any]]:
+    """Fetches all active notice slugs and update timestamps for dynamic sitemap generation."""
+    if not supabase:
+        logger.error("Supabase client not initialized for sitemap query.")
+        return []
+
+    try:
+        res = (
+            supabase.table("notices")
+            .select("slug, updated_at, created_at")
+            .eq("is_active", True)
+            .order("created_at", desc=True)
+            .execute()
+        )
+        return res.data or []
+    except Exception as e:
+        logger.error(f"Error fetching slugs for sitemap: {e}")
+        return []
+
 def upsert_notice(record: Dict[str, Any]) -> Any:
     if not supabase:
         raise RuntimeError("Database client not initialized")

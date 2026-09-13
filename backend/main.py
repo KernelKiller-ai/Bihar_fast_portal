@@ -1,6 +1,7 @@
 import os
 import re
 import logging
+from datetime import date
 from urllib.parse import urlparse
 from typing import Optional, Any
 from fastapi import FastAPI, HTTPException, BackgroundTasks, Header, Query, Response, status
@@ -90,7 +91,13 @@ def is_url_whitelisted(url: Optional[str]) -> bool:
 def flush_cache(slug: Optional[str] = None):
     if redis:
         try:
-            keys = ["home:latest_posts", "feed:jobs", "feed:admit_card", "feed:results"]
+            keys = [
+                "home:latest_posts", 
+                "feed:jobs", 
+                "feed:admit_card", 
+                "feed:results", 
+                "seo:dynamic_sitemap"
+            ]
             if slug:
                 keys.append(f"post:{slug}")
             for k in keys:
@@ -214,6 +221,67 @@ def get_post_detail(slug: str):
         media_type="application/json",
         headers={"Cache-Control": "public, max-age=300, s-maxage=1800"}
     )
+
+# ==================== DYNAMIC SEO SITEMAP FOR POSTS ====================
+
+@app.get("/api/sitemap-posts.xml")
+def dynamic_posts_sitemap():
+    cache_key = "seo:dynamic_sitemap"
+
+    if redis:
+        try:
+            cached_xml = redis.get(cache_key)
+            if cached_xml:
+                return Response(
+                    content=cached_xml if isinstance(cached_xml, (str, bytes)) else str(cached_xml),
+                    media_type="application/xml",
+                    headers={"Cache-Control": "public, max-age=3600, s-maxage=7200"}
+                )
+        except Exception as e:
+            logger.warning(f"Redis read bypass for sitemap: {e}")
+
+    site_base = "https://www.biharfast.in"
+    today = date.today().isoformat()
+
+    try:
+        posts = db.fetch_all_slugs_for_sitemap()
+    except Exception as e:
+        logger.error(f"Error reading slugs for sitemap: {e}")
+        posts = []
+
+    xml_lines = [
+        '<?xml version="1.0" encoding="UTF-8"?>',
+        '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">'
+    ]
+
+    for item in posts:
+        slug = item.get("slug")
+        if slug:
+            raw_time = item.get("updated_at")
+            lastmod = raw_time.split("T")[0] if raw_time and "T" in raw_time else today
+            xml_lines.append(f"""  <url>
+    <loc>{site_base}/post/{slug}</loc>
+    <lastmod>{lastmod}</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.85</priority>
+  </url>""")
+
+    xml_lines.append('</urlset>')
+    sitemap_xml = "\n".join(xml_lines)
+
+    if redis and posts:
+        try:
+            redis.set(cache_key, sitemap_xml, ex=3600)
+        except Exception:
+            pass
+
+    return Response(
+        content=sitemap_xml,
+        media_type="application/xml",
+        headers={"Cache-Control": "public, max-age=3600, s-maxage=7200"}
+    )
+
+# ==================== SYNC ENDPOINT ====================
 
 @app.post("/api/posts/sync")
 def sync_post(
