@@ -1,14 +1,15 @@
 import os
 import re
-import json
 import logging
 from urllib.parse import urlparse
 from typing import Optional, Any
 from fastapi import FastAPI, HTTPException, BackgroundTasks, Header, Query, Response, status
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import ORJSONResponse
 from pydantic import BaseModel
 from upstash_redis import Redis
 from dotenv import load_dotenv
+import orjson
 
 import database as db
 
@@ -30,9 +31,14 @@ if UPSTASH_URL and UPSTASH_TOKEN:
     except Exception as e:
         logger.error(f"Redis connection failed: {e}")
 
-app = FastAPI(title="BiharFast Ultra-Low Latency Engine", version="4.0")
+# Default response class set to ORJSONResponse for <20ms API latency
+app = FastAPI(
+    title="BiharFast Ultra-Low Latency Engine", 
+    version="4.1", 
+    default_response_class=ORJSONResponse
+)
 
-# CORS Setup
+# Optimized CORS Setup
 default_origins = [
     "http://localhost:5173",
     "http://localhost:3000",
@@ -57,6 +63,7 @@ OFFICIAL_ALLOWED_DOMAINS = {
     "bceceboard.bihar.gov.in",
     "bpsc.bih.nic.in",
     "bpsc.bihar.gov.in",
+    "onlinebpsc.bihar.gov.in",
     "csbc.bih.nic.in",
     "csbc.bihar.gov.in",
     "bpssc.bih.nic.in",
@@ -111,10 +118,10 @@ def is_url_whitelisted(url: Optional[str]) -> bool:
     except Exception:
         return False
 
-def safe_json_parse(data: Any) -> Any:
+def fast_loads(data: Any) -> Any:
     if isinstance(data, str):
         try:
-            return json.loads(data)
+            return orjson.loads(data)
         except Exception:
             return data
     return data
@@ -122,12 +129,11 @@ def safe_json_parse(data: Any) -> Any:
 def flush_cache(slug: Optional[str] = None):
     if redis:
         try:
-            redis.delete("home:latest_posts")
-            redis.delete("feed:jobs")
-            redis.delete("feed:admit_card")
-            redis.delete("feed:results")
+            keys = ["home:latest_posts", "feed:jobs", "feed:admit_card", "feed:results"]
             if slug:
-                redis.delete(f"post:{slug}")
+                keys.append(f"post:{slug}")
+            for k in keys:
+                redis.delete(k)
         except Exception as e:
             logger.error(f"Redis flush error: {e}")
 
@@ -137,7 +143,7 @@ def flush_cache(slug: Optional[str] = None):
 def health_check():
     return {
         "status": "active",
-        "engine": "BiharFast Modular Engine",
+        "engine": "BiharFast Ultra-Low Latency Engine",
         "supabase_connected": db.get_db() is not None,
         "redis_connected": redis is not None
     }
@@ -152,7 +158,7 @@ def get_all_posts(response: Response, limit: int = Query(50, ge=1, le=100)):
             cached = redis.get(cache_key)
             if cached:
                 response.headers["Cache-Control"] = "public, max-age=60, stale-while-revalidate=120"
-                return {"success": True, "source": "redis_cache", "data": safe_json_parse(cached)}
+                return {"success": True, "source": "redis_cache", "data": fast_loads(cached)}
         except Exception as e:
             logger.warning(f"Redis read error: {e}")
 
@@ -164,7 +170,7 @@ def get_all_posts(response: Response, limit: int = Query(50, ge=1, le=100)):
 
     if redis and data:
         try:
-            redis.set(cache_key, json.dumps(data, ensure_ascii=False), ex=300)
+            redis.set(cache_key, orjson.dumps(data).decode("utf-8"), ex=300)
         except Exception as e:
             logger.warning(f"Redis write error: {e}")
 
@@ -190,7 +196,7 @@ def get_category_feed(category: str, response: Response, limit: int = 30):
             cached = redis.get(cache_key)
             if cached:
                 response.headers["Cache-Control"] = "public, max-age=60, stale-while-revalidate=120"
-                return {"success": True, "source": "redis_cache", "data": safe_json_parse(cached)}
+                return {"success": True, "source": "redis_cache", "data": fast_loads(cached)}
         except Exception as e:
             logger.warning(f"Redis lookup error on {category}: {e}")
 
@@ -202,7 +208,7 @@ def get_category_feed(category: str, response: Response, limit: int = 30):
 
     if redis and data:
         try:
-            redis.set(cache_key, json.dumps(data, ensure_ascii=False), ex=300)
+            redis.set(cache_key, orjson.dumps(data).decode("utf-8"), ex=300)
         except Exception as e:
             logger.warning(f"Redis write error: {e}")
 
@@ -217,7 +223,7 @@ def get_post_detail(slug: str, response: Response):
             cached = redis.get(cache_key)
             if cached:
                 response.headers["Cache-Control"] = "public, max-age=300, stale-while-revalidate=600"
-                return {"success": True, "source": "redis_cache", "data": safe_json_parse(cached)}
+                return {"success": True, "source": "redis_cache", "data": fast_loads(cached)}
         except Exception as e:
             logger.warning(f"Redis lookup error for slug {slug}: {e}")
 
@@ -232,7 +238,7 @@ def get_post_detail(slug: str, response: Response):
 
     if redis:
         try:
-            redis.set(cache_key, json.dumps(post_data, ensure_ascii=False), ex=1800)
+            redis.set(cache_key, orjson.dumps(post_data).decode("utf-8"), ex=1800)
         except Exception as e:
             logger.warning(f"Redis write error: {e}")
 
@@ -264,6 +270,10 @@ def sync_post(
     else:
         normalized_cat = "jobs"
 
+    # Exact duplicate check before upserting
+    existing_record = db.fetch_notice_by_slug(slug)
+    is_new_post = existing_record is None
+
     record = {
         "slug": slug,
         "title": payload.title,
@@ -293,7 +303,14 @@ def sync_post(
 
     bg.add_task(flush_cache, slug=slug)
 
-    return {"success": True, "table": "notices", "slug": slug, "data": res.data}
+    # Return is_new flag to instruct scraper whether to alert Telegram
+    return {
+        "success": True, 
+        "table": "notices", 
+        "slug": slug, 
+        "is_new": is_new_post, 
+        "data": res.data
+    }
 
 @app.post("/api/subscribe")
 def subscribe_newsletter(payload: SubscribePayload):
