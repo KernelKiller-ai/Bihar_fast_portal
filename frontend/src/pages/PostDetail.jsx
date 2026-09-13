@@ -4,9 +4,6 @@ import { useParams, Link } from "react-router-dom";
 import JobLayout from "../components/layouts/JobLayout";
 import AdmitCardLayout from "../components/layouts/AdmitCardLayout";
 import ResultLayout from "../components/layouts/ResultLayout";
-import RtpsLayout from "../components/layouts/RtpsLayout";
-import UdyamiLayout from "../components/layouts/UdyamiLayout";
-import BiharBhumiLayout from "../components/layouts/BiharBhumiLayout";
 import { 
   ArrowLeft, 
   Loader2, 
@@ -98,7 +95,6 @@ export default function PostDetail({ notices = [] }) {
   }
 
   const category = (post.category || post.type || "").toLowerCase().trim();
-  const currentSlug = (post.slug || "").toLowerCase().trim();
 
   // Related Updates logic (same category or same department, excluding current post)
   const relatedNotices = notices
@@ -117,40 +113,6 @@ export default function PostDetail({ notices = [] }) {
     : notices.filter((n) => (n.slug || generateSlug(n)) !== slug).slice(0, 4);
 
   const renderActiveLayout = () => {
-    if (
-      category === "services" ||
-      category === "rtps" ||
-      currentSlug.includes("rtps") ||
-      currentSlug.includes("certificate") ||
-      currentSlug.includes("aay-praman") ||
-      currentSlug.includes("niwas-praman")
-    ) {
-      return <RtpsLayout post={post} />;
-    }
-
-    if (
-      category === "schemes" ||
-      category === "yojana" ||
-      category === "udyami" ||
-      currentSlug.includes("udyami") ||
-      currentSlug.includes("subsidy") ||
-      currentSlug.includes("yojana")
-    ) {
-      return <UdyamiLayout post={post} />;
-    }
-
-    if (
-      category === "bihar_bhumi" ||
-      category === "bhoomi" ||
-      category === "land" ||
-      currentSlug.includes("bhumi") ||
-      currentSlug.includes("lagan") ||
-      currentSlug.includes("jamabandi") ||
-      currentSlug.includes("dakhil-kharij")
-    ) {
-      return <BiharBhumiLayout post={post} />;
-    }
-
     switch (category) {
       case "admit_card":
       case "admitcard":
@@ -162,6 +124,8 @@ export default function PostDetail({ notices = [] }) {
       case "jobs":
       case "job":
       case "latest-jobs":
+      case "services":
+      case "schemes":
       default:
         return <JobLayout post={post} />;
     }
@@ -233,15 +197,15 @@ export default function PostDetail({ notices = [] }) {
           </Link>
 
           <Link
-            to="/post/rtps-bihar-online-application-service"
+            to="/rtps-bihar"
             className="p-3.5 bg-white hover:bg-indigo-50/50 border border-slate-200 hover:border-indigo-400 rounded-xl transition flex items-center gap-3 group shadow-2xs"
           >
             <div className="p-2.5 rounded-lg bg-indigo-700 text-white shrink-0 group-hover:scale-105 transition">
               <ShieldCheck size={18} />
             </div>
             <div>
-              <p className="font-bold text-slate-900 group-hover:text-indigo-800">RTPS Bihar Portal</p>
-              <p className="text-[11px] text-slate-600">जाति, आय, निवास ऑनलाइन प्रमाण</p>
+              <p className="font-bold text-slate-900 group-hover:text-indigo-800">RTPS Bihar Hub</p>
+              <p className="text-[11px] text-slate-600">जाति, आय, निवास 1-क्लिक डाउनलोड</p>
             </div>
           </Link>
         </div>

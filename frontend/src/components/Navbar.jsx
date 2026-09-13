@@ -1,9 +1,9 @@
 import { Link } from "react-router-dom";
-import { ShieldCheck, Users } from "lucide-react";
+import { ShieldCheck, Sparkles } from "lucide-react";
 
 export default function Navbar() {
   return (
-    <nav className="w-full sticky top-0 z-50 select-none shadow-lg">
+    <nav className="w-full sticky top-0 z-50 select-none shadow-md">
       {/* 1. Indian Tricolor Micro Top Border */}
       <div className="w-full h-1 bg-linear-to-r from-[#FF9933] via-white to-[#138808]" />
 
@@ -16,7 +16,7 @@ export default function Navbar() {
         <div className="max-w-[1550px] mx-auto px-4 sm:px-8 py-2.5 flex items-center justify-between gap-4 relative z-10">
           
           {/* Logo Brand Plate */}
-          <Link to="/" className="flex items-center gap-3.5 group shrink-0">
+          <Link to="/" className="flex items-center gap-3 group shrink-0">
             <div className="bg-white p-1 rounded-xl shadow-md border border-sky-200/50 flex items-center justify-center transition group-hover:scale-105">
               <img 
                 src="/logo.png" 
@@ -55,13 +55,15 @@ export default function Navbar() {
           </div>
 
           {/* Right Action Buttons */}
-          <div className="flex items-center gap-3 shrink-0">
-            {/* Live Counter Pill */}
-            <div className="hidden sm:flex items-center gap-2 bg-white/10 border border-white/20 backdrop-blur-md px-3 py-1.5 rounded-full text-xs font-bold text-white shadow-xs">
-              <Users size={14} className="text-emerald-300" />
-              <span className="font-mono text-emerald-300 font-black text-xs">1,299</span>
-              <span className="text-[10.5px] text-sky-200 font-normal">Active</span>
-            </div>
+          <div className="flex items-center gap-2.5 shrink-0">
+            {/* Quick Hubs Badge */}
+            <Link
+              to="/upcoming-2026"
+              className="hidden sm:inline-flex items-center gap-1.5 bg-white/10 hover:bg-white/20 border border-white/20 text-sky-100 px-3 py-2 rounded-xl text-xs font-bold transition active:scale-95"
+            >
+              <Sparkles size={13} className="text-amber-400" />
+              <span>सभी पोर्टल्स (2026)</span>
+            </Link>
 
             {/* Official WhatsApp Channel Join Button */}
             <a
