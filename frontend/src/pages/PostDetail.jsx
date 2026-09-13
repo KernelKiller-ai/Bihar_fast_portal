@@ -20,7 +20,6 @@ import { generateSlug } from "../utils/slug";
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "https://bihar-fast-portal.onrender.com";
 
-// Dedicated Hub Mapping for Instant High-Speed Redirection
 const DEDICATED_HUBS = [
   { match: ["rtps", "caste", "income", "residential", "niwas", "aay", "jati"], link: "/rtps-bihar", title: "RTPS Bihar Direct Portal" },
   { match: ["udyami", "mukhyamantri udyami"], link: "/udyami-yojana", title: "मुख्यमंत्री उद्यमी योजना Hub" },
@@ -34,7 +33,12 @@ const DEDICATED_HUBS = [
 export default function PostDetail({ notices = [] }) {
   const { slug } = useParams();
 
-  const localPost = notices.find((item) => item.slug === slug || String(item.id) === String(slug)) || null;
+  const localCandidate = notices.find((item) => item.slug === slug || String(item.id) === String(slug)) || null;
+  
+  // Agar local post me Gemini fields pehle se available hain to local use karein, warna API se full record mangwayein
+  const hasEnrichedData = Boolean(localCandidate && (localCandidate.short_desc || localCandidate.how_to_apply));
+  const localPost = hasEnrichedData ? localCandidate : null;
+
   const [fetchedPost, setFetchedPost] = useState(null);
   const [loading, setLoading] = useState(!localPost && Boolean(slug && slug !== "undefined"));
 
@@ -50,8 +54,10 @@ export default function PostDetail({ notices = [] }) {
     let isMounted = true;
     async function fetchSinglePost() {
       try {
+        setLoading(true);
         const res = await fetch(`${API_BASE_URL}/api/posts/${slug}`);
         const json = await res.json();
+        
         if (isMounted && json.success && json.data) {
           const item = json.data;
           setFetchedPost({
@@ -66,7 +72,13 @@ export default function PostDetail({ notices = [] }) {
             eligibility: item.eligibility || "विज्ञापन देखें",
             qualification_details: item.qualification_details,
             pdfUrl: item.pdf_url || item.pdfUrl,
-            applyUrl: item.apply_url || item.applyUrl || item.pdf_url || item.pdfUrl
+            applyUrl: item.apply_url || item.applyUrl || item.pdf_url || item.pdfUrl,
+            download_url: item.download_url || item.apply_url || item.pdf_url,
+            // Gemini Generated Dynamic Fields
+            short_desc: item.short_desc || "",
+            how_to_apply: Array.isArray(item.how_to_apply) ? item.how_to_apply : [],
+            selection_process: Array.isArray(item.selection_process) ? item.selection_process : [],
+            extra_links: Array.isArray(item.extra_links) ? item.extra_links : []
           });
         }
       } catch (err) {
@@ -85,7 +97,7 @@ export default function PostDetail({ notices = [] }) {
 
   const post = localPost || fetchedPost;
 
-  // Dynamic SEO Injection
+  // Dynamic SEO Injection with High-Value Descriptions
   useEffect(() => {
     if (!post) return;
 
@@ -101,7 +113,11 @@ export default function PostDetail({ notices = [] }) {
       tag.setAttribute("content", content);
     };
 
-    const desc = `${post.department || "Bihar Govt"}: ${post.title}. Eligibility: ${post.eligibility || "See Details"}. Last Date: ${post.lastDate || "Active"}. Direct Apply Online & Official Notification PDF.`;
+    // Use authentic AI summary for Google Meta Description if available
+    const desc = post.short_desc 
+      ? post.short_desc.slice(0, 155) + "..." 
+      : `${post.department || "Bihar Govt"}: ${post.title}. Eligibility: ${post.eligibility || "See Details"}. Last Date: ${post.lastDate || "Active"}. Direct Apply Online & Official Notification PDF.`;
+
     setMeta("name", "description", desc);
     setMeta("property", "og:title", `${post.title} - BiharFast`);
     setMeta("property", "og:description", desc);
@@ -141,12 +157,10 @@ export default function PostDetail({ notices = [] }) {
   const slugLower = (post.slug || slug || "").toLowerCase();
   const titleLower = (post.title || "").toLowerCase();
 
-  // Check if this post relates to a dedicated high-traffic hub
   const matchedHub = DEDICATED_HUBS.find((h) =>
     h.match.some((keyword) => slugLower.includes(keyword) || titleLower.includes(keyword))
   );
 
-  // Related Updates logic
   const relatedNotices = notices
     .filter((n) => {
       const nSlug = n.slug || generateSlug(n);
@@ -201,7 +215,7 @@ export default function PostDetail({ notices = [] }) {
         </span>
       </nav>
 
-      {/* Dedicated Hub Alert Banner (if applicable) */}
+      {/* Dedicated Hub Alert Banner */}
       {matchedHub && (
         <div className="mb-4 p-3.5 rounded-xl bg-linear-to-r from-blue-600 to-indigo-700 text-white flex flex-col sm:flex-row items-center justify-between gap-3 shadow-md">
           <div className="flex items-center gap-2.5 text-xs sm:text-sm">
@@ -220,10 +234,10 @@ export default function PostDetail({ notices = [] }) {
         </div>
       )}
 
-      {/* 2. Main Post Content Template */}
+      {/* 2. Main Post Content Layout */}
       {renderActiveLayout()}
 
-      {/* 3. High-Value Cyber Tools Internal Linking Box */}
+      {/* 3. Free Aspirant Utilities Hub */}
       <section className="mt-8 bg-linear-to-r from-blue-50 via-slate-50 to-emerald-50 border border-blue-200/80 rounded-2xl p-5 shadow-xs">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-blue-100 pb-3 mb-4">
           <div>
