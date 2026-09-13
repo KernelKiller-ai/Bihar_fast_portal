@@ -9,7 +9,7 @@ export default defineConfig({
     tailwindcss(),
     VitePWA({
       registerType: 'autoUpdate',
-      includeAssets: ['favicon.ico', 'robots.txt', 'sitemap.xml', 'logo.png'],
+      includeAssets: ['favicon.ico', 'robots.txt', 'sitemap.xml', 'sitemap-static.xml', 'logo.png'],
       manifest: {
         name: 'BiharFast - Bihar Govt Jobs & Alerts',
         short_name: 'BiharFast',
@@ -41,11 +41,17 @@ export default defineConfig({
       },
       workbox: {
         maximumFileSizeToCacheInBytes: 4 * 1024 * 1024,
-        globPatterns: ['**/*.{js,css,html,ico,png,svg}']
+        globPatterns: ['**/*.{js,css,html,ico,png,svg}'],
+        // Ye sabse important hai: API aur XML routes ko Service Worker bypass karega
+        navigateFallbackDenylist: [/^\/api/, /\.xml$/]
       }
     })
   ],
   build: {
+    // Cross-world preload warning fix
+    modulePreload: {
+      polyfill: false
+    },
     chunkSizeWarningLimit: 800,
     rollupOptions: {
       output: {
