@@ -5,7 +5,6 @@ import NotificationCard from "./components/NotificationCard";
 import ImageResizer from "./components/ImageResizer";
 import AgeCalculator from "./components/AgeCalculator";
 import Footer from "./components/Footer";
-import { PERMANENT_SERVICES } from "./data/portalData";
 import { generateSlug } from "./utils/slug";
 
 // Icons
@@ -13,7 +12,7 @@ import {
   Camera, Calculator, Flame, Sparkles, Briefcase, 
   Search, ArrowRight, Award, IdCard, Send, MessageSquare, 
   ExternalLink, Zap, TrendingUp, ShieldCheck, Loader2,
-  GraduationCap, Wrench, Users, CheckCircle2
+  GraduationCap, Wrench, CheckCircle2
 } from "lucide-react";
 
 // Lazy Loaded Pages (Bundle Size Optimization)
@@ -37,16 +36,15 @@ const Terms = lazy(() => import("./pages/terms"));
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "https://bihar-fast-portal.onrender.com";
 
+// Only dynamic circular tabs (RTPS and Schemes removed as they have dedicated hubs)
 const CATEGORY_TABS = [
   { id: "all", label: "All Updates", icon: Sparkles },
   { id: "results", label: "Results", icon: Award },
   { id: "admit_card", label: "Admit Card", icon: IdCard },
   { id: "jobs", label: "Govt Jobs", icon: Briefcase },
-  { id: "services", label: "RTPS Services", icon: ShieldCheck },
-  { id: "schemes", label: "Schemes / Yojana", icon: Sparkles },
 ];
 
-// Cleaned Direct Links (Only Official Government Recruitment Boards)
+// Cleaned Direct Links (Official Government Recruitment Boards Only)
 const DIRECT_LINKS = [
   { name: "BPSC Public Service", url: "https://bpsc.bihar.gov.in", tag: "Civil Services" },
   { name: "CSBC Police Constable", url: "https://csbc.bihar.gov.in", tag: "Police Dept" },
@@ -81,56 +79,54 @@ export default function App() {
         }
 
         if (Array.isArray(rawData) && rawData.length > 0) {
-          const normalized = rawData.map((item) => {
-            const rawCat = (item.category || item.type || "").toLowerCase().trim();
-            const titleLower = (item.title || "").toLowerCase();
-            let cat = "jobs";
+          const normalized = rawData
+            .filter((item) => {
+              // Exclude any static RTPS/Bhumi/Udyami leaks from circular feed
+              const s = (item.slug || item.id || "").toLowerCase();
+              return !s.includes("rtps") && !s.includes("bhumi") && !s.includes("udyami");
+            })
+            .map((item) => {
+              const rawCat = (item.category || item.type || "").toLowerCase().trim();
+              const titleLower = (item.title || "").toLowerCase();
+              let cat = "jobs";
 
-            if (rawCat.includes("admit") || titleLower.includes("admit card") || titleLower.includes("call letter") || titleLower.includes("hall ticket")) {
-              cat = "admit_card";
-            } else if (rawCat.includes("result") || titleLower.includes("result") || titleLower.includes("merit list") || titleLower.includes("score card") || titleLower.includes("cut-off") || titleLower.includes("cutoff")) {
-              cat = "results";
-            } else if (rawCat.includes("scheme") || rawCat.includes("yojana") || titleLower.includes("yojana") || titleLower.includes("udyami") || titleLower.includes("mukhyamantri")) {
-              cat = "schemes";
-            } else if (rawCat.includes("service") || rawCat.includes("rtps") || rawCat.includes("bhumi") || titleLower.includes("dakhil kharij") || titleLower.includes("lpc") || titleLower.includes("certificate")) {
-              cat = "services";
-            } else {
-              cat = "jobs";
-            }
+              if (rawCat.includes("admit") || titleLower.includes("admit card") || titleLower.includes("call letter") || titleLower.includes("hall ticket")) {
+                cat = "admit_card";
+              } else if (rawCat.includes("result") || titleLower.includes("result") || titleLower.includes("merit list") || titleLower.includes("score card") || titleLower.includes("cut-off") || titleLower.includes("cutoff")) {
+                cat = "results";
+              } else {
+                cat = "jobs";
+              }
 
-            return {
-              ...item,
-              id: item.id || item.slug,
-              slug: item.slug || generateSlug(item),
-              title: item.title,
-              department: item.department || "BIHAR GOVT",
-              category: cat,
-              total_posts: item.total_posts || item.totalPosts || item.benefit_amount || item.processing_time || "अधिसूचना देखें",
-              totalPosts: item.total_posts || item.totalPosts || item.benefit_amount || item.processing_time || "अधिसूचना देखें",
-              last_date: item.last_date || item.lastDate || "सक्रिय सूचना",
-              lastDate: item.last_date || item.lastDate || "सक्रिय सूचना",
-              eligibility: item.eligibility || "विज्ञापन देखें",
-              qualification_details: item.qualification_details,
-              pdf_url: item.pdf_url || item.pdfUrl,
-              pdfUrl: item.pdf_url || item.pdfUrl,
-              apply_url: item.apply_url || item.applyUrl || item.download_url || item.pdf_url,
-              applyUrl: item.apply_url || item.applyUrl || item.download_url || item.pdf_url,
-              link: item.apply_url || item.applyUrl || item.download_url || item.pdf_url,
-              fees: item.fees || item.fee || "निःशुल्क (₹0)",
-              processing_time: item.processing_time || item.delivery_time || "10-14 कार्य दिवस"
-            };
-          });
+              return {
+                ...item,
+                id: item.id || item.slug,
+                slug: item.slug || generateSlug(item),
+                title: item.title,
+                department: item.department || "BIHAR GOVT",
+                category: cat,
+                total_posts: item.total_posts || item.totalPosts || "अधिसूचना देखें",
+                totalPosts: item.total_posts || item.totalPosts || "अधिसूचना देखें",
+                last_date: item.last_date || item.lastDate || "सक्रिय सूचना",
+                lastDate: item.last_date || item.lastDate || "सक्रिय सूचना",
+                eligibility: item.eligibility || "विज्ञापन देखें",
+                qualification_details: item.qualification_details,
+                pdf_url: item.pdf_url || item.pdfUrl,
+                pdfUrl: item.pdf_url || item.pdfUrl,
+                apply_url: item.apply_url || item.applyUrl || item.download_url || item.pdf_url,
+                applyUrl: item.apply_url || item.applyUrl || item.download_url || item.pdf_url,
+                link: item.apply_url || item.applyUrl || item.download_url || item.pdf_url,
+                fees: item.fees || item.fee || "निःशुल्क (₹0)"
+              };
+            });
 
-          const existingSlugs = new Set(normalized.map((n) => n.slug));
-          const uniquePermServices = (PERMANENT_SERVICES || []).filter((p) => !existingSlugs.has(p.slug));
-
-          setPortalItems([...normalized, ...uniquePermServices]);
+          setPortalItems(normalized);
         } else {
-          setPortalItems(PERMANENT_SERVICES || []);
+          setPortalItems([]);
         }
       } catch (err) {
         console.warn("Backend fallback active:", err.message);
-        setPortalItems(PERMANENT_SERVICES || []);
+        setPortalItems([]);
       } finally {
         setLoading(false);
       }
@@ -151,10 +147,6 @@ export default function App() {
       matchesTab = cat === "results" || cat === "result";
     } else if (activeTab === "admit_card") {
       matchesTab = cat === "admit_card" || cat === "admit";
-    } else if (activeTab === "services") {
-      matchesTab = cat === "services" || cat === "service" || cat === "rtps";
-    } else if (activeTab === "schemes") {
-      matchesTab = cat === "schemes" || cat === "scheme";
     } else {
       matchesTab = cat === activeTab;
     }
@@ -224,7 +216,7 @@ export default function App() {
                               Opportunities, <span className="text-[#C2410C]">Now Faster.</span>
                             </h1>
                             <p className="text-xs sm:text-sm text-slate-700 font-bold pt-1">
-                              Latest Jobs | Welfare Schemes | Useful Tools | All in One Place
+                              Latest Jobs | Direct Fast Portals | Useful Tools | All in One Place
                             </p>
                             <p className="text-[11px] text-slate-600 font-semibold">
                               Trusted • Simple • Fast • For a Brighter Bihar
@@ -236,7 +228,7 @@ export default function App() {
                               <Search className="text-slate-600 ml-3 shrink-0" size={19} />
                               <input
                                 type="text"
-                                placeholder="Search jobs, schemes, results, notifications..."
+                                placeholder="Search jobs, results, admit cards..."
                                 value={searchQuery}
                                 onChange={(e) => setSearchQuery(e.target.value)}
                                 className="w-full py-2 px-3 text-xs sm:text-sm text-slate-900 placeholder:text-slate-500 font-semibold focus:outline-none"
@@ -275,16 +267,16 @@ export default function App() {
                               <span className="text-[10px] sm:text-[11px] font-bold text-slate-900 mt-1 leading-tight">Government<br />Jobs</span>
                             </button>
 
-                            <button
-                              type="button"
-                              onClick={() => { setActiveTab("schemes"); setSearchQuery(""); }}
+                            {/* Direct to Dedicated RTPS Hub */}
+                            <Link
+                              to="/rtps-bihar"
                               className="flex flex-col items-center justify-center p-1.5 rounded-xl hover:bg-emerald-50/80 transition group cursor-pointer text-center"
                             >
                               <div className="w-10 h-10 sm:w-11 sm:h-11 rounded-full bg-[#10B981] text-white flex items-center justify-center shadow-xs group-hover:scale-105 transition">
-                                <Users size={18} />
+                                <ShieldCheck size={18} />
                               </div>
-                              <span className="text-[10px] sm:text-[11px] font-bold text-slate-900 mt-1 leading-tight">Welfare<br />Schemes</span>
-                            </button>
+                              <span className="text-[10px] sm:text-[11px] font-bold text-slate-900 mt-1 leading-tight">RTPS<br />Services</span>
+                            </Link>
 
                             <Link
                               to="/upcoming-2026"
@@ -293,7 +285,7 @@ export default function App() {
                               <div className="w-10 h-10 sm:w-11 sm:h-11 rounded-full bg-[#D97706] text-white flex items-center justify-center shadow-xs group-hover:scale-105 transition">
                                 <GraduationCap size={18} />
                               </div>
-                              <span className="text-[10px] sm:text-[11px] font-bold text-slate-900 mt-1 leading-tight">Scholarships<br />& Upcoming</span>
+                              <span className="text-[10px] sm:text-[11px] font-bold text-slate-900 mt-1 leading-tight">Upcoming<br />& Portals</span>
                             </Link>
 
                             <button
@@ -403,10 +395,6 @@ export default function App() {
                               <span>Fast & Lightweight <span className="font-medium opacity-90 block text-[9.5px]">Works on 2G/3G too</span></span>
                             </span>
                             <span className="flex items-center gap-2">
-                              <Users size={16} className="text-emerald-200" />
-                              <span>Bilingual <span className="font-medium opacity-90 block text-[9.5px]">English | हिंदी</span></span>
-                            </span>
-                            <span className="flex items-center gap-2">
                               <Sparkles size={16} className="text-rose-200" />
                               <span>Empowering Bihar <span className="font-medium opacity-90 block text-[9.5px]">Real-Time Vacancy Alerts</span></span>
                             </span>
@@ -513,6 +501,7 @@ export default function App() {
                         {activeTool === "resizer" && <ImageResizer onClose={() => setActiveTool(null)} />}
                         {activeTool === "calculator" && <AgeCalculator onClose={() => setActiveTool(null)} />}
 
+                        {/* Category Filter Tabs */}
                         <div className="flex items-center gap-2 overflow-x-auto pb-2 scrollbar-none">
                           {CATEGORY_TABS.map((tab) => {
                             const Icon = tab.icon;
@@ -651,7 +640,7 @@ export default function App() {
                           </div>
                         </div>
 
-                        {/* Official Commission Links Only */}
+                        {/* Official Commission Links */}
                         <div className="bg-white rounded-2xl p-5 border border-slate-200 shadow-sm">
                           <div className="flex items-center justify-between border-b border-slate-100 pb-3 mb-3">
                             <div className="flex items-center gap-1.5">
