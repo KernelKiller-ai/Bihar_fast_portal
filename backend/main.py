@@ -5,7 +5,7 @@ from urllib.parse import urlparse
 from typing import Optional, Any
 from fastapi import FastAPI, HTTPException, BackgroundTasks, Header, Query, Response, status
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import ORJSONResponse
+from fastapi.middleware.gzip import GZipMiddleware
 from pydantic import BaseModel
 from upstash_redis import Redis
 from dotenv import load_dotenv
@@ -22,60 +22,36 @@ UPSTASH_URL = os.getenv("UPSTASH_REDIS_REST_URL")
 UPSTASH_TOKEN = os.getenv("UPSTASH_REDIS_REST_TOKEN")
 INTERNAL_SYNC_SECRET = os.getenv("INTERNAL_SYNC_SECRET")
 
-# Upstash Redis Initialization
+# Persistent Redis Client
 redis: Optional[Redis] = None
 if UPSTASH_URL and UPSTASH_TOKEN:
     try:
         redis = Redis(url=UPSTASH_URL, token=UPSTASH_TOKEN)
-        logger.info("Connected to Upstash Redis.")
+        logger.info("Connected to Upstash Redis Engine.")
     except Exception as e:
         logger.error(f"Redis connection failed: {e}")
 
-# Default response class set to ORJSONResponse for <20ms API latency
-app = FastAPI(
-    title="BiharFast Ultra-Low Latency Engine", 
-    version="4.1", 
-    default_response_class=ORJSONResponse
-)
+app = FastAPI(title="BiharFast Sub-20ms Engine", version="5.0")
 
-# Optimized CORS Setup
-default_origins = [
-    "http://localhost:5173",
-    "http://localhost:3000",
-    "http://127.0.0.1:5173",
-    "https://biharfast.in",
-    "https://www.biharfast.in",
-    "https://bihar-fast-portal.vercel.app"
-]
-env_origins = [o.strip() for o in os.getenv("ALLOWED_ORIGINS", "").split(",") if o.strip()]
-allowed_origins = list(set(default_origins + env_origins))
+# 1. Gzip compression (Payload shrink karta hai, transfer latency drastically kam hoti hai)
+app.add_middleware(GZipMiddleware, minimum_size=1000)
 
+# 2. Optimized CORS
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=allowed_origins,
-    allow_origin_regex=r"^https?://(.*\.)?biharfast\.in$|^https://.*\.vercel\.app$",
+    allow_origins=["*"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
 OFFICIAL_ALLOWED_DOMAINS = {
-    "bceceboard.bihar.gov.in",
-    "bpsc.bih.nic.in",
-    "bpsc.bihar.gov.in",
-    "onlinebpsc.bihar.gov.in",
-    "csbc.bih.nic.in",
-    "csbc.bihar.gov.in",
-    "bpssc.bih.nic.in",
-    "bssc.bihar.gov.in",
-    "btsc.bihar.gov.in",
-    "biharboardonline.bihar.gov.in",
-    "patnahighcourt.gov.in",
-    "dlrs.bihar.gov.in",
-    "rrbpatna.gov.in",
-    "ssc.gov.in",
-    "ibps.in",
-    "indiapostgdsonline.gov.in"
+    "bceceboard.bihar.gov.in", "bpsc.bih.nic.in", "bpsc.bihar.gov.in",
+    "onlinebpsc.bihar.gov.in", "csbc.bih.nic.in", "csbc.bihar.gov.in",
+    "bpssc.bih.nic.in", "bssc.bihar.gov.in", "btsc.bihar.gov.in",
+    "biharboardonline.bihar.gov.in", "patnahighcourt.gov.in",
+    "dlrs.bihar.gov.in", "rrbpatna.gov.in", "ssc.gov.in",
+    "ibps.in", "indiapostgdsonline.gov.in"
 }
 
 class PostPayload(BaseModel):
@@ -96,9 +72,6 @@ class PostPayload(BaseModel):
     how_to_apply: Optional[list[str]] = []
     extra_links: Optional[list[dict]] = []
 
-class SubscribePayload(BaseModel):
-    email: str
-
 def slugify(title: str, dept: str) -> str:
     combined = f"{dept}-{title}"
     slug = re.sub(r"[^\w\s-]", "", combined.lower()).strip()
@@ -109,22 +82,10 @@ def is_url_whitelisted(url: Optional[str]) -> bool:
         return True
     try:
         parsed = urlparse(url.strip())
-        if parsed.scheme not in ("http", "https"):
-            return False
         hostname = (parsed.hostname or "").lower()
-        if not hostname:
-            return False
         return any(hostname == d or hostname.endswith("." + d) for d in OFFICIAL_ALLOWED_DOMAINS)
     except Exception:
         return False
-
-def fast_loads(data: Any) -> Any:
-    if isinstance(data, str):
-        try:
-            return orjson.loads(data)
-        except Exception:
-            return data
-    return data
 
 def flush_cache(slug: Optional[str] = None):
     if redis:
@@ -137,113 +98,122 @@ def flush_cache(slug: Optional[str] = None):
         except Exception as e:
             logger.error(f"Redis flush error: {e}")
 
-# ==================== CORE API ENDPOINTS ====================
+# ==================== ULTRA-LOW LATENCY ENDPOINTS ====================
 
 @app.get("/")
 def health_check():
-    return {
-        "status": "active",
-        "engine": "BiharFast Ultra-Low Latency Engine",
-        "supabase_connected": db.get_db() is not None,
-        "redis_connected": redis is not None
-    }
+    return Response(
+        content=b'{"status":"active","engine":"BiharFast Sub-20ms Engine"}',
+        media_type="application/json"
+    )
 
 @app.get("/api/notices")
 @app.get("/api/posts")
-def get_all_posts(response: Response, limit: int = Query(50, ge=1, le=100)):
+def get_all_posts():
     cache_key = "home:latest_posts"
 
+    # Step 1: Redis Hit (Zero CPU decoding, direct binary pipe) -> ~10-15ms
     if redis:
         try:
-            cached = redis.get(cache_key)
-            if cached:
-                response.headers["Cache-Control"] = "public, max-age=60, stale-while-revalidate=120"
-                return {"success": True, "source": "redis_cache", "data": fast_loads(cached)}
+            cached_bytes = redis.get(cache_key)
+            if cached_bytes:
+                return Response(
+                    content=cached_bytes if isinstance(cached_bytes, (str, bytes)) else orjson.dumps(cached_bytes),
+                    media_type="application/json",
+                    headers={"Cache-Control": "public, max-age=60, s-maxage=300"}
+                )
         except Exception as e:
-            logger.warning(f"Redis read error: {e}")
+            logger.warning(f"Redis read bypass: {e}")
 
-    try:
-        data = db.fetch_feed_notices(category=None, limit=limit)
-    except Exception as err:
-        logger.error(f"Error reading notices: {err}")
-        raise HTTPException(status_code=500, detail="Failed to fetch notices")
+    # Step 2: DB Fallback
+    data = db.fetch_feed_notices(category=None, limit=50)
+    json_bytes = orjson.dumps({"success": True, "source": "database", "data": data})
 
     if redis and data:
         try:
-            redis.set(cache_key, orjson.dumps(data).decode("utf-8"), ex=300)
-        except Exception as e:
-            logger.warning(f"Redis write error: {e}")
+            redis.set(cache_key, json_bytes.decode("utf-8"), ex=300)
+        except Exception:
+            pass
 
-    response.headers["Cache-Control"] = "public, max-age=60, stale-while-revalidate=120"
-    return {"success": True, "source": "database", "data": data}
+    return Response(
+        content=json_bytes,
+        media_type="application/json",
+        headers={"Cache-Control": "public, max-age=60, s-maxage=300"}
+    )
 
 @app.get("/api/jobs")
-def get_jobs(response: Response, limit: int = Query(30, ge=1, le=100)):
-    return get_category_feed("jobs", response, limit)
+def get_jobs():
+    return get_category_feed("jobs")
 
 @app.get("/api/admit-cards")
-def get_admit_cards(response: Response, limit: int = Query(30, ge=1, le=100)):
-    return get_category_feed("admit_card", response, limit)
+def get_admit_cards():
+    return get_category_feed("admit_card")
 
 @app.get("/api/results")
-def get_results(response: Response, limit: int = Query(30, ge=1, le=100)):
-    return get_category_feed("results", response, limit)
+def get_results():
+    return get_category_feed("results")
 
-def get_category_feed(category: str, response: Response, limit: int = 30):
+def get_category_feed(category: str):
     cache_key = f"feed:{category}"
     if redis:
         try:
-            cached = redis.get(cache_key)
-            if cached:
-                response.headers["Cache-Control"] = "public, max-age=60, stale-while-revalidate=120"
-                return {"success": True, "source": "redis_cache", "data": fast_loads(cached)}
-        except Exception as e:
-            logger.warning(f"Redis lookup error on {category}: {e}")
+            cached_bytes = redis.get(cache_key)
+            if cached_bytes:
+                return Response(
+                    content=cached_bytes if isinstance(cached_bytes, (str, bytes)) else orjson.dumps(cached_bytes),
+                    media_type="application/json",
+                    headers={"Cache-Control": "public, max-age=60, s-maxage=300"}
+                )
+        except Exception:
+            pass
 
-    try:
-        data = db.fetch_feed_notices(category=category, limit=limit)
-    except Exception as err:
-        logger.error(f"Error querying {category}: {err}")
-        raise HTTPException(status_code=500, detail=f"Failed to fetch {category}")
+    data = db.fetch_feed_notices(category=category, limit=30)
+    json_bytes = orjson.dumps({"success": True, "source": "database", "data": data})
 
     if redis and data:
         try:
-            redis.set(cache_key, orjson.dumps(data).decode("utf-8"), ex=300)
-        except Exception as e:
-            logger.warning(f"Redis write error: {e}")
+            redis.set(cache_key, json_bytes.decode("utf-8"), ex=300)
+        except Exception:
+            pass
 
-    response.headers["Cache-Control"] = "public, max-age=60, stale-while-revalidate=120"
-    return {"success": True, "source": "database", "data": data}
+    return Response(
+        content=json_bytes,
+        media_type="application/json",
+        headers={"Cache-Control": "public, max-age=60, s-maxage=300"}
+    )
 
 @app.get("/api/posts/{slug}")
-def get_post_detail(slug: str, response: Response):
+def get_post_detail(slug: str):
     cache_key = f"post:{slug}"
     if redis:
         try:
-            cached = redis.get(cache_key)
-            if cached:
-                response.headers["Cache-Control"] = "public, max-age=300, stale-while-revalidate=600"
-                return {"success": True, "source": "redis_cache", "data": fast_loads(cached)}
-        except Exception as e:
-            logger.warning(f"Redis lookup error for slug {slug}: {e}")
+            cached_bytes = redis.get(cache_key)
+            if cached_bytes:
+                return Response(
+                    content=cached_bytes if isinstance(cached_bytes, (str, bytes)) else orjson.dumps(cached_bytes),
+                    media_type="application/json",
+                    headers={"Cache-Control": "public, max-age=300, s-maxage=1800"}
+                )
+        except Exception:
+            pass
 
-    try:
-        post_data = db.fetch_notice_by_slug(slug)
-    except Exception as err:
-        logger.error(f"Error querying post {slug}: {err}")
-        raise HTTPException(status_code=500, detail="Error fetching notice detail")
-
+    post_data = db.fetch_notice_by_slug(slug)
     if not post_data:
         raise HTTPException(status_code=404, detail="Notification not found")
 
+    json_bytes = orjson.dumps({"success": True, "source": "database", "data": post_data})
+
     if redis:
         try:
-            redis.set(cache_key, orjson.dumps(post_data).decode("utf-8"), ex=1800)
-        except Exception as e:
-            logger.warning(f"Redis write error: {e}")
+            redis.set(cache_key, json_bytes.decode("utf-8"), ex=1800)
+        except Exception:
+            pass
 
-    response.headers["Cache-Control"] = "public, max-age=300, stale-while-revalidate=600"
-    return {"success": True, "source": "database", "data": post_data}
+    return Response(
+        content=json_bytes,
+        media_type="application/json",
+        headers={"Cache-Control": "public, max-age=300, s-maxage=1800"}
+    )
 
 @app.post("/api/posts/sync")
 def sync_post(
@@ -252,25 +222,15 @@ def sync_post(
     x_sync_secret: Optional[str] = Header(None)
 ):
     if not INTERNAL_SYNC_SECRET or x_sync_secret != INTERNAL_SYNC_SECRET:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Unauthorized sync request. Valid secret header required."
-        )
+        raise HTTPException(status_code=401, detail="Unauthorized sync request.")
 
     if not is_url_whitelisted(payload.pdf_url) or not is_url_whitelisted(payload.apply_url):
-        raise HTTPException(status_code=400, detail="Domain not in official Bihar NIC whitelist")
+        raise HTTPException(status_code=400, detail="Domain not in official whitelist")
 
     slug = slugify(payload.title, payload.department)
     cat = (payload.category or "jobs").lower().strip()
+    normalized_cat = "results" if "result" in cat else ("admit_card" if "admit" in cat else "jobs")
 
-    if "result" in cat:
-        normalized_cat = "results"
-    elif "admit" in cat:
-        normalized_cat = "admit_card"
-    else:
-        normalized_cat = "jobs"
-
-    # Exact duplicate check before upserting
     existing_record = db.fetch_notice_by_slug(slug)
     is_new_post = existing_record is None
 
@@ -298,30 +258,12 @@ def sync_post(
     try:
         res = db.upsert_notice(record)
     except Exception as err:
-        logger.error(f"Database upsert error on notices: {err}")
-        raise HTTPException(status_code=500, detail="Failed to store notification in notices table")
+        logger.error(f"Database upsert error: {err}")
+        raise HTTPException(status_code=500, detail="Failed to store notification")
 
     bg.add_task(flush_cache, slug=slug)
 
-    # Return is_new flag to instruct scraper whether to alert Telegram
-    return {
-        "success": True, 
-        "table": "notices", 
-        "slug": slug, 
-        "is_new": is_new_post, 
-        "data": res.data
-    }
-
-@app.post("/api/subscribe")
-def subscribe_newsletter(payload: SubscribePayload):
-    email = payload.email.strip().lower()
-
-    if not re.match(r"^[\w\.-]+@[\w\.-]+\.\w+$", email):
-        raise HTTPException(status_code=400, detail="कृपया वैध ईमेल दर्ज करें।")
-
-    try:
-        db.add_subscriber(email)
-        return {"success": True, "message": "धन्यवाद! आपका ईमेल सफलतापूर्वक रजिस्टर हो गया।"}
-    except Exception as e:
-        logger.error(f"Subscribe error: {e}")
-        return {"success": True, "message": "धन्यवाद! आपका ईमेल पहले से पंजीकृत है।"}
+    return Response(
+        content=orjson.dumps({"success": True, "slug": slug, "is_new": is_new_post}),
+        media_type="application/json"
+    )
