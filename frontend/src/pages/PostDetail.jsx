@@ -13,11 +13,23 @@ import {
   Camera, 
   Calculator, 
   ShieldCheck, 
-  FileText 
+  FileText,
+  ExternalLink
 } from "lucide-react";
 import { generateSlug } from "../utils/slug";
 
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "http://localhost:5000";
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "https://bihar-fast-portal.onrender.com";
+
+// Dedicated Hub Mapping for Instant High-Speed Redirection
+const DEDICATED_HUBS = [
+  { match: ["rtps", "caste", "income", "residential", "niwas", "aay", "jati"], link: "/rtps-bihar", title: "RTPS Bihar Direct Portal" },
+  { match: ["udyami", "mukhyamantri udyami"], link: "/udyami-yojana", title: "मुख्यमंत्री उद्यमी योजना Hub" },
+  { match: ["matric", "10th result", "bseb 10th"], link: "/bseb-matric-10th", title: "BSEB 10th Matric Hub" },
+  { match: ["inter", "12th result", "bseb 12th"], link: "/bseb-inter-12th", title: "BSEB 12th Inter Hub" },
+  { match: ["kyp", "kushal yuva"], link: "/kyp-bihar", title: "कुशल युवा कार्यक्रम (KYP) Hub" },
+  { match: ["student credit card", "bscc", "mnssby"], link: "/student-credit-card", title: "स्टूडेंट क्रेडिट कार्ड Hub" },
+  { match: ["cuet", "cuet ug"], link: "/cuet-ug-admission", title: "CUET UG Admission Portal" },
+];
 
 export default function PostDetail({ notices = [] }) {
   const { slug } = useParams();
@@ -73,6 +85,37 @@ export default function PostDetail({ notices = [] }) {
 
   const post = localPost || fetchedPost;
 
+  // Dynamic SEO Injection
+  useEffect(() => {
+    if (!post) return;
+
+    document.title = `${post.title} | BiharFast Official`;
+
+    const setMeta = (attr, val, content) => {
+      let tag = document.querySelector(`meta[${attr}="${val}"]`);
+      if (!tag) {
+        tag = document.createElement("meta");
+        tag.setAttribute(attr, val);
+        document.head.appendChild(tag);
+      }
+      tag.setAttribute("content", content);
+    };
+
+    const desc = `${post.department || "Bihar Govt"}: ${post.title}. Eligibility: ${post.eligibility || "See Details"}. Last Date: ${post.lastDate || "Active"}. Direct Apply Online & Official Notification PDF.`;
+    setMeta("name", "description", desc);
+    setMeta("property", "og:title", `${post.title} - BiharFast`);
+    setMeta("property", "og:description", desc);
+    setMeta("property", "og:type", "article");
+
+    let canonical = document.querySelector('link[rel="canonical"]');
+    if (!canonical) {
+      canonical = document.createElement("link");
+      canonical.setAttribute("rel", "canonical");
+      document.head.appendChild(canonical);
+    }
+    canonical.setAttribute("href", `https://biharfast.in/post/${post.slug || slug}`);
+  }, [post, slug]);
+
   if (loading) {
     return (
       <div className="min-h-[60vh] flex flex-col items-center justify-center gap-3">
@@ -95,8 +138,15 @@ export default function PostDetail({ notices = [] }) {
   }
 
   const category = (post.category || post.type || "").toLowerCase().trim();
+  const slugLower = (post.slug || slug || "").toLowerCase();
+  const titleLower = (post.title || "").toLowerCase();
 
-  // Related Updates logic (same category or same department, excluding current post)
+  // Check if this post relates to a dedicated high-traffic hub
+  const matchedHub = DEDICATED_HUBS.find((h) =>
+    h.match.some((keyword) => slugLower.includes(keyword) || titleLower.includes(keyword))
+  );
+
+  // Related Updates logic
   const relatedNotices = notices
     .filter((n) => {
       const nSlug = n.slug || generateSlug(n);
@@ -107,7 +157,6 @@ export default function PostDetail({ notices = [] }) {
     })
     .slice(0, 4);
 
-  // Fallback related items if no direct category match
   const displayRelated = relatedNotices.length > 0 
     ? relatedNotices 
     : notices.filter((n) => (n.slug || generateSlug(n)) !== slug).slice(0, 4);
@@ -152,6 +201,25 @@ export default function PostDetail({ notices = [] }) {
         </span>
       </nav>
 
+      {/* Dedicated Hub Alert Banner (if applicable) */}
+      {matchedHub && (
+        <div className="mb-4 p-3.5 rounded-xl bg-linear-to-r from-blue-600 to-indigo-700 text-white flex flex-col sm:flex-row items-center justify-between gap-3 shadow-md">
+          <div className="flex items-center gap-2.5 text-xs sm:text-sm">
+            <Sparkles size={18} className="text-amber-300 shrink-0 animate-pulse" />
+            <span>
+              इस सेवा के लिए <strong>डायरेक्ट सुपर-फास्ट पोर्टल</strong> उपलब्ध है: बिना किसी देरी के सीधे लिंक का उपयोग करें।
+            </span>
+          </div>
+          <Link
+            to={matchedHub.link}
+            className="bg-white text-blue-900 hover:bg-amber-100 px-3.5 py-1.5 rounded-lg font-black text-xs transition flex items-center gap-1.5 shrink-0 shadow-xs"
+          >
+            <span>{matchedHub.title}</span>
+            <ExternalLink size={13} />
+          </Link>
+        </div>
+      )}
+
       {/* 2. Main Post Content Template */}
       {renderActiveLayout()}
 
@@ -172,7 +240,7 @@ export default function PostDetail({ notices = [] }) {
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs">
           <Link
             to="/#cyber-tools-section"
-            className="p-3.5 bg-white hover:bg-amber-50/50 border border-slate-200 hover:border-amber-400 rounded-xl transition flex items-center gap-3 group shadow-2xs"
+            className="p-3.5 bg-white hover:bg-amber-50/50 border border-slate-200 hover:border-amber-400 rounded-xl transition flex items-center gap-3 group shadow-xs"
           >
             <div className="p-2.5 rounded-lg bg-blue-700 text-white shrink-0 group-hover:scale-105 transition">
               <Camera size={18} />
@@ -185,7 +253,7 @@ export default function PostDetail({ notices = [] }) {
 
           <Link
             to="/#cyber-tools-section"
-            className="p-3.5 bg-white hover:bg-emerald-50/50 border border-slate-200 hover:border-emerald-400 rounded-xl transition flex items-center gap-3 group shadow-2xs"
+            className="p-3.5 bg-white hover:bg-emerald-50/50 border border-slate-200 hover:border-emerald-400 rounded-xl transition flex items-center gap-3 group shadow-xs"
           >
             <div className="p-2.5 rounded-lg bg-emerald-700 text-white shrink-0 group-hover:scale-105 transition">
               <Calculator size={18} />
@@ -198,7 +266,7 @@ export default function PostDetail({ notices = [] }) {
 
           <Link
             to="/rtps-bihar"
-            className="p-3.5 bg-white hover:bg-indigo-50/50 border border-slate-200 hover:border-indigo-400 rounded-xl transition flex items-center gap-3 group shadow-2xs"
+            className="p-3.5 bg-white hover:bg-indigo-50/50 border border-slate-200 hover:border-indigo-400 rounded-xl transition flex items-center gap-3 group shadow-xs"
           >
             <div className="p-2.5 rounded-lg bg-indigo-700 text-white shrink-0 group-hover:scale-105 transition">
               <ShieldCheck size={18} />
