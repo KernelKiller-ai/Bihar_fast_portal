@@ -1,15 +1,18 @@
 import os
 import re
+import json
 import logging
-from datetime import date
+from datetime import date, datetime, timezone
 from urllib.parse import urlparse
-from typing import Optional, Any
+from typing import Optional, Any, List, Dict
 from fastapi import FastAPI, HTTPException, BackgroundTasks, Header, Query, Response, status
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.middleware.gzip import GZipMiddleware
 from pydantic import BaseModel
 from upstash_redis import Redis
 from dotenv import load_dotenv
+from google import genai
+from google.genai import types
 import orjson
 
 import database as db
@@ -22,6 +25,7 @@ load_dotenv(override=False)
 UPSTASH_URL = os.getenv("UPSTASH_REDIS_REST_URL")
 UPSTASH_TOKEN = os.getenv("UPSTASH_REDIS_REST_TOKEN")
 INTERNAL_SYNC_SECRET = os.getenv("INTERNAL_SYNC_SECRET")
+GEMINI_API_KEY = os.getenv("GEMINI_API_KEY", "").strip('"\'')
 
 # Persistent Redis Client
 redis: Optional[Redis] = None
@@ -32,12 +36,19 @@ if UPSTASH_URL and UPSTASH_TOKEN:
     except Exception as e:
         logger.error(f"Redis connection failed: {e}")
 
-app = FastAPI(title="BiharFast Sub-20ms Engine", version="5.0")
+# Gemini Client for Human-Triggered Generation
+ai_client: Optional[genai.Client] = None
+if GEMINI_API_KEY:
+    try:
+        ai_client = genai.Client(api_key=GEMINI_API_KEY)
+        logger.info("Gemini AI Client initialized.")
+    except Exception as e:
+        logger.warning(f"Gemini client initialization failed: {e}")
 
-# 1. Gzip compression (Payload shrink karta hai, transfer latency drastically kam hoti hai)
+app = FastAPI(title="BiharFast All-India Sub-20ms Engine", version="6.0")
+
 app.add_middleware(GZipMiddleware, minimum_size=1000)
 
-# 2. Optimized CORS
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -47,13 +58,30 @@ app.add_middleware(
 )
 
 OFFICIAL_ALLOWED_DOMAINS = {
+    # --- Bihar State Boards ---
     "bceceboard.bihar.gov.in", "bpsc.bih.nic.in", "bpsc.bihar.gov.in",
     "onlinebpsc.bihar.gov.in", "csbc.bih.nic.in", "csbc.bihar.gov.in",
     "bpssc.bih.nic.in", "bssc.bihar.gov.in", "btsc.bihar.gov.in",
     "biharboardonline.bihar.gov.in", "patnahighcourt.gov.in",
-    "dlrs.bihar.gov.in", "rrbpatna.gov.in", "ssc.gov.in",
-    "ibps.in", "indiapostgdsonline.gov.in"
+    "dlrs.bihar.gov.in", "rrbpatna.gov.in",
+
+    # --- Central Govt & All-India Commissions ---
+    "ssc.gov.in", "upsc.gov.in", "upsconline.nic.in",
+    "ibps.in", "sbi.co.in", "rbi.org.in",
+    "indianrailways.gov.in", "rrbapply.gov.in",
+    "indiapostgdsonline.gov.in", "nta.ac.in",
+
+    # --- Defence & Paramilitary ---
+    "joinindianarmy.nic.in", "joinindiannavy.gov.in", "agnipathvayu.cdac.in",
+    "crpf.gov.in", "bsf.gov.in", "cisf.gov.in", "itbpolice.nic.in", "ssb.gov.in"
 }
+
+class InboxSyncPayload(BaseModel):
+    title: str
+    department: str
+    category: Optional[str] = "jobs"
+    pdf_url: Optional[str] = None
+    apply_url: Optional[str] = None
 
 class PostPayload(BaseModel):
     title: str
@@ -72,6 +100,29 @@ class PostPayload(BaseModel):
     selection_process: Optional[list[str]] = []
     how_to_apply: Optional[list[str]] = []
     extra_links: Optional[list[dict]] = []
+
+class PostUpdateRequest(BaseModel):
+    title: Optional[str] = None
+    category: Optional[str] = None
+    department: Optional[str] = None
+    total_posts: Optional[str] = None
+    last_date: Optional[str] = None
+    eligibility: Optional[str] = None
+    fees: Optional[str] = None
+    apply_url: Optional[str] = None
+    pdf_url: Optional[str] = None
+    short_desc: Optional[str] = None
+    important_dates: Optional[Dict[str, Any]] = None
+    application_fees: Optional[Dict[str, Any]] = None
+    age_limit: Optional[Dict[str, Any]] = None
+    selection_process: Optional[List[str]] = None
+    how_to_apply: Optional[List[str]] = None
+    extra_links: Optional[List[Dict[str, Any]]] = None
+    status: Optional[str] = None
+    admin_notes: Optional[str] = None
+
+class StatusUpdateRequest(BaseModel):
+    status: str
 
 def slugify(title: str, dept: str) -> str:
     combined = f"{dept}-{title}"
@@ -105,12 +156,12 @@ def flush_cache(slug: Optional[str] = None):
         except Exception as e:
             logger.error(f"Redis flush error: {e}")
 
-# ==================== ULTRA-LOW LATENCY ENDPOINTS ====================
+# ==================== ULTRA-LOW LATENCY PUBLIC FEEDS ====================
 
 @app.get("/")
 def health_check():
     return Response(
-        content=b'{"status":"active","engine":"BiharFast Sub-20ms Engine"}',
+        content=b'{"status":"active","engine":"BiharFast All-India Sub-20ms Engine"}',
         media_type="application/json"
     )
 
@@ -118,8 +169,6 @@ def health_check():
 @app.get("/api/posts")
 def get_all_posts():
     cache_key = "home:latest_posts"
-
-    # Step 1: Redis Hit (Zero CPU decoding, direct binary pipe) -> ~10-15ms
     if redis:
         try:
             cached_bytes = redis.get(cache_key)
@@ -132,7 +181,6 @@ def get_all_posts():
         except Exception as e:
             logger.warning(f"Redis read bypass: {e}")
 
-    # Step 2: DB Fallback
     data = db.fetch_feed_notices(category=None, limit=50)
     json_bytes = orjson.dumps({"success": True, "source": "database", "data": data})
 
@@ -222,12 +270,232 @@ def get_post_detail(slug: str):
         headers={"Cache-Control": "public, max-age=300, s-maxage=1800"}
     )
 
-# ==================== DYNAMIC SEO SITEMAP FOR POSTS ====================
+# ==================== SCRAPED INBOX RECEIVER (ZERO LLM COST) ====================
+
+@app.post("/api/inbox/sync")
+def sync_raw_to_inbox(
+    payload: InboxSyncPayload, 
+    x_sync_secret: Optional[str] = Header(None)
+):
+    """Cron scraper sends raw notices here. Stored in inbox without calling LLM."""
+    if not INTERNAL_SYNC_SECRET or x_sync_secret != INTERNAL_SYNC_SECRET:
+        raise HTTPException(status_code=401, detail="Unauthorized inbox sync.")
+
+    if not is_url_whitelisted(payload.pdf_url) or not is_url_whitelisted(payload.apply_url):
+        raise HTTPException(status_code=400, detail="Domain not in official whitelist")
+
+    res = db.insert_inbox_notice(payload.model_dump())
+    if not res:
+        return Response(content=b'{"success":true,"status":"duplicate_skipped"}', media_type="application/json")
+
+    return Response(
+        content=orjson.dumps({"success": True, "data": res}),
+        media_type="application/json"
+    )
+
+# ==================== ADMIN & HUMAN-CONTROLLED LLM PIPELINE ====================
+
+@app.get("/api/admin/quota-stats")
+def get_quota_stats():
+    """Returns today's LLM consumption (max 10/day)."""
+    return db.get_today_llm_usage()
+
+@app.get("/api/admin/inbox")
+def get_scraped_inbox(status: str = Query("unprocessed")):
+    """Fetches raw notices waiting for Admin review."""
+    items = db.fetch_inbox_notices(status=status, limit=100)
+    return Response(
+        content=orjson.dumps({"success": True, "count": len(items), "data": items}),
+        media_type="application/json"
+    )
+
+@app.post("/api/admin/inbox/{inbox_id}/reject")
+def reject_inbox_item(inbox_id: str):
+    """Admin ignores/rejects an unimportant notice with zero LLM consumption."""
+    updated = db.update_inbox_status(inbox_id, "rejected")
+    if not updated:
+        raise HTTPException(status_code=404, detail="Inbox item not found")
+    return {"success": True, "message": "Notice rejected and archived."}
+
+@app.post("/api/admin/inbox/{inbox_id}/enrich-and-publish")
+def enrich_and_publish_with_llm(inbox_id: str, bg: BackgroundTasks):
+    """
+    Human-in-the-loop: Admin clicks 'Enrich & Publish'.
+    Checks 10/day quota -> calls Gemini -> saves to live notices -> marks inbox enriched.
+    """
+    inbox_item = db.fetch_inbox_item_by_id(inbox_id)
+    if not inbox_item:
+        raise HTTPException(status_code=404, detail="Inbox item not found")
+
+    if inbox_item.get("status") == "enriched":
+        raise HTTPException(status_code=400, detail="Notice has already been processed with AI.")
+
+    # 1. Enforce strict 10/day quota
+    allowed = db.check_and_increment_daily_llm_quota(max_limit=10)
+    if not allowed:
+        raise HTTPException(
+            status_code=429, 
+            detail="Daily quota exhausted! Maximum 10 AI-enriched posts allowed per day."
+        )
+
+    # 2. Call Gemini 2.5 Flash
+    title = inbox_item.get("title", "")
+    dept = inbox_item.get("department", "Govt of India")
+    cat = inbox_item.get("category", "jobs")
+    pdf_url = inbox_item.get("pdf_url")
+    apply_url = inbox_item.get("apply_url") or "https://www.biharfast.in"
+
+    ai_data = {}
+    if ai_client:
+        prompt = f"""
+Analyze this government notification update and generate a strictly structured JSON response for BiharFast job portal.
+Return ONLY clean, valid JSON without any markdown ticks or explanations.
+
+Input Details:
+- Title: {title}
+- Department: {dept}
+- Category: {cat}
+- PDF Link: {pdf_url}
+- Apply Link: {apply_url}
+
+Generate a JSON object matching this schema:
+{{
+  "title": "Clean concise professional title in Hindi/English mix",
+  "short_desc": "2-3 line summary explaining what this notification is about for aspirants.",
+  "total_posts": "e.g. 1,250 पद or अधिसूचना देखें",
+  "last_date": "e.g. 30 अक्टूबर 2026 or अधिसूचना अनुसार",
+  "eligibility": "Clear educational qualification criteria",
+  "fees": "e.g. Gen/OBC: ₹100 | SC/ST: ₹0",
+  "important_dates": {{
+    "Notification Released": "Recent Date",
+    "Application Start": "Date or यथाशीघ्र",
+    "Last Date to Apply": "Date",
+    "Exam Date": "Notify Soon or Exact Date"
+  }},
+  "application_fees": {{
+    "General / OBC / EWS": "₹--- or ₹0",
+    "SC / ST / PwD": "₹0 or Specific Fee"
+  }},
+  "age_limit": {{
+    "Minimum Age": "18 or 21 Years",
+    "Maximum Age": "27 to 40 Years as per norms",
+    "Age Relaxation": "As per Govt rules"
+  }},
+  "selection_process": [
+    "Written Examination / Online CBT",
+    "Document Verification & Medical"
+  ],
+  "how_to_apply": [
+    "Visit the official recruitment portal.",
+    "Complete online registration and submit documents.",
+    "Pay the applicable fee and print final form."
+  ]
+}}
+"""
+        try:
+            response = ai_client.models.generate_content(
+                model="gemini-2.5-flash",
+                contents=prompt,
+                config=types.GenerateContentConfig(
+                    response_mime_type="application/json",
+                    temperature=0.2
+                )
+            )
+            if response.text:
+                ai_data = json.loads(response.text)
+        except Exception as e:
+            logger.error(f"Gemini processing error: {e}")
+
+    # 3. Create Live Notice Record
+    final_title = ai_data.get("title") or title
+    slug = slugify(final_title, dept)
+    normalized_cat = "results" if "result" in cat else ("admit_card" if "admit" in cat else "jobs")
+
+    record = {
+        "slug": slug,
+        "title": final_title,
+        "department": dept,
+        "category": normalized_cat,
+        "total_posts": ai_data.get("total_posts") or "अधिसूचना देखें",
+        "last_date": ai_data.get("last_date") or "सक्रिय सूचना",
+        "eligibility": ai_data.get("eligibility") or "विज्ञापन देखें",
+        "fees": ai_data.get("fees") or "निःशुल्क (₹0)",
+        "apply_url": apply_url,
+        "pdf_url": pdf_url,
+        "short_desc": ai_data.get("short_desc") or f"{dept} official recruitment notification.",
+        "important_dates": ai_data.get("important_dates") or {},
+        "application_fees": ai_data.get("application_fees") or {},
+        "age_limit": ai_data.get("age_limit") or {},
+        "selection_process": ai_data.get("selection_process") or [],
+        "how_to_apply": ai_data.get("how_to_apply") or [],
+        "extra_links": [],
+        "is_active": True,
+        "status": "published"  # Direct published on user confirmation
+    }
+
+    db.upsert_notice(record)
+    db.update_inbox_status(inbox_id, "enriched")
+    bg.add_task(flush_cache, slug=slug)
+
+    return Response(
+        content=orjson.dumps({
+            "success": True, 
+            "message": "Notice enriched with AI and published live!", 
+            "slug": slug,
+            "quota": db.get_today_llm_usage()
+        }),
+        media_type="application/json"
+    )
+
+# ==================== LIVE POSTS EDIT & STATUS (ADMIN) ====================
+
+@app.get("/api/admin/posts")
+def get_admin_posts(status: Optional[str] = Query(None)):
+    posts = db.fetch_admin_notices(status=status, limit=100)
+    return Response(
+        content=orjson.dumps({"success": True, "count": len(posts), "data": posts}),
+        media_type="application/json"
+    )
+
+@app.put("/api/admin/posts/{post_id}")
+def update_existing_post(post_id: str, payload: PostUpdateRequest, bg: BackgroundTasks):
+    existing = db.fetch_notice_by_id(post_id)
+    if not existing:
+        raise HTTPException(status_code=404, detail="Post not found")
+
+    update_dict = {k: v for k, v in payload.model_dump().items() if v is not None}
+    
+    if "category" in update_dict:
+        cat = update_dict["category"].lower().strip()
+        update_dict["category"] = "results" if "result" in cat else ("admit_card" if "admit" in cat else "jobs")
+
+    updated_post = db.update_notice_by_id(post_id, update_dict)
+    bg.add_task(flush_cache, slug=existing.get("slug"))
+
+    return Response(
+        content=orjson.dumps({"success": True, "message": "Post updated successfully", "data": updated_post}),
+        media_type="application/json"
+    )
+
+@app.post("/api/admin/posts/{post_id}/status")
+def change_post_status(post_id: str, payload: StatusUpdateRequest, bg: BackgroundTasks):
+    existing = db.fetch_notice_by_id(post_id)
+    if not existing:
+        raise HTTPException(status_code=404, detail="Post not found")
+
+    updated_post = db.update_notice_by_id(post_id, {"status": payload.status})
+    bg.add_task(flush_cache, slug=existing.get("slug"))
+
+    return Response(
+        content=orjson.dumps({"success": True, "message": f"Status changed to {payload.status}", "data": updated_post}),
+        media_type="application/json"
+    )
+
+# ==================== DYNAMIC SITEMAP ====================
 
 @app.get("/api/sitemap-posts.xml")
 def dynamic_posts_sitemap():
     cache_key = "seo:dynamic_sitemap"
-
     if redis:
         try:
             cached_xml = redis.get(cache_key)
@@ -279,59 +547,4 @@ def dynamic_posts_sitemap():
         content=sitemap_xml,
         media_type="application/xml",
         headers={"Cache-Control": "public, max-age=3600, s-maxage=7200"}
-    )
-
-# ==================== SYNC ENDPOINT ====================
-
-@app.post("/api/posts/sync")
-def sync_post(
-    payload: PostPayload, 
-    bg: BackgroundTasks, 
-    x_sync_secret: Optional[str] = Header(None)
-):
-    if not INTERNAL_SYNC_SECRET or x_sync_secret != INTERNAL_SYNC_SECRET:
-        raise HTTPException(status_code=401, detail="Unauthorized sync request.")
-
-    if not is_url_whitelisted(payload.pdf_url) or not is_url_whitelisted(payload.apply_url):
-        raise HTTPException(status_code=400, detail="Domain not in official whitelist")
-
-    slug = slugify(payload.title, payload.department)
-    cat = (payload.category or "jobs").lower().strip()
-    normalized_cat = "results" if "result" in cat else ("admit_card" if "admit" in cat else "jobs")
-
-    existing_record = db.fetch_notice_by_slug(slug)
-    is_new_post = existing_record is None
-
-    record = {
-        "slug": slug,
-        "title": payload.title,
-        "department": payload.department,
-        "category": normalized_cat,
-        "total_posts": payload.total_posts or "अधिसूचना देखें",
-        "last_date": payload.last_date or "सक्रिय सूचना",
-        "eligibility": payload.eligibility or "विज्ञापन देखें",
-        "fees": payload.fees or "निःशुल्क (₹0)",
-        "apply_url": payload.apply_url or "#",
-        "pdf_url": payload.pdf_url,
-        "short_desc": payload.short_desc,
-        "important_dates": payload.important_dates or {},
-        "application_fees": payload.application_fees or {},
-        "age_limit": payload.age_limit or {},
-        "selection_process": payload.selection_process or [],
-        "how_to_apply": payload.how_to_apply or [],
-        "extra_links": payload.extra_links or [],
-        "is_active": True
-    }
-
-    try:
-        res = db.upsert_notice(record)
-    except Exception as err:
-        logger.error(f"Database upsert error: {err}")
-        raise HTTPException(status_code=500, detail="Failed to store notification")
-
-    bg.add_task(flush_cache, slug=slug)
-
-    return Response(
-        content=orjson.dumps({"success": True, "slug": slug, "is_new": is_new_post}),
-        media_type="application/json"
     )

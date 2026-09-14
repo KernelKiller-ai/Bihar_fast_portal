@@ -1,154 +1,236 @@
-# BiharFast Project Documentation
+# BiharFast — Project Documentation
 
-## 1. Project Overview
+## 1. Overview
 
-BiharFast is a Bihar-focused government opportunity portal that aggregates and displays:
+BiharFast is a Bihar-focused public information and recruitment platform built to simplify access to government updates, job notifications, admit cards, scheme information, and citizen services in one place.
 
-- Govt job notifications
-- Results and admit cards
-- Welfare schemes / Yojana
-- Citizen services / RTPS services
-- Other Bihar government notices and updates
+The platform is designed for users who want fast, clean, and trustworthy government-related information without navigating multiple official portals manually.
 
-The project is built as a full-stack web app:
+This project combines:
 
-- Frontend: React + Vite
-- Backend/API: FastAPI
-- Database: Supabase
-- Cache: Upstash Redis
-- Data collection: Python scrapers for official Bihar government portals
+- a modern React frontend for public-facing information
+- a FastAPI backend for data delivery and API orchestration
+- Supabase as the main structured data layer
+- Upstash Redis for faster caching and feed speed
+- Python scrapers to collect updates from official government and board portals
 
 ---
 
-## 2. Project Structure
+## 2. What this project does
+
+BiharFast helps users find and track:
+
+- Government job updates
+- BPSC / CSBC / BPSSC / BCECEB / BTSC / BSSC-related notices
+- Results and admit cards
+- Welfare schemes and Yojana announcements
+- RTPS and local citizen service portals
+- Educational and student opportunity updates
+- Important Bihar government public notices
+
+The site is organized around a real-time notification feed and dedicated hub pages for major Bihar information categories.
+
+---
+
+## 3. Why this project matters
+
+The project solves a common problem: important public information is spread across many websites, sometimes with slow access, inconsistent UI, and cluttered layouts.
+
+BiharFast reduces that friction by delivering a cleaner experience with:
+
+- centralized updates
+- direct official links
+- better category organization
+- dedicated landing pages for high-value services
+- responsive mobile-first UI
+- quick access to trending opportunities
+
+---
+
+## 4. High-level architecture
+
+```text
+User Browser
+    │
+    ▼
+React Frontend (Vite + React Router)
+    │
+    ├── Home feed / search / category pages
+    ├── Post detail pages
+    ├── Hub pages (RTPS, Yojana, BSEB, etc.)
+    └── Tool pages (resizer, age calculator, etc.)
+    │
+    ▼
+FastAPI Backend
+    │
+    ├── Supabase data fetching
+    ├── Redis cache layer
+    ├── article detail API
+    ├── sync API for inserts/updates
+    └── newsletter subscribe endpoint
+    │
+    ▼
+Supabase Database
+    │
+    ├── jobs
+    ├── schemes
+    ├── citizen_services
+    ├── results_admit_cards
+    └── subscribers
+```
+
+---
+
+## 5. Project structure
 
 ```text
 bihar_fast/
 ├── backend/
-│   ├── data/
-│   ├── scrapers/
 │   ├── .env
 │   ├── main.py
-│   ├── quick_feed_sync.py
 │   ├── requirements.txt
+│   ├── quick_feed_sync.py
 │   ├── seed_latest_updates.py
 │   ├── sync_engine.py
 │   ├── telegram_bot.py
+│   ├── data/
+│   ├── scrapers/
 │   └── venv/
+│
 ├── frontend/
 │   ├── public/
 │   ├── src/
 │   ├── index.html
 │   ├── package.json
 │   ├── vite.config.js
-│   └── vercel.json
+│   ├── vercel.json
+│   └── eslint.config.js
+│
 ├── package.json
 ├── document.md
-└── .gitignore
+├── .gitignore
+└── README.md (if added later)
 ```
 
-### Main folders
+### Backend responsibilities
 
-#### backend/
-Contains the API server and scrapers.
+- `main.py` contains the main FastAPI app, routes, API logic, CORS config, and database access
+- `sync_engine.py` handles sync logic and data ingestion operations
+- `quick_feed_sync.py` helps with rapid feed refreshes
+- `seed_latest_updates.py` populates or refreshes latest notices
+- `telegram_bot.py` sends alerts and notifications to Telegram
+- `scrapers/` contains portal-specific scraping logic for government boards and services
+- `data/` stores curated or processed information
 
-- `main.py`: FastAPI app and main endpoints
-- `sync_engine.py`: sync logic for ingesting or updating posts
-- `quick_feed_sync.py`: quick feed synchronization script
-- `seed_latest_updates.py`: seeding script for latest updates
-- `telegram_bot.py`: Telegram alert integration
-- `scrapers/`: web scrapers for official portals like BPSC, CSBC, SSC, etc.
-- `data/`: stored or curated data items
+### Frontend responsibilities
 
-#### frontend/
-Contains the website UI, pages, components, and routing.
-
-- `src/App.jsx`: main app and home page logic
-- `src/components/`: reusable UI components
-- `src/pages/`: all page views
-- `src/data/portalData.js`: static portal data and permanent service info
-- `src/utils/slug.js`: slug generation logic
+- `src/App.jsx` contains the core home page, feed logic, filters, and hub navigation
+- `src/pages/` contains specific landing pages and detail pages
+- `src/components/` contains reusable UI blocks like Navbar, Footer, NotificationCard, etc.
+- `src/data/portalData.js` holds static government portal info and permanent services data
+- `src/utils/slug.js` provides slug generation for URLs and post linking
 
 ---
 
-## 3. Tech Stack
+## 6. Tech stack
 
 ### Frontend
+
 - React 19
 - Vite
 - React Router DOM
 - Lucide React icons
-- CSS with custom styling
+- CSS and custom design system
+- Service worker/PWA support for app-like behavior
 
 ### Backend
+
 - Python
 - FastAPI
-- Supabase Python client
+- Supabase Python Client
 - Upstash Redis
-- Python-dotenv
-- Requests, BeautifulSoup
+- Python dotenv
+- Requests and BeautifulSoup for scraping
 
-### Integration
-- Telegram notifications
-- CORS-enabled API access
-- Cache-based feed optimization
-- Domain whitelist for official government websites
+### Data and integrations
 
----
-
-## 4. Main Features
-
-### Home feed
-The website fetches notices from the backend `/api/notices` or `/api/posts` endpoint, then groups them into categories:
-
-- Jobs
-- Results
-- Admit Cards
-- Schemes / Yojana
-- Citizen Services
-
-### Post detail pages
-Each article/notification is mapped to a slug and can be viewed in detail using routes like:
-
-- `/posts/:slug`
-- detail is resolved by backend lookup across multiple tables
-
-### Admin / sync support
-There is an admin page and sync endpoint to allow posting or updating records using a secret header.
-
-### Official domain filtering
-The backend validates that PDF and application URLs belong to trusted official domains such as:
-
-- bpsc.bihar.gov.in
-- csbc.bihar.gov.in
-- biharboardonline.bihar.gov.in
-- serviceonline.bihar.gov.in
-- biharbhumi.bihar.gov.in
-- udyami.bihar.gov.in
-
-### Newsletter subscription
-Users can subscribe with email; data is stored in Supabase via `subscribers` table.
+- Supabase for structured storage
+- Redis for caching homepage and post data
+- Telegram alerts for sync/notice updates
+- Domain whitelist for trusted government URLs
 
 ---
 
-## 5. API Overview
+## 7. Core features
 
-Base URL is configured by frontend environment variable or defaults to:
+### 7.1 Live notice feed
+The home page fetches notices from the backend and groups them under categories such as:
+
+- jobs
+- results
+- admit cards
+- schemes
+- citizen services
+
+This gives users a quick overview of current opportunities and official updates.
+
+### 7.2 Detail pages with SEO-friendly URLs
+Every notice can be opened as a dedicated detail page using slug-based routing.
+
+This improves:
+
+- readability
+- direct sharing
+- indexed URL structure
+- better public discoverability
+
+### 7.3 Dedicated hub pages
+The platform includes dedicated sections for high-traffic topics such as:
+
+- BSEB 10th / 12th result pages
+- RTPS Bihar service hub
+- Udyami Yojana page
+- Student Credit Card page
+- Kushal Yuva Program page
+- CUET UG admission page
+
+These pages help users go directly to the most relevant service instead of searching widely.
+
+### 7.4 Official domain validation
+The backend enforces safe URL handling by validating links against trusted official Bihar government domains.
+
+This protects the system from unsafe or unofficial donation or spam-style URLs.
+
+### 7.5 Subscription and sync support
+The backend exposes:
+
+- a subscription endpoint for newsletter signups
+- a protected sync endpoint to insert or update notices
+- Telegram integration for updates and alert broadcasting
+
+### 7.6 Admin-ready structure
+The project includes admin-related views and internal sync functionality so content updates can be managed without manually editing the frontend.
+
+---
+
+## 8. API overview
+
+The frontend connects to a backend API with a base URL configured as follows:
 
 ```text
-https://bihar-fast-portal.onrender.com
+VITE_API_BASE_URL or default: https://bihar-fast-portal.onrender.com
 ```
 
-### Core endpoints
+### Main endpoints
 
-#### Fetch all notices
+#### Home feed
 ```http
 GET /api/notices
 GET /api/posts
 ```
-Returns combined data from jobs, results, schemes, and services.
+Returns the latest merged feed across jobs, schemes, results, and services.
 
-#### Category endpoints
+#### Category-based endpoints
 ```http
 GET /api/jobs
 GET /api/schemes
@@ -157,45 +239,46 @@ GET /api/admissions
 GET /api/results
 ```
 
-#### Detail endpoint
+#### Post detail
 ```http
 GET /api/posts/{slug}
 ```
 
-#### Sync new post
+#### Sync post
 ```http
 POST /api/posts/sync
 Headers:
-  x_sync_secret: <your-secret>
+  x_sync_secret: <secret>
 ```
-Used to insert or update a post in the correct table.
+Used for admin/internal insert or update flows.
 
-#### Subscribe
+#### Subscription
 ```http
 POST /api/subscribe
 ```
-Adds the email to the subscribers table.
+Used to add a user email to the subscribers list.
 
 ---
 
-## 6. Environment Variables
+## 9. Environment configuration
 
-The backend uses `.env` values. Example variables include:
+Backend environment variables are usually stored in `.env` under the `backend/` folder.
+
+Example:
 
 ```env
 SUPABASE_URL=your_supabase_url
 SUPABASE_SECRET_KEY=your_supabase_key
-# or
 SUPABASE_SERVICE_ROLE_KEY=your_service_role_key
 
 UPSTASH_REDIS_REST_URL=your_redis_url
 UPSTASH_REDIS_REST_TOKEN=your_redis_token
 
-INTERNAL_SYNC_SECRET=your_internal_secret
+INTERNAL_SYNC_SECRET=your_secret_key
 ALLOWED_ORIGINS=http://localhost:5173,https://biharfast.in
 ```
 
-Frontend environment variables may be used as well, for example:
+Frontend example:
 
 ```env
 VITE_API_BASE_URL=http://localhost:8000
@@ -203,9 +286,9 @@ VITE_API_BASE_URL=http://localhost:8000
 
 ---
 
-## 7. Local Setup
+## 10. Local development
 
-### 7.1 Frontend setup
+### Frontend
 
 ```bash
 cd frontend
@@ -213,32 +296,25 @@ npm install
 npm run dev
 ```
 
-Frontend runs on Vite dev server, usually at:
+Usually runs at:
 
 ```text
 http://localhost:5173
 ```
 
-### 7.2 Backend setup
-
-From project root:
+### Backend
 
 ```bash
 cd backend
 python -m venv venv
 venv\Scripts\activate
 pip install -r requirements.txt
-```
-
-Run backend:
-
-```bash
 uvicorn main:app --reload --host 0.0.0.0 --port 8000
 ```
 
 ---
 
-## 8. Production Build
+## 11. Production build and deployment
 
 ### Frontend build
 
@@ -247,66 +323,96 @@ cd frontend
 npm run build
 ```
 
-This project already includes a build script and is suitable for deployment to Vercel.
+This is used for production deployment and supports Vercel-style hosting.
 
 ### Backend deployment
-The API is designed for deployment on a Python-compatible hosting platform such as Render or a VPS. It expects:
+The backend is designed for deployment on hosting platforms such as:
 
-- environment variables configured
-- Supabase access available
-- Redis configured
-- secrets set for sync API access
+- Render
+- VPS / Ubuntu server
+- Dockerized deployment environment
 
----
+It expects:
 
-## 9. Data Flow
-
-1. Scrapers fetch notices from official Bihar government portals.
-2. Data is normalized and stored into Supabase tables like:
-   - `jobs`
-   - `schemes`
-   - `citizen_services`
-   - `results_admit_cards`
-   - `admissions`
-3. Backend APIs read those tables and expose them to frontend.
-4. Frontend uses the API to render live updates on the website.
-5. Redis caches frequently requested feed data for faster response.
+- valid environment variables
+- Supabase connection
+- Redis connection
+- secure internal sync secret
+- working CORS origins
 
 ---
 
-## 10. Important Notes for Maintainers
+## 12. Data flow
 
-- Always validate external URLs before storing them.
-- Keep official government domains in the whitelist.
-- Use `INTERNAL_SYNC_SECRET` for any admin-like sync operations.
-- Keep `Supabase` and `Upstash Redis` environment values secure.
-- Update scrapers when government portal HTML structure changes.
-- Prefer caching for high-traffic feed endpoints.
+The real system flow is simple but effective:
 
----
-
-## 11. Summary
-
-This app is a modern Bihar government information portal that combines:
-
-- modern React frontend
-- Python FastAPI backend
-- live government notices
-- data caching
-- campaign and service pages
-- subscription and sync support
-
-It is designed to help users quickly access job updates, scheme information, and official government opportunities in one place.
+1. The scraper fetches data from official government portals.
+2. Data is normalized and stored in Supabase tables.
+3. The FastAPI app reads and aggregates those records.
+4. Redis caches the most requested feed data for faster responses.
+5. The frontend displays updated notices and category pages.
+6. Users click through to official PDFs or application portals.
 
 ---
 
-## 12. Suggested Next Improvements
+## 13. Current project strengths
 
-- Add automated tests for backend API endpoints
-- Add admin dashboard for content moderation
-- Add newsletter email sending integration
-- Add dashboard analytics for traffic and notices
-- Improve scraper resiliency and retry logic
-- Add better SEO metadata for each page
+BiharFast already has several strong foundations:
 
-If you want, I can also create a second version of this document in a more professional format for GitHub, including screenshots, architecture diagrams, and deployment instructions.
+- live data-driven notice feed
+- direct official portal access
+- category-based browsing
+- dedicated hubs for major Bihar schemes and result pages
+- good frontend UX for mobile and desktop
+- strong admin/internal sync capability
+- caching design for better speed
+- service-worker/PWA readiness
+
+This gives the project a real product feel rather than a simple static website.
+
+---
+
+## 14. Maintenance notes
+
+A few important practices for long-term reliability:
+
+- keep official domain whitelist updated regularly
+- validate scraped URLs before publishing
+- update scraper logic when government portals change layouts
+- monitor Redis hit rate and API latency
+- keep Supabase credentials and sync secret secure
+- make sure homepage feed remains concise and fast
+
+---
+
+## 15. Suggested next improvements
+
+To move from a solid startup product to a strong public portal, these improvements are recommended:
+
+- add automated API testing
+- add admin content moderation dashboard
+- add notification email system
+- improve scraper retry and fallback logic
+- add analytics dashboard for most visited categories
+- improve SEO metadata and structured data
+- create a content publishing workflow for updates
+- add sitemap and RSS feed support
+
+---
+
+## 16. Summary
+
+BiharFast is not just a basic frontend page set; it is a working public information platform that brings together government opportunities, official notices, and citizen services in one place.
+
+It is built with a practical architecture, strong integration patterns, and a public-facing design that can scale as more categories and services are added.
+
+This project already demonstrates a real-world product mindset: it is useful for end users, easier to maintain, and suitable for expansion into a larger Bihar public services ecosystem.
+
+---
+
+## 17. Final statement
+
+The project has moved beyond a prototype and is now shaped like a real digital public service product. It combines government data, user experience, direct links, category organization, and fast content delivery in a way that gives it genuine value for Bihar citizens and aspirants.
+
+If needed, the next phase can focus on scaling reliability, adding analytics, improving backend speed, and expanding the content ecosystem further.
+

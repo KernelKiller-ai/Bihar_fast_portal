@@ -1,12 +1,12 @@
-name: BiharFast 3x Daily Scraper
+name: BiharFast All-India Scraper Engine
 
 on:
   schedule:
     # UTC 02:30 = 08:00 AM IST
-    # UTC 08:30 = 02:00 PM IST
-    # UTC 14:30 = 08:00 PM IST
-    - cron: '30 2,8,14 * * *'
-  workflow_dispatch: # GitHub dashboard se manual Run button se bhi test kar sakte hain
+    # UTC 07:30 = 01:00 PM IST
+    # UTC 13:30 = 07:00 PM IST
+    - cron: '30 2,7,13 * * *'
+  workflow_dispatch: # GitHub dashboard par 'Run workflow' button se manual trigger karne ke liye
 
 jobs:
   run-scraper:
@@ -28,7 +28,5 @@ jobs:
         env:
           API_BASE_URL: ${{ secrets.API_BASE_URL }}
           INTERNAL_SYNC_SECRET: ${{ secrets.INTERNAL_SYNC_SECRET }}
-          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
-          TELEGRAM_CHANNEL_ID: ${{ secrets.TELEGRAM_CHANNEL_ID }}
         run: |
           python backend/cron_worker.py
