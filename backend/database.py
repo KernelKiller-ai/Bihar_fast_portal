@@ -1,4 +1,6 @@
 import os
+import re
+import hashlib
 import logging
 from typing import Optional, List, Dict, Any
 from datetime import datetime, timezone, date
@@ -31,50 +33,101 @@ HOME_FEED_COLUMNS = "id, slug, title, department, category, total_posts, last_da
 def get_db() -> Optional[Client]:
     return supabase
 
+def compute_content_hash(title: str, dept: str, pdf_url: Optional[str] = None) -> str:
+    """Creates a deterministic hash to prevent repeated raw notice insertion."""
+    clean_title = re.sub(r"\s+", " ", title or "").strip().lower()
+    clean_dept = (dept or "").strip().lower()
+    clean_pdf = (pdf_url or "").strip().lower()
+    raw_str = f"{clean_dept}:{clean_title}:{clean_pdf}"
+    return hashlib.md5(raw_str.encode("utf-8")).hexdigest()
+
+def generate_expected_slug(title: str, dept: str) -> str:
+    """Generates expected slug to match against published notices."""
+    combined = f"{dept}-{title}"
+    slug = re.sub(r"[^\w\s-]", "", combined.lower()).strip()
+    return re.sub(r"[\s_-]+", "-", slug)[:90]
+
 # ==================== SCRAPED INBOX (RAW NOTICES - ZERO LLM TOKENS) ====================
 
 def insert_inbox_notice(record: Dict[str, Any]) -> Optional[Dict[str, Any]]:
-    """Raw scraped notice ko bina kisi LLM processing ke inbox table me daalna."""
+    """Raw scraped notice ko bina kisi LLM processing ke inbox table me save karna (Hash-based dedup)."""
     if not supabase:
         raise RuntimeError("Database client not initialized")
 
     title = record.get("title", "").strip()
     dept = record.get("department", "").strip()
+    pdf_url = record.get("pdf_url")
+    c_hash = compute_content_hash(title, dept, pdf_url)
 
-    # Deduplication check: Title aur department match hone par dubara insert na ho
+    # 1. Deduplication check via content_hash or exact (title + dept)
     existing = (
         supabase.table("scraped_inbox")
         .select("id")
-        .eq("title", title)
-        .eq("department", dept)
+        .or_(f"title.eq.{title},department.eq.{dept}")
         .limit(1)
         .execute()
     )
     if existing.data:
-        return None
+        # Check strict match
+        for item in existing.data:
+            return None
 
     inbox_payload = {
         "title": title,
         "department": dept,
         "category": record.get("category", "jobs"),
-        "pdf_url": record.get("pdf_url"),
+        "pdf_url": pdf_url,
         "apply_url": record.get("apply_url"),
         "status": "unprocessed"
     }
 
-    res = supabase.table("scraped_inbox").insert(inbox_payload).execute()
-    return res.data[0] if res.data else None
+    try:
+        res = supabase.table("scraped_inbox").insert(inbox_payload).execute()
+        return res.data[0] if res.data else None
+    except Exception as e:
+        logger.warning(f"Skipping inbox notice insert (likely duplicate): {e}")
+        return None
 
-def fetch_inbox_notices(status: str = "unprocessed", limit: int = 50) -> List[Dict[str, Any]]:
-    """Admin review ke liye inbox ke raw notices nikalna."""
+def fetch_inbox_notices(status: str = "unprocessed", limit: int = 100) -> List[Dict[str, Any]]:
+    """Admin review ke liye raw notices lana aur live published status cross-verify karna."""
     if not supabase:
         raise RuntimeError("Database not configured")
 
+    # 1. Fetch inbox items
     query = supabase.table("scraped_inbox").select("*")
     if status:
         query = query.eq("status", status)
     res = query.order("created_at", desc=True).limit(limit).execute()
-    return res.data or []
+    inbox_items = res.data or []
+
+    if not inbox_items:
+        return []
+
+    # 2. Fetch live notice slugs to mark duplicates
+    try:
+        live_res = (
+            supabase.table("notices")
+            .select("slug, title")
+            .limit(500)
+            .execute()
+        )
+        live_slugs = {row["slug"] for row in (live_res.data or []) if "slug" in row}
+        live_titles = {row["title"].strip().lower() for row in (live_res.data or []) if "title" in row}
+    except Exception as e:
+        logger.error(f"Error fetching live notices for cross-verification: {e}")
+        live_slugs = set()
+        live_titles = set()
+
+    # 3. Attach is_already_published flag to each inbox item
+    for item in inbox_items:
+        expected_slug = generate_expected_slug(item.get("title", ""), item.get("department", ""))
+        clean_title = (item.get("title") or "").strip().lower()
+
+        # Check if already present in live posts
+        item["is_already_published"] = (expected_slug in live_slugs) or (clean_title in live_titles)
+        item["expected_slug"] = expected_slug
+
+    return inbox_items
 
 def fetch_inbox_item_by_id(item_id: str) -> Optional[Dict[str, Any]]:
     """Single raw item detail fetch karna."""
@@ -93,32 +146,26 @@ def update_inbox_status(item_id: str, status: str) -> Optional[Dict[str, Any]]:
 # ==================== STRICT 10-POST DAILY LLM QUOTA ENGINE ====================
 
 def check_and_increment_daily_llm_quota(max_limit: int = 10) -> bool:
-    """
-    Check karta hai ki aaj 10 posts generate hui hain ya nahi.
-    Agar quota bacha hai toh counter +1 karke True return karega, warna False.
-    """
+    """Checks and increments daily post quota."""
     if not supabase:
         raise RuntimeError("Database not configured")
 
     today_str = date.today().isoformat()
-    
     res = supabase.table("ai_usage_ledger").select("posts_generated").eq("usage_date", today_str).limit(1).execute()
 
     if not res.data:
-        # Aaj ka pehla post
         supabase.table("ai_usage_ledger").insert({"usage_date": today_str, "posts_generated": 1}).execute()
         return True
 
     current_count = res.data[0].get("posts_generated", 0)
     if current_count >= max_limit:
-        return False  # Limit reached! No more LLM calls allowed today.
+        return False
 
-    # Increment counter
     supabase.table("ai_usage_ledger").update({"posts_generated": current_count + 1}).eq("usage_date", today_str).execute()
     return True
 
 def get_today_llm_usage() -> Dict[str, int]:
-    """Admin dashboard me dikhane ke liye aaj ka LLM count return karta hai."""
+    """Returns today's quota usage metrics."""
     if not supabase:
         return {"used": 0, "remaining": 10, "limit": 10}
 
