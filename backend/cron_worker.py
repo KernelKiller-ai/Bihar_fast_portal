@@ -8,14 +8,17 @@ import urllib3
 from bs4 import BeautifulSoup
 from dotenv import load_dotenv
 
+# Disable SSL warning notices for older state-board certificates
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 load_dotenv()
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
 logger = logging.getLogger("BiharFastAllIndiaScraper")
 
-API_BASE_URL = os.getenv("API_BASE_URL", "https://bihar-fast-portal.onrender.com").rstrip("/")
-INTERNAL_SYNC_SECRET = os.getenv("INTERNAL_SYNC_SECRET", "")
+# Safe URL & Secret normalization (removes trailing slashes & accidental whitespace)
+RAW_API_URL = os.getenv("API_BASE_URL", "https://bihar-fast-portal.onrender.com")
+API_BASE_URL = RAW_API_URL.strip().rstrip("/")
+INTERNAL_SYNC_SECRET = os.getenv("INTERNAL_SYNC_SECRET", "").strip()
 
 BROWSER_HEADERS = {
     "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36",
@@ -303,14 +306,16 @@ def scrape_bceceb():
 
 def push_to_inbox(notice: dict):
     """Pushes raw notice directly into backend scraped_inbox (ZERO LLM tokens spent)."""
-    sync_endpoint = f"{API_BASE_URL}/api/inbox/sync"
+    base = API_BASE_URL.rstrip("/")
+    sync_endpoint = f"{base}/api/inbox/sync"
+
     headers = {
         "Content-Type": "application/json",
         "x-sync-secret": INTERNAL_SYNC_SECRET
     }
 
     try:
-        res = requests.post(sync_endpoint, json=notice, headers=headers, timeout=15)
+        res = requests.post(sync_endpoint, json=notice, headers=headers, timeout=20)
         if res.status_code == 200:
             logger.info(f"[INBOX SAVED] {notice['department']} -> {notice['title'][:40]}")
         elif res.status_code == 401:
@@ -323,6 +328,7 @@ def push_to_inbox(notice: dict):
         logger.error(f"Backend inbox connection error: {e}")
 
 def run_pipeline():
+    logger.info(f"Connecting to Backend Endpoint: {API_BASE_URL}/api/inbox/sync")
     logger.info("Starting BiharFast All-India + State Scraper Engine...")
     all_notices = []
 
