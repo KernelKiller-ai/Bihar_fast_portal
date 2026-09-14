@@ -36,7 +36,7 @@ const Terms = lazy(() => import("./pages/terms"));
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "https://bihar-fast-portal.onrender.com";
 
-// Only dynamic circular tabs (RTPS and Schemes removed as they have dedicated hubs)
+// Only dynamic circular tabs
 const CATEGORY_TABS = [
   { id: "all", label: "All Updates", icon: Sparkles },
   { id: "results", label: "Results", icon: Award },
@@ -81,7 +81,6 @@ export default function App() {
         if (Array.isArray(rawData) && rawData.length > 0) {
           const normalized = rawData
             .filter((item) => {
-              // Exclude any static RTPS/Bhumi/Udyami leaks from circular feed
               const s = (item.slug || item.id || "").toLowerCase();
               return !s.includes("rtps") && !s.includes("bhumi") && !s.includes("udyami");
             })
@@ -267,7 +266,6 @@ export default function App() {
                               <span className="text-[10px] sm:text-[11px] font-bold text-slate-900 mt-1 leading-tight">Government<br />Jobs</span>
                             </button>
 
-                            {/* Direct to Dedicated RTPS Hub */}
                             <Link
                               to="/rtps-bihar"
                               className="flex flex-col items-center justify-center p-1.5 rounded-xl hover:bg-emerald-50/80 transition group cursor-pointer text-center"
@@ -339,43 +337,43 @@ export default function App() {
                             <Sparkles size={13} /> Fast Hubs:
                           </span>
                           <Link 
-                            to="/bseb-matric-10th"
+                            to="/bseb-matric-10th" 
                             className="px-3 py-1 rounded-lg bg-blue-600/30 hover:bg-blue-600 border border-blue-500/40 transition shrink-0"
                           >
                             BSEB 10th Result
                           </Link>
                           <Link 
-                            to="/bseb-inter-12th"
+                            to="/bseb-inter-12th" 
                             className="px-3 py-1 rounded-lg bg-emerald-600/30 hover:bg-emerald-600 border border-emerald-500/40 transition shrink-0"
                           >
                             BSEB 12th Inter
                           </Link>
                           <Link 
-                            to="/cuet-ug-admission"
+                            to="/cuet-ug-admission" 
                             className="px-3 py-1 rounded-lg bg-purple-600/30 hover:bg-purple-600 border border-purple-500/40 transition shrink-0"
                           >
                             CUET UG 2026
                           </Link>
                           <Link 
-                            to="/rtps-bihar"
+                            to="/rtps-bihar" 
                             className="px-3 py-1 rounded-lg bg-teal-600/30 hover:bg-teal-600 border border-teal-500/40 transition shrink-0"
                           >
                             RTPS जाति/आय/निवास
                           </Link>
                           <Link 
-                            to="/udyami-yojana"
+                            to="/udyami-yojana" 
                             className="px-3 py-1 rounded-lg bg-amber-600/30 hover:bg-amber-600 border border-amber-500/40 transition shrink-0"
                           >
                             उद्यमी योजना ₹10L
                           </Link>
                           <Link 
-                            to="/kyp-bihar"
+                            to="/kyp-bihar" 
                             className="px-3 py-1 rounded-lg bg-sky-600/30 hover:bg-sky-600 border border-sky-500/40 transition shrink-0"
                           >
                             कुशल युवा (KYP)
                           </Link>
                           <Link 
-                            to="/student-credit-card"
+                            to="/student-credit-card" 
                             className="px-3 py-1 rounded-lg bg-indigo-600/30 hover:bg-indigo-600 border border-indigo-500/40 transition shrink-0"
                           >
                             स्टूडेंट क्रेडिट कार्ड ₹4L
@@ -554,7 +552,6 @@ export default function App() {
                       </div>
 
                       <aside className="lg:col-span-4 space-y-6">
-                        {/* Dedicated Fast Hubs Sidebar Panel */}
                         <div className="bg-white rounded-2xl p-5 border border-slate-200 shadow-sm">
                           <div className="flex items-center justify-between border-b border-slate-100 pb-3 mb-3">
                             <div className="flex items-center gap-1.5">
@@ -640,7 +637,6 @@ export default function App() {
                           </div>
                         </div>
 
-                        {/* Official Commission Links */}
                         <div className="bg-white rounded-2xl p-5 border border-slate-200 shadow-sm">
                           <div className="flex items-center justify-between border-b border-slate-100 pb-3 mb-3">
                             <div className="flex items-center gap-1.5">
@@ -699,6 +695,9 @@ export default function App() {
             <Route path="/privacy-policy" element={<PrivacyPolicy />} />
             <Route path="/terms" element={<Terms />} />
             <Route path="/terms-and-conditions" element={<Terms />} />
+            
+            {/* Admin Gate Dual Routing */}
+            <Route path="/admin" element={<Admin />} />
             <Route path="/admin-portal" element={<Admin />} />
             
             {/* Dedicated High-Speed Hubs */}
