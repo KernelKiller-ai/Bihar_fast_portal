@@ -2,10 +2,11 @@ import { useState, useEffect, useMemo } from "react";
 import { 
   PlusCircle, KeyRound, CheckCircle, AlertCircle, Loader2, 
   FileText, Edit3, Trash2, Check, RefreshCw, ExternalLink, 
-  Search, Eye, Clock, ShieldCheck, X, Sparkles, Inbox, Ban
+  Search, Eye, Clock, ShieldCheck, X, Sparkles, Inbox, Ban,
+  CheckCheck
 } from "lucide-react";
 
-// Production Backend URL (Fallback handled)
+// Production Backend URL
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "https://bihar-fast-portal.onrender.com";
 
 export default function Admin() {
@@ -134,7 +135,7 @@ export default function Admin() {
       
       setFeedback({ 
         type: "success", 
-        message: `सफलता! नोटिस Gemini AI द्वारा तैयार करके पोर्टल पर लाइव पब्लिश कर दिया गया! (Slug: ${data.slug})` 
+        message: `सफलता! नोटिस Gemini AI द्वारा तैयार करके पोर्टल पर लाइव पब्लिश कर दिया गया!` 
       });
 
       fetchPosts();
@@ -147,7 +148,7 @@ export default function Admin() {
 
   // Reject Raw Notice from Inbox (0 Tokens spent)
   const handleRejectInboxItem = async (inboxId) => {
-    if (!window.confirm("क्या आप इस नोटिस को रिजेक्ट/डिलीट करना चाहते हैं? (बिना AI उपयोग के)")) return;
+    if (!window.confirm("क्या आप इस नोटिस को रिजेक्ट/हटाना चाहते हैं?")) return;
 
     setActionLoading(`rej_${inboxId}`);
     try {
@@ -372,7 +373,7 @@ export default function Admin() {
             >
               <Inbox size={15} /> 
               Scraped Inbox ({inboxItems.length})
-              {inboxItems.length > 0 && (
+              {inboxItems.some(i => !i.is_already_published) && (
                 <span className="bg-amber-400 text-slate-900 text-[10px] px-1.5 py-0.2 rounded-full font-black ml-1">
                   NEW
                 </span>
@@ -437,7 +438,7 @@ export default function Admin() {
                   <Inbox className="text-[#0B4F8A]" size={17} /> Raw Scraped Feed (Zero AI Tokens Spent)
                 </h2>
                 <p className="text-[11px] text-slate-500 font-medium mt-0.5">
-                  Ye notices official websites se naye aaye hain. Decide karein kise Gemini se enrich karna hai.
+                  Jo notices pehle se live hain unpar Green Badge hoga. Naye notices ko aap AI se live publish kar sakte hain.
                 </p>
               </div>
 
@@ -481,13 +482,29 @@ export default function Admin() {
                     </tr>
                   ) : (
                     filteredInbox.map((item) => (
-                      <tr key={item.id} className="hover:bg-slate-50/80 transition">
+                      <tr key={item.id} className={`transition ${item.is_already_published ? "bg-slate-50/50 opacity-80" : "hover:bg-slate-50/80"}`}>
                         <td className="p-4 max-w-md">
-                          <div className="font-bold text-slate-900 leading-snug">{item.title}</div>
-                          <div className="flex items-center gap-2 mt-1.5">
+                          <div className="flex items-start gap-2">
+                            <div className="font-bold text-slate-900 leading-snug">
+                              {item.title}
+                            </div>
+                          </div>
+                          <div className="flex flex-wrap items-center gap-2 mt-1.5">
                             <span className="bg-blue-50 text-[#0B4F8A] text-[10px] font-black px-2 py-0.5 rounded">
                               {item.department}
                             </span>
+                            
+                            {/* Verification Badge */}
+                            {item.is_already_published ? (
+                              <span className="bg-emerald-100 text-emerald-800 border border-emerald-300 text-[10px] font-bold px-2 py-0.5 rounded-full flex items-center gap-1">
+                                <CheckCheck size={11} /> पहले से पोर्टल पर लाइव है
+                              </span>
+                            ) : (
+                              <span className="bg-amber-100 text-amber-800 text-[10px] font-bold px-2 py-0.5 rounded-full">
+                                नया नोटिस
+                              </span>
+                            )}
+
                             <span className="text-[10px] text-slate-400">
                               {new Date(item.created_at).toLocaleDateString("hi-IN")}
                             </span>
@@ -539,19 +556,30 @@ export default function Admin() {
                             </button>
 
                             {/* Human Triggered AI Enrich & Publish Button */}
-                            <button
-                              onClick={() => handleEnrichAndPublish(item.id)}
-                              disabled={actionLoading === `ai_${item.id}` || quotaStats.remaining <= 0}
-                              className="px-3 py-1.5 bg-linear-to-r from-amber-600 to-orange-600 hover:from-amber-700 hover:to-orange-700 text-white rounded-lg text-xs font-black transition flex items-center gap-1.5 shadow-xs cursor-pointer disabled:opacity-50"
-                              title="Enrich with Gemini AI & Publish Live"
-                            >
-                              {actionLoading === `ai_${item.id}` ? (
-                                <Loader2 size={13} className="animate-spin" />
-                              ) : (
-                                <Sparkles size={13} />
-                              )}
-                              AI Enrich & Publish
-                            </button>
+                            {item.is_already_published ? (
+                              <a
+                                href={`/post/${item.expected_slug}`}
+                                target="_blank"
+                                rel="noreferrer"
+                                className="px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-300 rounded-lg text-xs font-bold transition flex items-center gap-1.5"
+                              >
+                                <Eye size={13} /> View Live
+                              </a>
+                            ) : (
+                              <button
+                                onClick={() => handleEnrichAndPublish(item.id)}
+                                disabled={actionLoading === `ai_${item.id}` || quotaStats.remaining <= 0}
+                                className="px-3 py-1.5 bg-linear-to-r from-amber-600 to-orange-600 hover:from-amber-700 hover:to-orange-700 text-white rounded-lg text-xs font-black transition flex items-center gap-1.5 shadow-xs cursor-pointer disabled:opacity-50"
+                                title="Enrich with Gemini AI & Publish Live"
+                              >
+                                {actionLoading === `ai_${item.id}` ? (
+                                  <Loader2 size={13} className="animate-spin" />
+                                ) : (
+                                  <Sparkles size={13} />
+                                )}
+                                AI Enrich & Publish
+                              </button>
+                            )}
                           </div>
                         </td>
                       </tr>
