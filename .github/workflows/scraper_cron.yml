@@ -1,12 +1,14 @@
-name: BiharFast All-India Scraper Engine
+name: BiharFast 3x Daily Scraper
 
 on:
   schedule:
-    # UTC 02:30 = 08:00 AM IST
-    # UTC 07:30 = 01:00 PM IST
-    # UTC 13:30 = 07:00 PM IST
-    - cron: '30 2,7,13 * * *'
-  workflow_dispatch: # GitHub dashboard par 'Run workflow' button se manual trigger karne ke liye
+    # UTC time: 02:30 UTC = 8:00 AM IST
+    - cron: '30 2 * * *'
+    # 08:30 UTC = 2:00 PM IST
+    - cron: '30 8 * * *'
+    # 14:30 UTC = 8:00 PM IST
+    - cron: '30 14 * * *'
+  workflow_dispatch: # Manual button ke liye
 
 jobs:
   run-scraper:
@@ -18,11 +20,11 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
-          python-version: '3.11'
+          python-version: "3.11"
 
       - name: Install Dependencies
         run: |
-          pip install requests beautifulsoup4 python-dotenv
+          pip install -r backend/requirements.txt
 
       - name: Run Scraper Worker
         env:
