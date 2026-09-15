@@ -50,27 +50,28 @@ def generate_expected_slug(title: str, dept: str) -> str:
 # ==================== SCRAPED INBOX (RAW NOTICES - ZERO LLM TOKENS) ====================
 
 def insert_inbox_notice(record: Dict[str, Any]) -> Optional[Dict[str, Any]]:
-    """Raw scraped notice ko bina kisi LLM processing ke inbox table me save karna (Hash-based dedup)."""
+    """Raw scraped notice ko bina PostgREST 500 error ke safe query se store karna."""
     if not supabase:
         raise RuntimeError("Database client not initialized")
 
     title = record.get("title", "").strip()
     dept = record.get("department", "").strip()
     pdf_url = record.get("pdf_url")
-    c_hash = compute_content_hash(title, dept, pdf_url)
 
-    # 1. Deduplication check via content_hash or exact (title + dept)
-    existing = (
-        supabase.table("scraped_inbox")
-        .select("id")
-        .or_(f"title.eq.{title},department.eq.{dept}")
-        .limit(1)
-        .execute()
-    )
-    if existing.data:
-        # Check strict match
-        for item in existing.data:
+    # Safe exact deduplication: No malformed .or_() parsing
+    try:
+        existing = (
+            supabase.table("scraped_inbox")
+            .select("id")
+            .eq("title", title)
+            .eq("department", dept)
+            .limit(1)
+            .execute()
+        )
+        if existing.data:
             return None
+    except Exception as e:
+        logger.warning(f"Inbox duplicate check warning: {e}")
 
     inbox_payload = {
         "title": title,
@@ -85,7 +86,7 @@ def insert_inbox_notice(record: Dict[str, Any]) -> Optional[Dict[str, Any]]:
         res = supabase.table("scraped_inbox").insert(inbox_payload).execute()
         return res.data[0] if res.data else None
     except Exception as e:
-        logger.warning(f"Skipping inbox notice insert (likely duplicate): {e}")
+        logger.warning(f"Skipping inbox notice insert (likely unique violation): {e}")
         return None
 
 def fetch_inbox_notices(status: str = "unprocessed", limit: int = 100) -> List[Dict[str, Any]]:
