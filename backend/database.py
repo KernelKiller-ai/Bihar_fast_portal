@@ -2,6 +2,7 @@ import os
 import re
 import hashlib
 import logging
+from urllib.parse import urlparse
 from typing import Optional, List, Dict, Any, Tuple
 from datetime import datetime, timezone, date
 from supabase import create_client, Client
@@ -58,12 +59,44 @@ HOME_FEED_COLUMNS = (
     "eligibility, fees, apply_url, pdf_url, created_at, status"
 )
 
-def compute_content_hash(title: str, dept: str, pdf_url: Optional[str] = None) -> str:
-    """Creates a deterministic MD5 hash to prevent duplicate raw notice ingestion."""
+OFFICIAL_ALLOWED_DOMAINS = {
+    "bceceboard.bihar.gov.in", "bpsc.bih.nic.in", "bpsc.bihar.gov.in",
+    "onlinebpsc.bihar.gov.in", "csbc.bih.nic.in", "csbc.bihar.gov.in",
+    "bpssc.bih.nic.in", "bssc.bihar.gov.in", "btsc.bihar.gov.in",
+    "biharboardonline.bihar.gov.in", "patnahighcourt.gov.in", "dlrs.bihar.gov.in",
+    "rrbpatna.gov.in", "ssc.gov.in", "upsc.gov.in", "upsconline.nic.in",
+    "ibps.in", "sbi.co.in", "rbi.org.in", "indianrailways.gov.in",
+    "rrbapply.gov.in", "indiapostgdsonline.gov.in", "nta.ac.in",
+    "joinindianarmy.nic.in", "joinindianavy.gov.in", "agnipathvayu.cdac.in",
+    "crpf.gov.in", "bsf.gov.in", "cisf.gov.in", "itbpolice.nic.in", "ssb.gov.in"
+}
+
+def is_official_https_url(url: Optional[str]) -> bool:
+    if not url:
+        return True
+    try:
+        parsed = urlparse(url.strip())
+        hostname = (parsed.hostname or "").lower()
+        return (
+            parsed.scheme == "https"
+            and bool(parsed.netloc)
+            and any(hostname == domain or hostname.endswith("." + domain) for domain in OFFICIAL_ALLOWED_DOMAINS)
+        )
+    except Exception:
+        return False
+
+def compute_content_hash(
+    title: str,
+    dept: str,
+    pdf_url: Optional[str] = None,
+    apply_url: Optional[str] = None,
+) -> str:
+    """Creates the stable key used by the scraped inbox unique constraint."""
     clean_title = re.sub(r"\s+", " ", title or "").strip().lower()
     clean_dept = (dept or "").strip().lower()
     clean_pdf = (pdf_url or "").strip().lower()
-    raw_str = f"{clean_dept}:{clean_title}:{clean_pdf}"
+    clean_apply = (apply_url or "").strip().lower()
+    raw_str = f"{clean_dept}:{clean_title}:{clean_pdf}:{clean_apply}"
     return hashlib.md5(raw_str.encode("utf-8")).hexdigest()
 
 def generate_expected_slug(title: str, dept: str) -> str:
@@ -83,36 +116,29 @@ def insert_inbox_notice(record: Dict[str, Any]) -> Optional[Dict[str, Any]]:
     title = (record.get("title") or "").strip()
     dept = (record.get("department") or "").strip()
     pdf_url = record.get("pdf_url")
+    apply_url = record.get("apply_url")
 
     if not title:
         return None
-
-    # Safe deduplication by Title + Department
-    try:
-        existing = (
-            client.table("scraped_inbox")
-            .select("id")
-            .eq("title", title)
-            .eq("department", dept)
-            .limit(1)
-            .execute()
-        )
-        if existing.data and len(existing.data) > 0:
-            return None
-    except Exception as e:
-        logger.warning(f"Inbox duplicate check warning: {e}")
+    if not is_official_https_url(pdf_url) or not is_official_https_url(apply_url):
+        raise ValueError("Only approved HTTPS official URLs may be stored")
 
     inbox_payload = {
         "title": title,
         "department": dept,
         "category": record.get("category", "jobs"),
         "pdf_url": pdf_url,
-        "apply_url": record.get("apply_url"),
+        "apply_url": apply_url,
+        "content_hash": compute_content_hash(title, dept, pdf_url, apply_url),
         "status": "unprocessed"
     }
 
     try:
-        res = client.table("scraped_inbox").insert(inbox_payload).execute()
+        res = client.table("scraped_inbox").upsert(
+            inbox_payload,
+            on_conflict="content_hash",
+            ignore_duplicates=True,
+        ).execute()
         return res.data[0] if res.data else None
     except Exception as e:
         logger.warning(f"Skipping inbox notice insert (duplicate or constraint violation): {e}")
@@ -180,24 +206,22 @@ def update_inbox_status(item_id: str, status: str) -> Optional[Dict[str, Any]]:
 # ==================== DAILY AI USAGE LEDGER ====================
 
 def check_and_increment_daily_llm_quota(max_limit: int = 10) -> bool:
-    """Verifies and safely increments the daily AI generation quota."""
+    """Atomically reserves one daily AI quota slot in PostgreSQL."""
     client = get_db()
     if not client:
         raise RuntimeError("Database client not available")
 
     today_str = date.today().isoformat()
-    res = client.table("ai_usage_ledger").select("posts_generated").eq("usage_date", today_str).limit(1).execute()
+    try:
+        result = client.rpc(
+            "increment_daily_llm_quota",
+            {"p_usage_date": today_str, "p_max_limit": max_limit},
+        ).execute()
+    except Exception as exc:
+        logger.error("Atomic AI quota reservation failed: %s", exc)
+        raise RuntimeError("AI quota service unavailable") from exc
 
-    if not res.data:
-        client.table("ai_usage_ledger").insert({"usage_date": today_str, "posts_generated": 1}).execute()
-        return True
-
-    current_count = res.data[0].get("posts_generated", 0)
-    if current_count >= max_limit:
-        return False
-
-    client.table("ai_usage_ledger").update({"posts_generated": current_count + 1}).eq("usage_date", today_str).execute()
-    return True
+    return bool(result.data)
 
 def get_today_llm_usage() -> Dict[str, int]:
     """Retrieves current quota metrics for today."""
@@ -297,6 +321,11 @@ def update_notice_by_id(post_id: str, updates: Dict[str, Any]) -> Optional[Dict[
     if not client:
         raise RuntimeError("Database client not available")
 
+    updates = dict(updates)
+    for url_field in ("apply_url", "pdf_url"):
+        if url_field in updates and not is_official_https_url(updates[url_field]):
+            raise ValueError(f"{url_field} must be an approved HTTPS official URL")
+
     updates["updated_at"] = datetime.now(timezone.utc).isoformat()
     updates["last_edited_by"] = "admin"
 
@@ -308,6 +337,8 @@ def upsert_notice(record: Dict[str, Any]) -> Any:
     client = get_db()
     if not client:
         raise RuntimeError("Database client not available")
+    if not is_official_https_url(record.get("apply_url")) or not is_official_https_url(record.get("pdf_url")):
+        raise ValueError("Only approved HTTPS official URLs may be stored")
     return client.table("notices").upsert(record, on_conflict="slug").execute()
 
 def add_subscriber(email: str) -> Any:

@@ -2,7 +2,7 @@ import logging
 from typing import Dict, Any, List, Optional
 from datetime import datetime, timezone, timedelta, time
 from fastapi import APIRouter, HTTPException, Query, status
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, field_validator
 from database import get_db
 
 logger = logging.getLogger("class10_quiz")
@@ -20,6 +20,7 @@ class TimingStatus(BaseModel):
     message: str
     window_start: Optional[str] = None
     window_end: Optional[str] = None
+    window_end_at: Optional[str] = None
     next_slot_time: Optional[str] = None
 
 class QuestionOut(BaseModel):
@@ -47,11 +48,34 @@ class TodayQuizResponse(BaseModel):
     message: Optional[str] = None
 
 class SubmitAnswersRequest(BaseModel):
-    quiz_id: str = Field(..., description="UUID of the quiz batch")
+    quiz_id: str = Field(..., min_length=1, max_length=100, description="UUID of the quiz batch")
     answers: Dict[str, str] = Field(
-        default_factory=dict, 
+        default_factory=dict,
+        max_length=100,
         description="Map of question_id to selected option (A, B, C, D)"
     )
+
+    @field_validator("quiz_id")
+    @classmethod
+    def normalize_quiz_id(cls, value: str) -> str:
+        value = value.strip()
+        if not value:
+            raise ValueError("quiz_id is required")
+        return value
+
+    @field_validator("answers")
+    @classmethod
+    def validate_answers(cls, value: Dict[str, str]) -> Dict[str, str]:
+        normalized = {}
+        for question_id, answer in value.items():
+            clean_id = str(question_id).strip()
+            clean_answer = str(answer).strip().upper()
+            if not clean_id or len(clean_id) > 100:
+                raise ValueError("Invalid question ID")
+            if clean_answer not in {"A", "B", "C", "D"}:
+                raise ValueError("Answers must be A, B, C, or D")
+            normalized[clean_id] = clean_answer
+        return normalized
 
 class QuestionResultItem(BaseModel):
     id: str
@@ -94,6 +118,10 @@ def evaluate_exam_window(current_dt: Optional[datetime] = None) -> TimingStatus:
     t_1700 = time(17, 0)
     t_2230 = time(22, 30)
 
+    def window_end_at(end_time: time, day_offset: int = 0) -> str:
+        end_dt = datetime.combine(now.date(), end_time, tzinfo=IST_ZONE) + timedelta(days=day_offset)
+        return end_dt.isoformat()
+
     # 1. Morning Slot (07:00 AM - 01:00 PM)
     if t_0700 <= t < t_1300:
         return TimingStatus(
@@ -103,6 +131,7 @@ def evaluate_exam_window(current_dt: Optional[datetime] = None) -> TimingStatus:
             message="🌅 Morning Test Live hai! 01:00 PM tak submit karein.",
             window_start="07:00 AM",
             window_end="01:00 PM",
+            window_end_at=window_end_at(t_1300),
             next_slot_time="05:00 PM"
         )
 
@@ -115,6 +144,7 @@ def evaluate_exam_window(current_dt: Optional[datetime] = None) -> TimingStatus:
             message="🔒 Morning Set band ho chuka hai. Agla Evening Set 05:00 PM par live hoga.",
             window_start="01:00 PM",
             window_end="05:00 PM",
+            window_end_at=window_end_at(t_1700),
             next_slot_time="05:00 PM"
         )
 
@@ -127,6 +157,7 @@ def evaluate_exam_window(current_dt: Optional[datetime] = None) -> TimingStatus:
             message="🌆 Evening Test Live hai! 10:30 PM tak submit karein.",
             window_start="05:00 PM",
             window_end="10:30 PM",
+            window_end_at=window_end_at(t_2230),
             next_slot_time="07:00 AM (Kal)"
         )
 
@@ -139,6 +170,7 @@ def evaluate_exam_window(current_dt: Optional[datetime] = None) -> TimingStatus:
             message="🔒 Aaj ke dono sets band ho chuke hain. Kal subah 07:00 AM par naya set live hoga.",
             window_start="10:30 PM",
             window_end="07:00 AM",
+            window_end_at=window_end_at(t_0700, 1),
             next_slot_time="07:00 AM"
         )
 
@@ -195,34 +227,15 @@ def get_today_quiz(
         logger.error(f"Error querying active quiz for {today_str} [{target_slot}]: {e}")
         quiz_data = None
 
-    # 2. Resilient fallback to most recent active quiz in this slot
+    # Do not serve an older paper when today's slot has no quiz.
     if not quiz_data:
-        try:
-            fallback_query = (
-                supabase.table("class10_quizzes")
-                .select("id, title, subject, slot, total_questions, duration_minutes")
-                .eq("slot", target_slot)
-                .eq("is_active", True)
-            )
-            if subject:
-                fallback_query = fallback_query.eq("subject", subject.strip().lower())
-
-            fallback_res = fallback_query.order("created_at", desc=True).limit(1).execute()
-            if not fallback_res.data:
-                return TodayQuizResponse(
-                    is_live=False,
-                    timing_status=timing,
-                    quiz=None,
-                    questions=[],
-                    message="Prashn patra update kiya ja raha hai. Kripya thodi der me dekhein."
-                )
-            quiz_data = fallback_res.data[0]
-        except Exception as e:
-            logger.error(f"Error executing fallback quiz query: {e}")
-            raise HTTPException(
-                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                detail="Unable to load mock test"
-            )
+        return TodayQuizResponse(
+            is_live=False,
+            timing_status=timing,
+            quiz=None,
+            questions=[],
+            message="Aaj ka prashn patra abhi available nahi hai. Kripya thodi der me dekhein."
+        )
 
     # 3. Fetch questions (Strict exclusion of correct_option & explanation)
     try:
@@ -254,6 +267,15 @@ def get_today_quiz(
         for q in raw_questions
     ]
 
+    if not formatted_questions:
+        return TodayQuizResponse(
+            is_live=False,
+            timing_status=timing,
+            quiz=None,
+            questions=[],
+            message="Aaj ke test ke prashn abhi available nahi hain. Kripya thodi der me dekhein."
+        )
+
     return TodayQuizResponse(
         is_live=True,
         timing_status=timing,
@@ -284,6 +306,31 @@ def submit_quiz_answers(sub: SubmitAnswersRequest):
             detail="Invalid or missing quiz_id"
         )
 
+    timing = evaluate_exam_window()
+    if not timing.is_live or not timing.active_slot:
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="Test submission window has closed")
+
+    try:
+        quiz_res = (
+            supabase.table("class10_quizzes")
+            .select("id, quiz_date, slot, is_active")
+            .eq("id", clean_quiz_id)
+            .limit(1)
+            .execute()
+        )
+        quiz_record = quiz_res.data[0] if quiz_res.data else None
+    except Exception as e:
+        logger.error(f"Error loading quiz metadata for {clean_quiz_id}: {e}")
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Failed to validate test")
+
+    if (
+        not quiz_record
+        or not quiz_record.get("is_active")
+        or quiz_record.get("quiz_date") != get_current_ist_time().date().isoformat()
+        or quiz_record.get("slot") != timing.active_slot
+    ):
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="This test is no longer available")
+
     # 1. Fetch master answer key
     try:
         db_res = (
@@ -307,23 +354,32 @@ def submit_quiz_answers(sub: SubmitAnswersRequest):
             detail="No questions found for the supplied quiz ID"
         )
 
+    question_ids = {str(question["id"]) for question in db_questions}
+    unknown_question_ids = set(sub.answers) - question_ids
+    if unknown_question_ids:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail="Answers contain question IDs outside this quiz",
+        )
+
     # 2. Server-side validation
     total = len(db_questions)
     correct = 0
     wrong = 0
+    attempted = 0
     detailed_breakdown = []
 
     for q in db_questions:
         q_id = str(q["id"])
-        raw_user_ans = sub.answers.get(q_id)
-        user_ans = raw_user_ans.strip().upper() if raw_user_ans else None
+        user_ans = sub.answers.get(q_id)
         
         actual_ans = str(q.get("correct_option", "")).strip().upper()
         
-        is_attempted = bool(user_ans)
+        is_attempted = user_ans is not None
         is_correct = (user_ans == actual_ans) if is_attempted else False
 
         if is_attempted:
+            attempted += 1
             if is_correct:
                 correct += 1
             else:
@@ -344,7 +400,7 @@ def submit_quiz_answers(sub: SubmitAnswersRequest):
 
     return SubmitQuizResponse(
         total_questions=total,
-        attempted=len([v for v in sub.answers.values() if v and v.strip()]),
+        attempted=attempted,
         correct_count=correct,
         wrong_count=wrong,
         score=correct,

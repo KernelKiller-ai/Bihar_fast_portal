@@ -1,7 +1,7 @@
-import { useState, useEffect, useMemo } from "react";
+import { useState, useMemo } from "react";
 import { 
   PlusCircle, KeyRound, CheckCircle, AlertCircle, Loader2, 
-  FileText, Edit3, Trash2, Check, RefreshCw, ExternalLink, 
+  FileText, Edit3, Check, RefreshCw, ExternalLink,
   Search, Eye, Clock, ShieldCheck, X, Sparkles, Inbox, Ban,
   CheckCheck
 } from "lucide-react";
@@ -43,14 +43,19 @@ export default function Admin() {
     short_desc: "",
   });
 
-  const loadDashboardData = async () => {
+  const authHeaders = (token = authPin, includeJson = false) => ({
+    ...(includeJson ? { "Content-Type": "application/json" } : {}),
+    Authorization: `Bearer ${token}`,
+  });
+
+  const loadDashboardData = async (token = authPin) => {
     setLoading(true);
     setFeedback({ type: "", message: "" });
     try {
       await Promise.all([
-        fetchPosts(),
-        fetchInbox(),
-        fetchQuota()
+        fetchPosts(token),
+        fetchInbox(token),
+        fetchQuota(token)
       ]);
     } catch (err) {
       console.error("Dashboard initial load error:", err);
@@ -59,9 +64,9 @@ export default function Admin() {
     }
   };
 
-  const fetchQuota = async () => {
+  const fetchQuota = async (token = authPin) => {
     try {
-      const res = await fetch(`${API_BASE_URL}/api/admin/quota-stats`);
+      const res = await fetch(`${API_BASE_URL}/api/admin/quota-stats`, { headers: authHeaders(token) });
       if (res.ok) {
         const data = await res.json();
         setQuotaStats(data);
@@ -71,9 +76,9 @@ export default function Admin() {
     }
   };
 
-  const fetchPosts = async () => {
+  const fetchPosts = async (token = authPin) => {
     try {
-      const res = await fetch(`${API_BASE_URL}/api/admin/posts`);
+      const res = await fetch(`${API_BASE_URL}/api/admin/posts`, { headers: authHeaders(token) });
       if (!res.ok) throw new Error(`HTTP Error ${res.status}`);
       const json = await res.json();
 
@@ -90,9 +95,9 @@ export default function Admin() {
     }
   };
 
-  const fetchInbox = async () => {
+  const fetchInbox = async (token = authPin) => {
     try {
-      const res = await fetch(`${API_BASE_URL}/api/admin/inbox?status=unprocessed`);
+      const res = await fetch(`${API_BASE_URL}/api/admin/inbox?status=unprocessed`, { headers: authHeaders(token) });
       if (!res.ok) throw new Error(`HTTP Error ${res.status}`);
       const json = await res.json();
       setInboxItems(Array.isArray(json.data) ? json.data : []);
@@ -101,14 +106,20 @@ export default function Admin() {
     }
   };
 
-  const handleLogin = (e) => {
+  const handleLogin = async (e) => {
     e.preventDefault();
-    if (authPin.trim() === "biharfast2026") {
+    const token = authPin.trim();
+    if (!token) return;
+
+    try {
+      const res = await fetch(`${API_BASE_URL}/api/admin/quota-stats`, { headers: authHeaders(token) });
+      if (!res.ok) throw new Error(res.status === 401 ? "Authentication failed" : `HTTP ${res.status}`);
       setIsAuthenticated(true);
       setFeedback({ type: "", message: "" });
-      loadDashboardData();
-    } else {
-      setFeedback({ type: "error", message: "गलत पिन! कृपया सही एडमिन पासवर्ड दर्ज करें।" });
+      await loadDashboardData(token);
+    } catch (err) {
+      setIsAuthenticated(false);
+      setFeedback({ type: "error", message: `Admin login failed: ${err.message}` });
     }
   };
 
@@ -122,7 +133,8 @@ export default function Admin() {
     setActionLoading(`ai_${inboxId}`);
     try {
       const res = await fetch(`${API_BASE_URL}/api/admin/inbox/${inboxId}/enrich-and-publish`, {
-        method: "POST"
+        method: "POST",
+        headers: authHeaders(),
       });
       const data = await res.json();
 
@@ -153,7 +165,8 @@ export default function Admin() {
     setActionLoading(`rej_${inboxId}`);
     try {
       const res = await fetch(`${API_BASE_URL}/api/admin/inbox/${inboxId}/reject`, {
-        method: "POST"
+        method: "POST",
+        headers: authHeaders(),
       });
       if (!res.ok) throw new Error("Reject request failed");
 
@@ -172,7 +185,7 @@ export default function Admin() {
     try {
       const res = await fetch(`${API_BASE_URL}/api/admin/posts/${postId}/status`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: authHeaders(authPin, true),
         body: JSON.stringify({ status: newStatus }),
       });
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
@@ -198,7 +211,7 @@ export default function Admin() {
     try {
       const res = await fetch(`${API_BASE_URL}/api/admin/posts/${editingPost.id}`, {
         method: "PUT",
-        headers: { "Content-Type": "application/json" },
+        headers: authHeaders(authPin, true),
         body: JSON.stringify(editingPost),
       });
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
@@ -221,15 +234,14 @@ export default function Admin() {
     setLoading(true);
     setFeedback({ type: "", message: "" });
     try {
-      const res = await fetch(`${API_BASE_URL}/api/posts/sync`, {
+      const res = await fetch(`${API_BASE_URL}/api/inbox/sync`, {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "x-sync-secret": authPin,
-        },
+        headers: authHeaders(authPin, true),
         body: JSON.stringify(formData),
       });
-      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data.detail || `HTTP ${res.status}`);
+      if (!data.success) throw new Error("Unexpected sync response");
 
       setFeedback({ type: "success", message: "मैन्युअल पोस्ट लाइव पब्लिश हो गई!" });
       setFormData({
@@ -294,7 +306,7 @@ export default function Admin() {
           <form onSubmit={handleLogin} className="space-y-4">
             <input
               type="password"
-              placeholder="Enter Admin PIN"
+              placeholder="Enter admin access token"
               value={authPin}
               onChange={(e) => setAuthPin(e.target.value)}
               className="w-full text-center tracking-widest text-lg font-bold border-2 border-slate-200 rounded-xl py-3 px-4 focus:border-[#0B4F8A] focus:outline-none transition"
@@ -304,7 +316,7 @@ export default function Admin() {
               type="submit"
               className="w-full bg-[#0B4F8A] hover:bg-[#083b66] text-white font-bold py-3.5 rounded-xl transition shadow-md cursor-pointer text-sm tracking-wide"
             >
-              डैशबोर्ड अनलॉक करें
+              Verify admin access
             </button>
           </form>
 

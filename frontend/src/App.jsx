@@ -25,6 +25,7 @@ const UdyamiYojana = lazy(() => import("./pages/UdyamiYojana"));
 const RtpsBihar = lazy(() => import("./pages/RtpsBihar"));
 const KushalYuvaProgram = lazy(() => import("./pages/KushalYuvaProgram"));
 const StudentCreditCard = lazy(() => import("./pages/StudentCreditCard"));
+const MockTestPage = lazy(() => import("./pages/MockTestPage"));
 const Upcoming2026 = lazy(() => import("./pages/upcoming"));
 
 // Policy Pages (Lazy Loaded)
@@ -708,6 +709,7 @@ export default function App() {
             <Route path="/udyami-yojana" element={<UdyamiYojana />} />
             <Route path="/kyp-bihar" element={<KushalYuvaProgram />} />
             <Route path="/student-credit-card" element={<StudentCreditCard />} />
+            <Route path="/mock-test/class-10" element={<MockTestPage />} />
             
             <Route path="/upcoming-2026" element={<Upcoming2026 />} />
           </Routes>

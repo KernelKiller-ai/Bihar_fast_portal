@@ -1,13 +1,15 @@
 import os
 import re
 import json
+import hmac
 import logging
 from datetime import date, datetime, timezone
 from urllib.parse import urlparse
 from typing import Optional, Any, List, Dict
-from fastapi import FastAPI, HTTPException, BackgroundTasks, Header, Query, Response, status
+from fastapi import Depends, FastAPI, HTTPException, BackgroundTasks, Header, Query, Response, status
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.middleware.gzip import GZipMiddleware
+from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from pydantic import BaseModel, Field
 from upstash_redis import Redis
 from dotenv import load_dotenv
@@ -26,7 +28,9 @@ load_dotenv(override=False)
 UPSTASH_URL = os.getenv("UPSTASH_REDIS_REST_URL")
 UPSTASH_TOKEN = os.getenv("UPSTASH_REDIS_REST_TOKEN")
 INTERNAL_SYNC_SECRET = os.getenv("INTERNAL_SYNC_SECRET", "").strip()
+ADMIN_API_TOKEN = os.getenv("ADMIN_API_TOKEN", "").strip()
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY", "").strip('"\'')
+bearer_scheme = HTTPBearer(auto_error=False)
 
 # Persistent Redis Client
 redis: Optional[Redis] = None
@@ -140,14 +144,48 @@ def slugify(title: str, dept: str) -> str:
     return re.sub(r"[\s_-]+", "-", slug)[:90]
 
 def is_url_whitelisted(url: Optional[str]) -> bool:
-    if not url or url.strip() == "#":
+    if not url:
         return True
     try:
         parsed = urlparse(url.strip())
+        if parsed.scheme != "https" or not parsed.netloc:
+            return False
         hostname = (parsed.hostname or "").lower()
         return any(hostname == d or hostname.endswith("." + d) for d in OFFICIAL_ALLOWED_DOMAINS)
     except Exception:
         return False
+
+def require_admin(
+    credentials: Optional[HTTPAuthorizationCredentials] = Depends(bearer_scheme),
+):
+    if not ADMIN_API_TOKEN:
+        logger.critical("ADMIN_API_TOKEN is not configured; administrative access is disabled.")
+        raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail="Admin authentication is unavailable")
+    if (
+        not credentials
+        or credentials.scheme.lower() != "bearer"
+        or not hmac.compare_digest(credentials.credentials, ADMIN_API_TOKEN)
+    ):
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Authentication required")
+    return True
+
+def require_sync_or_admin(
+    credentials: Optional[HTTPAuthorizationCredentials] = Depends(bearer_scheme),
+    x_sync_secret: Optional[str] = Header(None),
+):
+    admin_valid = bool(
+        credentials
+        and credentials.scheme.lower() == "bearer"
+        and ADMIN_API_TOKEN
+        and hmac.compare_digest(credentials.credentials, ADMIN_API_TOKEN)
+    )
+    sync_valid = bool(
+        INTERNAL_SYNC_SECRET
+        and x_sync_secret
+        and hmac.compare_digest(x_sync_secret, INTERNAL_SYNC_SECRET)
+    )
+    if not (admin_valid or sync_valid):
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Unauthorized sync request")
 
 def flush_cache(slug: Optional[str] = None):
     if redis:
@@ -284,13 +322,10 @@ def get_post_detail(slug: str):
 
 @app.post("/api/inbox/sync")
 def sync_raw_to_inbox(
-    payload: InboxSyncPayload, 
-    x_sync_secret: Optional[str] = Header(None)
+    payload: InboxSyncPayload,
+    _: None = Depends(require_sync_or_admin),
 ):
     """Cron scraper sends raw notices here. Stored in inbox without invoking LLM."""
-    if not INTERNAL_SYNC_SECRET or x_sync_secret != INTERNAL_SYNC_SECRET:
-        raise HTTPException(status_code=401, detail="Unauthorized inbox sync.")
-
     if not is_url_whitelisted(payload.pdf_url) or not is_url_whitelisted(payload.apply_url):
         raise HTTPException(status_code=400, detail="Domain not in official whitelist")
 
@@ -306,12 +341,12 @@ def sync_raw_to_inbox(
 # ==================== ADMIN MODERATION & LLM ENRICHMENT ====================
 
 @app.get("/api/admin/quota-stats")
-def get_quota_stats():
+def get_quota_stats(_: None = Depends(require_admin)):
     """Returns today's LLM consumption (max 10/day)."""
     return db.get_today_llm_usage()
 
 @app.get("/api/admin/inbox")
-def get_scraped_inbox(status: str = Query("unprocessed")):
+def get_scraped_inbox(status: str = Query("unprocessed"), _: None = Depends(require_admin)):
     """Fetches raw notices waiting for Admin review."""
     items = db.fetch_inbox_notices(status=status, limit=100)
     return Response(
@@ -320,7 +355,7 @@ def get_scraped_inbox(status: str = Query("unprocessed")):
     )
 
 @app.post("/api/admin/inbox/{inbox_id}/reject")
-def reject_inbox_item(inbox_id: str):
+def reject_inbox_item(inbox_id: str, _: None = Depends(require_admin)):
     """Admin ignores/rejects an unimportant notice with zero LLM consumption."""
     updated = db.update_inbox_status(inbox_id, "rejected")
     if not updated:
@@ -328,7 +363,7 @@ def reject_inbox_item(inbox_id: str):
     return {"success": True, "message": "Notice rejected and archived."}
 
 @app.post("/api/admin/inbox/{inbox_id}/enrich-and-publish")
-def enrich_and_publish_with_llm(inbox_id: str, bg: BackgroundTasks):
+def enrich_and_publish_with_llm(inbox_id: str, bg: BackgroundTasks, _: None = Depends(require_admin)):
     """
     Human-in-the-loop: Admin confirms enrichment.
     Checks quota -> calls Gemini 2.5 Flash -> stores in notices table -> flushes Redis.
@@ -352,7 +387,7 @@ def enrich_and_publish_with_llm(inbox_id: str, bg: BackgroundTasks):
     dept = inbox_item.get("department", "Govt of India")
     cat = inbox_item.get("category", "jobs")
     pdf_url = inbox_item.get("pdf_url")
-    apply_url = inbox_item.get("apply_url") or "https://www.biharfast.in"
+    apply_url = inbox_item.get("apply_url")
 
     ai_data = {}
     if ai_client:
@@ -441,6 +476,9 @@ Generate a JSON object matching this schema:
         "status": "published"
     }
 
+    if not is_url_whitelisted(record["apply_url"]) or not is_url_whitelisted(record["pdf_url"]):
+        raise HTTPException(status_code=400, detail="Only approved HTTPS official URLs may be published")
+
     db.upsert_notice(record)
     db.update_inbox_status(inbox_id, "enriched")
     bg.add_task(flush_cache, slug=slug)
@@ -458,7 +496,7 @@ Generate a JSON object matching this schema:
 # ==================== LIVE POSTS EDIT & STATUS ====================
 
 @app.get("/api/admin/posts")
-def get_admin_posts(status: Optional[str] = Query(None)):
+def get_admin_posts(status: Optional[str] = Query(None), _: None = Depends(require_admin)):
     posts = db.fetch_admin_notices(status=status, limit=100)
     return Response(
         content=orjson.dumps({"success": True, "count": len(posts), "data": posts}),
@@ -466,12 +504,16 @@ def get_admin_posts(status: Optional[str] = Query(None)):
     )
 
 @app.put("/api/admin/posts/{post_id}")
-def update_existing_post(post_id: str, payload: PostUpdateRequest, bg: BackgroundTasks):
+def update_existing_post(post_id: str, payload: PostUpdateRequest, bg: BackgroundTasks, _: None = Depends(require_admin)):
     existing = db.fetch_notice_by_id(post_id)
     if not existing:
         raise HTTPException(status_code=404, detail="Post not found")
 
     update_dict = {k: v for k, v in payload.model_dump().items() if v is not None}
+
+    for url_field in ("apply_url", "pdf_url"):
+        if url_field in update_dict and not is_url_whitelisted(update_dict[url_field]):
+            raise HTTPException(status_code=400, detail=f"{url_field} must be an approved HTTPS official URL")
     
     if "category" in update_dict:
         cat = update_dict["category"].lower().strip()
@@ -486,7 +528,7 @@ def update_existing_post(post_id: str, payload: PostUpdateRequest, bg: Backgroun
     )
 
 @app.post("/api/admin/posts/{post_id}/status")
-def change_post_status(post_id: str, payload: StatusUpdateRequest, bg: BackgroundTasks):
+def change_post_status(post_id: str, payload: StatusUpdateRequest, bg: BackgroundTasks, _: None = Depends(require_admin)):
     existing = db.fetch_notice_by_id(post_id)
     if not existing:
         raise HTTPException(status_code=404, detail="Post not found")

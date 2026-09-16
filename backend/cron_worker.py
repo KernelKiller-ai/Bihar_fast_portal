@@ -4,14 +4,11 @@ import sys
 import time
 import logging
 import requests
-import urllib3
 from datetime import datetime, date, timedelta
 from typing import Optional, Dict, Any, List
 from bs4 import BeautifulSoup
 from dotenv import load_dotenv
 
-# Older state certificates ke SSL warnings suppress karne ke liye
-urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 load_dotenv()
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
@@ -126,7 +123,7 @@ def scrape_upsc():
     notices = []
     url = "https://upsc.gov.in/whats-new"
     try:
-        r = requests.get(url, headers=BROWSER_HEADERS, timeout=15, verify=False)
+        r = requests.get(url, headers=BROWSER_HEADERS, timeout=(5, 15))
         if r.status_code == 200:
             soup = BeautifulSoup(r.text, "html.parser")
             for row in soup.find_all("tr"):
@@ -158,7 +155,7 @@ def scrape_ssc():
     # 1. Official SSC Direct API Check
     api_url = "https://ssc.gov.in/api/notice"
     try:
-        r = requests.get(api_url, headers=BROWSER_HEADERS, timeout=12, verify=False)
+        r = requests.get(api_url, headers=BROWSER_HEADERS, timeout=(5, 12))
         if r.status_code == 200:
             data = r.json()
             items = data.get("data", []) if isinstance(data, dict) else []
@@ -184,7 +181,7 @@ def scrape_ssc():
     # 2. HTML Fallback
     if not notices:
         try:
-            r = requests.get("https://ssc.gov.in", headers=BROWSER_HEADERS, timeout=15, verify=False)
+            r = requests.get("https://ssc.gov.in", headers=BROWSER_HEADERS, timeout=(5, 15))
             if r.status_code == 200:
                 soup = BeautifulSoup(r.text, "html.parser")
                 for a in soup.find_all("a", href=True):
@@ -208,7 +205,7 @@ def scrape_ibps():
     notices = []
     url = "https://www.ibps.in"
     try:
-        r = requests.get(url, headers=BROWSER_HEADERS, timeout=15, verify=False)
+        r = requests.get(url, headers=BROWSER_HEADERS, timeout=(5, 15))
         if r.status_code == 200:
             soup = BeautifulSoup(r.text, "html.parser")
             for a in soup.find_all("a", href=True):
@@ -234,7 +231,7 @@ def scrape_rrb_central():
     notices = []
     url = "https://www.rrbapply.gov.in"
     try:
-        r = requests.get(url, headers=BROWSER_HEADERS, timeout=15, verify=False)
+        r = requests.get(url, headers=BROWSER_HEADERS, timeout=(5, 15))
         if r.status_code == 200:
             soup = BeautifulSoup(r.text, "html.parser")
             for a in soup.find_all("a", href=True):
@@ -259,7 +256,7 @@ def scrape_bpsc():
     notices = []
     url = "https://bpsc.bihar.gov.in/"
     try:
-        r = requests.get(url, headers=BROWSER_HEADERS, timeout=15, verify=False)
+        r = requests.get(url, headers=BROWSER_HEADERS, timeout=(5, 15))
         if r.status_code == 200:
             soup = BeautifulSoup(r.text, "html.parser")
             table = soup.find("table")
@@ -293,7 +290,7 @@ def scrape_csbc():
     notices = []
     url = "https://csbc.bihar.gov.in"
     try:
-        r = requests.get(url, headers=BROWSER_HEADERS, timeout=15, verify=False)
+        r = requests.get(url, headers=BROWSER_HEADERS, timeout=(5, 15))
         if r.status_code == 200:
             soup = BeautifulSoup(r.text, "html.parser")
             for row in soup.find_all("tr"):
@@ -323,9 +320,9 @@ def scrape_csbc():
 def scrape_bpssc():
     """BPSSC - Uses HTTP port 80 fallback to bypass NIC SSL firewall blocking."""
     notices = []
-    url = "http://bpssc.bih.nic.in/"
+    url = "https://bpssc.bih.nic.in/"
     try:
-        r = requests.get(url, headers=BROWSER_HEADERS, timeout=12, verify=False)
+        r = requests.get(url, headers=BROWSER_HEADERS, timeout=(5, 12))
         if r.status_code == 200:
             soup = BeautifulSoup(r.text, "html.parser")
             for row in soup.find_all("tr"):
@@ -340,13 +337,13 @@ def scrape_bpssc():
                     if len(title_text) > 12:
                         pdf_link = link_tag["href"]
                         if not pdf_link.startswith("http"):
-                            pdf_link = "http://bpssc.bih.nic.in/" + pdf_link.lstrip("/")
+                            pdf_link = "https://bpssc.bih.nic.in/" + pdf_link.lstrip("/")
                         notices.append({
                             "title": title_text[:140],
                             "department": "BPSSC (Bihar Police SI)",
                             "category": detect_category(title_text),
                             "pdf_url": pdf_link,
-                            "apply_url": "http://bpssc.bih.nic.in"
+                            "apply_url": "https://bpssc.bih.nic.in"
                         })
     except Exception as e:
         logger.warning(f"BPSSC scraping skipped: {e}")
@@ -356,7 +353,7 @@ def scrape_bssc():
     notices = []
     url = "https://bssc.bihar.gov.in/NoticeBoard.aspx"
     try:
-        r = requests.get(url, headers=BROWSER_HEADERS, timeout=15, verify=False)
+        r = requests.get(url, headers=BROWSER_HEADERS, timeout=(5, 15))
         if r.status_code == 200:
             soup = BeautifulSoup(r.text, "html.parser")
             table = soup.find("table")
@@ -389,7 +386,7 @@ def scrape_btsc():
     notices = []
     url = "https://btsc.bihar.gov.in"
     try:
-        r = requests.get(url, headers=BROWSER_HEADERS, timeout=15, verify=False)
+        r = requests.get(url, headers=BROWSER_HEADERS, timeout=(5, 15))
         if r.status_code == 200:
             soup = BeautifulSoup(r.text, "html.parser")
             for a in soup.find_all("a", href=True):
@@ -418,7 +415,7 @@ def scrape_bceceb():
     notices = []
     url = "https://bceceboard.bihar.gov.in"
     try:
-        r = requests.get(url, headers=BROWSER_HEADERS, timeout=15, verify=False)
+        r = requests.get(url, headers=BROWSER_HEADERS, timeout=(5, 15))
         if r.status_code == 200:
             soup = BeautifulSoup(r.text, "html.parser")
             for a in soup.find_all("a", href=True):
