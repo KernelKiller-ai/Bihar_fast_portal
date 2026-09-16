@@ -10,14 +10,14 @@ from typing import Optional, Dict, Any, List
 from bs4 import BeautifulSoup
 from dotenv import load_dotenv
 
-# Disable SSL warning notices for older state-board certificates
+# Older state certificates ke SSL warnings suppress karne ke liye
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 load_dotenv()
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
 logger = logging.getLogger("BiharFastAllIndiaScraper")
 
-# Safe URL & Secret normalization
+# Endpoint & Auth Normalization
 RAW_API_URL = os.getenv("API_BASE_URL", "https://bihar-fast-portal.onrender.com")
 API_BASE_URL = RAW_API_URL.strip().rstrip("/")
 INTERNAL_SYNC_SECRET = os.getenv("INTERNAL_SYNC_SECRET", "").strip()
@@ -34,21 +34,24 @@ BROWSER_HEADERS = {
 }
 
 def clean_text(text: str) -> str:
-    return re.sub(r"\s+", " ", text).strip()
+    return re.sub(r"\s+", " ", text or "").strip()
 
 def detect_category(title: str) -> str:
-    title_lower = title.lower()
-    if any(k in title_lower for k in ["admit card", "hall ticket", "e-admit", "प्रवेश पत्र", "call letter"]):
+    t = title.lower()
+    if any(k in t for k in ["admit card", "hall ticket", "e-admit", "प्रवेश पत्र", "call letter"]):
         return "admit_card"
-    if any(k in title_lower for k in ["result", "marks", "cutoff", "scorecard", "परिणाम", "merit list", "recommendation"]):
+    if any(k in t for k in ["result", "marks", "cutoff", "scorecard", "परिणाम", "merit list"]):
         return "results"
     return "jobs"
 
-# ==================== DATE-AWARE ENGINE (FRESHNESS CHECK) ====================
+# ==================== DATE-AWARE ENGINE (FRESHNESS FILTER) ====================
 
 def parse_notice_date(text: str) -> Optional[date]:
-    """Extracts date in formats like DD-MM-YYYY, DD/MM/YYYY, or DD Mon YYYY."""
-    # Pattern 1: 15-09-2026 or 15/09/2026
+    """Extracts date from patterns like DD-MM-YYYY, DD/MM/YYYY, or DD Mon YYYY."""
+    if not text:
+        return None
+        
+    # Pattern 1: DD-MM-YYYY / DD/MM/YYYY
     m1 = re.search(r"(\d{1,2})[-/.](\d{1,2})[-/.](\d{4})", text)
     if m1:
         d, m, y = m1.groups()
@@ -57,34 +60,32 @@ def parse_notice_date(text: str) -> Optional[date]:
         except ValueError:
             pass
 
-    # Pattern 2: 15 Sep 2026
+    # Pattern 2: 15 Sep 2026 / 15 September 2026
     m2 = re.search(r"(\d{1,2})\s+([A-Za-z]{3,9})\s+(\d{4})", text)
     if m2:
         d, mon_str, y = m2.groups()
         for fmt in ("%b", "%B"):
             try:
-                parsed_dt = datetime.strptime(f"{d} {mon_str} {y}", f"%d {fmt} %Y").date()
-                return parsed_dt
+                return datetime.strptime(f"{d} {mon_str} {y}", f"%d {fmt} %Y").date()
             except ValueError:
                 continue
     return None
 
-def is_fresh_notice(notice_date: Optional[date], max_age_days: int = 4) -> bool:
+def is_fresh_notice(notice_date: Optional[date], max_age_days: int = 5) -> bool:
     """Returns True if the notice is within the last `max_age_days` days."""
     if not notice_date:
-        # Date na mile toh filter out na karein taaki zaroori notice miss na ho
-        return True
+        return True  # Date parse na hone par safe side notice miss nahi karte
     age = (date.today() - notice_date).days
     return 0 <= age <= max_age_days
 
 # ==================== TELEGRAM BROADCASTER ====================
 
 def broadcast_to_telegram(notice: dict):
-    """Sends a clean, high-priority formatted alert directly to your Telegram channel."""
+    """Sends immediate formatted alert to Telegram channel."""
     if not TELEGRAM_BOT_TOKEN or not TELEGRAM_CHANNEL_ID:
         return
 
-    title = notice.get("title", "नया अपडेट")
+    title = notice.get("title", "New Notification")
     dept = notice.get("department", "Govt Department")
     cat = notice.get("category", "jobs").upper()
     pdf_url = notice.get("pdf_url")
@@ -96,13 +97,13 @@ def broadcast_to_telegram(notice: dict):
         f"🏷️ श्रेणी: #{cat}\n\n"
     )
     if pdf_url:
-        msg += f"📄 [ऑफिशियल PDF डाउनलोड करें]({pdf_url})\n"
+        msg += f"📄 [ऑफिशियल PDF देखें]({pdf_url})\n"
     if apply_url:
         msg += f"🌐 [ऑनलाइन पोर्टल लिंक]({apply_url})\n"
 
-    msg += "\n⚡ *सबसे तेज़ अपडेट्स के लिए जुड़ें:* @biharfast"
+    msg += "\n⚡ *सबसे तेज़ अपडेट्स:* @biharfast"
 
-    url = f"https://api.telegram.org/bot{TELEGRAM_BOT_TOKEN}/sendMessage"
+    endpoint = f"https://api.telegram.org/bot{TELEGRAM_BOT_TOKEN}/sendMessage"
     payload = {
         "chat_id": TELEGRAM_CHANNEL_ID,
         "text": msg,
@@ -111,9 +112,9 @@ def broadcast_to_telegram(notice: dict):
     }
 
     try:
-        r = requests.post(url, json=payload, timeout=8)
+        r = requests.post(endpoint, json=payload, timeout=8)
         if r.status_code == 200:
-            logger.info(f"[TELEGRAM SENT] {title[:35]}")
+            logger.info(f"[TELEGRAM BROADCASTED] {title[:35]}")
         else:
             logger.warning(f"Telegram API warning: {r.text}")
     except Exception as e:
@@ -122,7 +123,6 @@ def broadcast_to_telegram(notice: dict):
 # ==================== ALL INDIA CENTRAL RECRUITMENT SCRAPERS ====================
 
 def scrape_upsc():
-    """UPSC All India Civil, CDS, NDA, Engineering & Medical Services"""
     notices = []
     url = "https://upsc.gov.in/whats-new"
     try:
@@ -134,7 +134,7 @@ def scrape_upsc():
                 if link_tag:
                     raw_row_text = row.get_text(separator=" ")
                     n_date = parse_notice_date(raw_row_text)
-                    if not is_fresh_notice(n_date, max_age_days=4):
+                    if not is_fresh_notice(n_date, max_age_days=5):
                         continue
 
                     title_text = clean_text(link_tag.get_text())
@@ -154,38 +154,57 @@ def scrape_upsc():
     return notices[:20]
 
 def scrape_ssc():
-    """Staff Selection Commission (CGL, CHSL, MTS, GD, CPO)"""
     notices = []
-    url = "https://ssc.gov.in"
+    # 1. Official SSC Direct API Check
+    api_url = "https://ssc.gov.in/api/notice"
     try:
-        session = requests.Session()
-        r = session.get(url, headers=BROWSER_HEADERS, timeout=15, verify=False)
+        r = requests.get(api_url, headers=BROWSER_HEADERS, timeout=12, verify=False)
         if r.status_code == 200:
-            soup = BeautifulSoup(r.text, "html.parser")
-            for a in soup.find_all("a", href=True):
-                href = a["href"].lower()
-                text = clean_text(a.get_text())
-                if (".pdf" in href or "notice" in href) and len(text) > 12:
-                    n_date = parse_notice_date(text)
-                    if not is_fresh_notice(n_date, max_age_days=4):
-                        continue
+            data = r.json()
+            items = data.get("data", []) if isinstance(data, dict) else []
+            for item in items[:15]:
+                title = item.get("noticeTitle") or item.get("title") or ""
+                doc_path = item.get("attachmentPath") or item.get("filePath") or ""
+                n_date = parse_notice_date(str(item.get("noticeDate") or ""))
+                if not is_fresh_notice(n_date, max_age_days=5):
+                    continue
 
-                    pdf_link = a["href"]
-                    if not pdf_link.startswith("http"):
-                        pdf_link = "https://ssc.gov.in/" + pdf_link.lstrip("/")
+                if title:
+                    pdf_url = f"https://ssc.gov.in/{doc_path.lstrip('/')}" if doc_path else "https://ssc.gov.in"
                     notices.append({
-                        "title": f"SSC: {text[:140]}",
+                        "title": f"SSC: {clean_text(title)[:140]}",
                         "department": "SSC (All India)",
-                        "category": detect_category(text),
-                        "pdf_url": pdf_link,
+                        "category": detect_category(title),
+                        "pdf_url": pdf_url,
                         "apply_url": "https://ssc.gov.in"
                     })
-    except Exception as e:
-        logger.warning(f"SSC scraping skipped: {e}")
+    except Exception:
+        pass
+
+    # 2. HTML Fallback
+    if not notices:
+        try:
+            r = requests.get("https://ssc.gov.in", headers=BROWSER_HEADERS, timeout=15, verify=False)
+            if r.status_code == 200:
+                soup = BeautifulSoup(r.text, "html.parser")
+                for a in soup.find_all("a", href=True):
+                    href = a["href"].lower()
+                    text = clean_text(a.get_text())
+                    if (".pdf" in href or "notice" in href) and len(text) > 12:
+                        pdf_link = a["href"] if a["href"].startswith("http") else "https://ssc.gov.in/" + a["href"].lstrip("/")
+                        notices.append({
+                            "title": f"SSC: {text[:140]}",
+                            "department": "SSC (All India)",
+                            "category": detect_category(text),
+                            "pdf_url": pdf_link,
+                            "apply_url": "https://ssc.gov.in"
+                        })
+        except Exception as e:
+            logger.warning(f"SSC fallback scraping skipped: {e}")
+            
     return notices[:20]
 
 def scrape_ibps():
-    """IBPS Banking (PO, Clerk, SO, RRB Scale I/II/III)"""
     notices = []
     url = "https://www.ibps.in"
     try:
@@ -196,7 +215,7 @@ def scrape_ibps():
                 text = clean_text(a.get_text())
                 if any(k in text.lower() for k in ["crp", "po", "clerk", "specialist", "rrb", "recruitment"]) and len(text) > 15:
                     n_date = parse_notice_date(text)
-                    if not is_fresh_notice(n_date, max_age_days=4):
+                    if not is_fresh_notice(n_date, max_age_days=5):
                         continue
 
                     link = a["href"] if a["href"].startswith("http") else f"https://www.ibps.in/{a['href'].lstrip('/')}"
@@ -212,7 +231,6 @@ def scrape_ibps():
     return notices[:20]
 
 def scrape_rrb_central():
-    """Railway Recruitment Control Board Central Application Portal"""
     notices = []
     url = "https://www.rrbapply.gov.in"
     try:
@@ -249,14 +267,14 @@ def scrape_bpsc():
                 for row in table.find_all("tr"):
                     cols = row.find_all("td")
                     if len(cols) >= 2:
-                        raw_row_text = row.get_text(separator=" ")
-                        n_date = parse_notice_date(raw_row_text)
-                        if not is_fresh_notice(n_date, max_age_days=4):
+                        date_str = clean_text(cols[0].get_text())
+                        n_date = parse_notice_date(date_str)
+                        if not is_fresh_notice(n_date, max_age_days=5):
                             continue
 
                         link_tag = row.find("a", href=True)
-                        title_text = clean_text(raw_row_text)
-                        if link_tag and len(title_text) > 12:
+                        title_text = clean_text(row.get_text(separator=" "))
+                        if link_tag and len(title_text) > 10:
                             pdf_link = link_tag["href"]
                             if not pdf_link.startswith("http"):
                                 pdf_link = "https://bpsc.bihar.gov.in/" + pdf_link.lstrip("/")
@@ -269,7 +287,7 @@ def scrape_bpsc():
                             })
     except Exception as e:
         logger.warning(f"BPSC scraping error: {e}")
-    return notices[:20]
+    return notices[:15]
 
 def scrape_csbc():
     notices = []
@@ -281,7 +299,7 @@ def scrape_csbc():
             for row in soup.find_all("tr"):
                 raw_row_text = row.get_text(separator=" ")
                 n_date = parse_notice_date(raw_row_text)
-                if not is_fresh_notice(n_date, max_age_days=4):
+                if not is_fresh_notice(n_date, max_age_days=5):
                     continue
 
                 link_tag = row.find("a", href=True)
@@ -303,17 +321,17 @@ def scrape_csbc():
     return notices[:20]
 
 def scrape_bpssc():
-    """BPSSC Bihar Police SI with increased 15s timeout"""
+    """BPSSC - Uses HTTP port 80 fallback to bypass NIC SSL firewall blocking."""
     notices = []
-    url = "https://bpssc.bih.nic.in/"
+    url = "http://bpssc.bih.nic.in/"
     try:
-        r = requests.get(url, headers=BROWSER_HEADERS, timeout=15, verify=False)
+        r = requests.get(url, headers=BROWSER_HEADERS, timeout=12, verify=False)
         if r.status_code == 200:
             soup = BeautifulSoup(r.text, "html.parser")
             for row in soup.find_all("tr"):
                 raw_row_text = row.get_text(separator=" ")
                 n_date = parse_notice_date(raw_row_text)
-                if not is_fresh_notice(n_date, max_age_days=4):
+                if not is_fresh_notice(n_date, max_age_days=5):
                     continue
 
                 link_tag = row.find("a", href=True)
@@ -322,13 +340,13 @@ def scrape_bpssc():
                     if len(title_text) > 12:
                         pdf_link = link_tag["href"]
                         if not pdf_link.startswith("http"):
-                            pdf_link = "https://bpssc.bih.nic.in/" + pdf_link.lstrip("/")
+                            pdf_link = "http://bpssc.bih.nic.in/" + pdf_link.lstrip("/")
                         notices.append({
                             "title": title_text[:140],
                             "department": "BPSSC (Bihar Police SI)",
                             "category": detect_category(title_text),
                             "pdf_url": pdf_link,
-                            "apply_url": "https://bpssc.bih.nic.in"
+                            "apply_url": "http://bpssc.bih.nic.in"
                         })
     except Exception as e:
         logger.warning(f"BPSSC scraping skipped: {e}")
@@ -346,7 +364,7 @@ def scrape_bssc():
                 for row in table.find_all("tr"):
                     raw_row_text = row.get_text(separator=" ")
                     n_date = parse_notice_date(raw_row_text)
-                    if not is_fresh_notice(n_date, max_age_days=4):
+                    if not is_fresh_notice(n_date, max_age_days=5):
                         continue
 
                     link_tag = row.find("a", href=True)
@@ -365,7 +383,7 @@ def scrape_bssc():
                             })
     except Exception as e:
         logger.warning(f"BSSC scraping error: {e}")
-    return notices[:20]
+    return notices[:15]
 
 def scrape_btsc():
     notices = []
@@ -378,7 +396,7 @@ def scrape_btsc():
                 if ".pdf" in a["href"].lower():
                     text = clean_text(a.get_text())
                     n_date = parse_notice_date(text)
-                    if not is_fresh_notice(n_date, max_age_days=4):
+                    if not is_fresh_notice(n_date, max_age_days=5):
                         continue
 
                     if len(text) > 12:
@@ -394,7 +412,7 @@ def scrape_btsc():
                         })
     except Exception as e:
         logger.warning(f"BTSC scraping error: {e}")
-    return notices[:20]
+    return notices[:15]
 
 def scrape_bceceb():
     notices = []
@@ -407,7 +425,7 @@ def scrape_bceceb():
                 if ".pdf" in a["href"].lower() or "adv" in a["href"].lower():
                     text = clean_text(a.get_text())
                     n_date = parse_notice_date(text)
-                    if not is_fresh_notice(n_date, max_age_days=4):
+                    if not is_fresh_notice(n_date, max_age_days=5):
                         continue
 
                     if len(text) > 12:
@@ -428,7 +446,6 @@ def scrape_bceceb():
 # ==================== PUSH RAW NOTICES TO SCRAPED_INBOX & TELEGRAM ====================
 
 def push_to_inbox(notice: dict):
-    """Pushes raw notice directly into backend scraped_inbox and broadcasts to Telegram on success."""
     base = API_BASE_URL.rstrip("/")
     sync_endpoint = f"{base}/api/inbox/sync"
 
@@ -445,7 +462,6 @@ def push_to_inbox(notice: dict):
                 logger.info(f"[ALREADY SYNCED] {notice['title'][:35]}")
             else:
                 logger.info(f"[INBOX SAVED] {notice['department']} -> {notice['title'][:40]}")
-                # Broadcast fresh new notice to Telegram
                 broadcast_to_telegram(notice)
         elif res.status_code == 401:
             logger.error("Inbox sync unauthorized: INTERNAL_SYNC_SECRET mismatch!")
