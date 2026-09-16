@@ -113,7 +113,7 @@ export default function Class10QuizPlayer() {
   };
 
   if (loading) {
-    return <div className="flex min-h-[460px] flex-col items-center justify-center rounded-3xl border bg-white p-8 shadow-sm"><div className="mb-4 h-14 w-14 animate-spin rounded-full border-4 border-indigo-100 border-t-indigo-600" /><p className="text-sm font-bold text-slate-700">परीक्षा सर्वर से कनेक्ट हो रहा है...</p></div>;
+    return <div className="flex min-h-115 flex-col items-center justify-center rounded-3xl border bg-white p-8 shadow-sm"><div className="mb-4 h-14 w-14 animate-spin rounded-full border-4 border-indigo-100 border-t-indigo-600" /><p className="text-sm font-bold text-slate-700">परीक्षा सर्वर से कनेक्ट हो रहा है...</p></div>;
   }
 
   if (errorMessage && !quizState.isLive && !scoreResult) {
