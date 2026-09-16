@@ -8,7 +8,7 @@ from typing import Optional, Any, List, Dict
 from fastapi import FastAPI, HTTPException, BackgroundTasks, Header, Query, Response, status
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.middleware.gzip import GZipMiddleware
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 from upstash_redis import Redis
 from dotenv import load_dotenv
 from google import genai
@@ -16,6 +16,7 @@ from google.genai import types
 import orjson
 
 import database as db
+from quiz_router import quiz_router
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
 logger = logging.getLogger("biharfast")
@@ -24,7 +25,7 @@ load_dotenv(override=False)
 
 UPSTASH_URL = os.getenv("UPSTASH_REDIS_REST_URL")
 UPSTASH_TOKEN = os.getenv("UPSTASH_REDIS_REST_TOKEN")
-INTERNAL_SYNC_SECRET = os.getenv("INTERNAL_SYNC_SECRET")
+INTERNAL_SYNC_SECRET = os.getenv("INTERNAL_SYNC_SECRET", "").strip()
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY", "").strip('"\'')
 
 # Persistent Redis Client
@@ -45,36 +46,61 @@ if GEMINI_API_KEY:
     except Exception as e:
         logger.warning(f"Gemini client initialization failed: {e}")
 
-app = FastAPI(title="BiharFast All-India Sub-20ms Engine", version="6.0")
+app = FastAPI(
+    title="BiharFast Portal Engine",
+    version="6.5.0",
+    docs_url="/docs",
+    redoc_url="/redoc"
+)
 
+# Compression Middleware
 app.add_middleware(GZipMiddleware, minimum_size=1000)
+
+# Robust CORS Configuration (Allows Local Vite Frontend + Live Domains)
+ALLOWED_ORIGINS = [
+    "http://localhost:5173",
+    "http://localhost:3000",
+    "http://127.0.0.1:5173",
+    "http://127.0.0.1:3000",
+    "https://biharfast.in",
+    "https://www.biharfast.in",
+    "https://bihar-fast-portal.onrender.com"
+]
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=ALLOWED_ORIGINS,
+    allow_origin_regex=r"^https?://(localhost|127\.0\.0\.1)(:[0-9]+)?$",
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
+# Connect Class 10th Mock Test Router
+app.include_router(quiz_router)
+
+# ==================== DOMAIN SAFETY WHITELIST ====================
+
 OFFICIAL_ALLOWED_DOMAINS = {
-    # --- Bihar State Boards ---
+    # Bihar State Boards
     "bceceboard.bihar.gov.in", "bpsc.bih.nic.in", "bpsc.bihar.gov.in",
     "onlinebpsc.bihar.gov.in", "csbc.bih.nic.in", "csbc.bihar.gov.in",
     "bpssc.bih.nic.in", "bssc.bihar.gov.in", "btsc.bihar.gov.in",
     "biharboardonline.bihar.gov.in", "patnahighcourt.gov.in",
     "dlrs.bihar.gov.in", "rrbpatna.gov.in",
 
-    # --- Central Govt & All-India Commissions ---
+    # Central Govt & All-India Commissions
     "ssc.gov.in", "upsc.gov.in", "upsconline.nic.in",
     "ibps.in", "sbi.co.in", "rbi.org.in",
     "indianrailways.gov.in", "rrbapply.gov.in",
     "indiapostgdsonline.gov.in", "nta.ac.in",
 
-    # --- Defence & Paramilitary ---
+    # Defence & Paramilitary
     "joinindianarmy.nic.in", "joinindiannavy.gov.in", "agnipathvayu.cdac.in",
     "crpf.gov.in", "bsf.gov.in", "cisf.gov.in", "itbpolice.nic.in", "ssb.gov.in"
 }
+
+# ==================== PYDANTIC SCHEMAS ====================
 
 class InboxSyncPayload(BaseModel):
     title: str
@@ -82,24 +108,6 @@ class InboxSyncPayload(BaseModel):
     category: Optional[str] = "jobs"
     pdf_url: Optional[str] = None
     apply_url: Optional[str] = None
-
-class PostPayload(BaseModel):
-    title: str
-    department: str
-    category: Optional[str] = "jobs"
-    total_posts: Optional[str] = "अधिसूचना देखें"
-    last_date: Optional[str] = "सक्रिय सूचना"
-    eligibility: Optional[str] = "विज्ञापन देखें"
-    fees: Optional[str] = "निःशुल्क (₹0)"
-    pdf_url: Optional[str] = None
-    apply_url: Optional[str] = None
-    short_desc: Optional[str] = None
-    important_dates: Optional[dict] = {}
-    application_fees: Optional[dict] = {}
-    age_limit: Optional[dict] = {}
-    selection_process: Optional[list[str]] = []
-    how_to_apply: Optional[list[str]] = []
-    extra_links: Optional[list[dict]] = []
 
 class PostUpdateRequest(BaseModel):
     title: Optional[str] = None
@@ -123,6 +131,8 @@ class PostUpdateRequest(BaseModel):
 
 class StatusUpdateRequest(BaseModel):
     status: str
+
+# ==================== HELPER FUNCTIONS ====================
 
 def slugify(title: str, dept: str) -> str:
     combined = f"{dept}-{title}"
@@ -161,7 +171,7 @@ def flush_cache(slug: Optional[str] = None):
 @app.get("/")
 def health_check():
     return Response(
-        content=b'{"status":"active","engine":"BiharFast All-India Sub-20ms Engine"}',
+        content=b'{"status":"active","engine":"BiharFast Engine","version":"6.5.0"}',
         media_type="application/json"
     )
 
@@ -270,14 +280,14 @@ def get_post_detail(slug: str):
         headers={"Cache-Control": "public, max-age=300, s-maxage=1800"}
     )
 
-# ==================== SCRAPED INBOX RECEIVER (ZERO LLM COST) ====================
+# ==================== SCRAPED INBOX RECEIVER ====================
 
 @app.post("/api/inbox/sync")
 def sync_raw_to_inbox(
     payload: InboxSyncPayload, 
     x_sync_secret: Optional[str] = Header(None)
 ):
-    """Cron scraper sends raw notices here. Stored in inbox without calling LLM."""
+    """Cron scraper sends raw notices here. Stored in inbox without invoking LLM."""
     if not INTERNAL_SYNC_SECRET or x_sync_secret != INTERNAL_SYNC_SECRET:
         raise HTTPException(status_code=401, detail="Unauthorized inbox sync.")
 
@@ -293,7 +303,7 @@ def sync_raw_to_inbox(
         media_type="application/json"
     )
 
-# ==================== ADMIN & HUMAN-CONTROLLED LLM PIPELINE ====================
+# ==================== ADMIN MODERATION & LLM ENRICHMENT ====================
 
 @app.get("/api/admin/quota-stats")
 def get_quota_stats():
@@ -320,8 +330,8 @@ def reject_inbox_item(inbox_id: str):
 @app.post("/api/admin/inbox/{inbox_id}/enrich-and-publish")
 def enrich_and_publish_with_llm(inbox_id: str, bg: BackgroundTasks):
     """
-    Human-in-the-loop: Admin clicks 'Enrich & Publish'.
-    Checks 10/day quota -> calls Gemini -> saves to live notices -> marks inbox enriched.
+    Human-in-the-loop: Admin confirms enrichment.
+    Checks quota -> calls Gemini 2.5 Flash -> stores in notices table -> flushes Redis.
     """
     inbox_item = db.fetch_inbox_item_by_id(inbox_id)
     if not inbox_item:
@@ -330,15 +340,14 @@ def enrich_and_publish_with_llm(inbox_id: str, bg: BackgroundTasks):
     if inbox_item.get("status") == "enriched":
         raise HTTPException(status_code=400, detail="Notice has already been processed with AI.")
 
-    # 1. Enforce strict 10/day quota
+    # Enforce strict 10/day quota
     allowed = db.check_and_increment_daily_llm_quota(max_limit=10)
     if not allowed:
         raise HTTPException(
-            status_code=429, 
+            status_code=status.HTTP_429_TOO_MANY_REQUESTS, 
             detail="Daily quota exhausted! Maximum 10 AI-enriched posts allowed per day."
         )
 
-    # 2. Call Gemini 2.5 Flash
     title = inbox_item.get("title", "")
     dept = inbox_item.get("department", "Govt of India")
     cat = inbox_item.get("category", "jobs")
@@ -406,7 +415,6 @@ Generate a JSON object matching this schema:
         except Exception as e:
             logger.error(f"Gemini processing error: {e}")
 
-    # 3. Create Live Notice Record
     final_title = ai_data.get("title") or title
     slug = slugify(final_title, dept)
     normalized_cat = "results" if "result" in cat else ("admit_card" if "admit" in cat else "jobs")
@@ -430,7 +438,7 @@ Generate a JSON object matching this schema:
         "how_to_apply": ai_data.get("how_to_apply") or [],
         "extra_links": [],
         "is_active": True,
-        "status": "published"  # Direct published on user confirmation
+        "status": "published"
     }
 
     db.upsert_notice(record)
@@ -447,7 +455,7 @@ Generate a JSON object matching this schema:
         media_type="application/json"
     )
 
-# ==================== LIVE POSTS EDIT & STATUS (ADMIN) ====================
+# ==================== LIVE POSTS EDIT & STATUS ====================
 
 @app.get("/api/admin/posts")
 def get_admin_posts(status: Optional[str] = Query(None)):
