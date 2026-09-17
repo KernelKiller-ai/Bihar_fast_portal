@@ -211,6 +211,24 @@ The backend exposes:
 ### 7.6 Admin-ready structure
 The project includes admin-related views and internal sync functionality so content updates can be managed without manually editing the frontend.
 
+### 7.7 Class 10 live quiz system
+The latest release adds a dynamic Class 10 mock-test system at `/class-10-quiz`.
+
+Public quiz capabilities include:
+
+- 24x7 active quiz mode with no fixed exam-window lockout
+- automatic preference for today's active quiz, with fallback to the latest active quiz
+- optional subject filtering
+- student registration with name, district, and optional phone number
+- timed mock-test experience with server-side answer evaluation
+- score, accuracy, attempted, correct, and wrong counts with answer explanations
+- Bihar district leaderboard for each quiz
+- WhatsApp sharing of the result and quiz link
+- IP-based protection limited to six submissions per day
+- Indian Standard Time (IST) for date and daily-attempt calculations
+
+The admin dashboard includes a dedicated `10th Quiz Control Hub`. Authorized admins can list quiz slots, create a quiz with subject/date/duration settings, switch a quiz live or offline, inspect questions, and add questions through either a single-question form or bulk JSON import.
+
 ---
 
 ## 8. API overview
@@ -257,6 +275,26 @@ Used for admin/internal insert or update flows.
 POST /api/subscribe
 ```
 Used to add a user email to the subscribers list.
+
+#### Class 10 quiz
+```http
+GET  /api/quiz/today?subject=science
+POST /api/quiz/submit
+GET  /api/quiz/leaderboard/{quiz_id}
+```
+
+`/api/quiz/today` returns the active quiz and questions. It first checks the current IST date and then falls back to the most recent active quiz. Quiz submissions are evaluated by the backend and recorded for the district leaderboard.
+
+Admin quiz routes require the admin bearer token:
+
+```http
+GET  /api/quiz/admin/all-quizzes
+POST /api/quiz/admin/create-quiz
+POST /api/quiz/admin/toggle-status/{quiz_id}?is_active=true
+POST /api/quiz/admin/add-questions
+```
+
+The quiz API is backed by the `class10_quizzes`, `class10_questions`, `class10_leaderboard`, and `quiz_ip_rate_limits` tables in Supabase.
 
 ---
 
@@ -353,6 +391,15 @@ The real system flow is simple but effective:
 5. The frontend displays updated notices and category pages.
 6. Users click through to official PDFs or application portals.
 
+### 12.1 Quiz data flow
+
+1. An admin creates a quiz slot and adds questions from the Quiz Control Hub.
+2. The public quiz page requests the active quiz from `/api/quiz/today`.
+3. The backend selects today's active quiz in IST, or the latest active quiz when today's slot is unavailable.
+4. The student completes the timed quiz and submits answers to `/api/quiz/submit`.
+5. The backend loads the answer key, calculates the result, applies the daily IP limit, and stores a leaderboard entry.
+6. The result page displays the score and detailed answers, then loads rankings from `/api/quiz/leaderboard/{quiz_id}`.
+
 ---
 
 ## 13. Current project strengths
@@ -382,6 +429,9 @@ A few important practices for long-term reliability:
 - monitor Redis hit rate and API latency
 - keep Supabase credentials and sync secret secure
 - make sure homepage feed remains concise and fast
+- monitor quiz submission limits and leaderboard data quality
+- keep the admin token out of frontend source and deployment logs
+- add automated tests for quiz scoring, IST date fallback, and rate limiting
 
 ---
 
