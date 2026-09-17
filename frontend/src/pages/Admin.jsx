@@ -3,8 +3,9 @@ import {
   PlusCircle, KeyRound, CheckCircle, AlertCircle, Loader2, 
   FileText, Edit3, Check, RefreshCw, ExternalLink,
   Search, Eye, Clock, ShieldCheck, X, Sparkles, Inbox, Ban,
-  CheckCheck
+  CheckCheck, Trophy, Layers, Send
 } from "lucide-react";
+import AdminQuizManager from "../components/AdminQuizManager";
 
 // Production Backend URL
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "https://bihar-fast-portal.onrender.com";
@@ -16,7 +17,7 @@ export default function Admin() {
   const [actionLoading, setActionLoading] = useState(null);
   const [feedback, setFeedback] = useState({ type: "", message: "" });
 
-  // Navigation: 'inbox' | 'all' | 'pending' | 'new'
+  // Navigation Tabs: 'inbox' | 'all' | 'quiz' | 'new'
   const [activeTab, setActiveTab] = useState("inbox");
   
   // Data States
@@ -113,13 +114,13 @@ export default function Admin() {
 
     try {
       const res = await fetch(`${API_BASE_URL}/api/admin/quota-stats`, { headers: authHeaders(token) });
-      if (!res.ok) throw new Error(res.status === 401 ? "Authentication failed" : `HTTP ${res.status}`);
+      if (!res.ok) throw new Error(res.status === 401 ? "गलत Admin Token! कृपया सही Token डालें।" : `HTTP ${res.status}`);
       setIsAuthenticated(true);
       setFeedback({ type: "", message: "" });
       await loadDashboardData(token);
     } catch (err) {
       setIsAuthenticated(false);
-      setFeedback({ type: "error", message: `Admin login failed: ${err.message}` });
+      setFeedback({ type: "error", message: err.message });
     }
   };
 
@@ -291,6 +292,7 @@ export default function Admin() {
     );
   }, [inboxItems, searchQuery]);
 
+  // 1. Login Screen
   if (!isAuthenticated) {
     return (
       <div className="min-h-[85vh] flex items-center justify-center px-4 bg-slate-50">
@@ -300,7 +302,7 @@ export default function Admin() {
           </div>
           <div>
             <h2 className="text-2xl font-black text-slate-900 tracking-tight">BiharFast Control Room</h2>
-            <p className="text-xs text-slate-500 mt-1.5 font-medium">All-India Scraper Inbox & AI Publisher</p>
+            <p className="text-xs text-slate-500 mt-1.5 font-medium">Scraper Inbox • AI Publisher • Quiz Control</p>
           </div>
 
           <form onSubmit={handleLogin} className="space-y-4">
@@ -316,7 +318,7 @@ export default function Admin() {
               type="submit"
               className="w-full bg-[#0B4F8A] hover:bg-[#083b66] text-white font-bold py-3.5 rounded-xl transition shadow-md cursor-pointer text-sm tracking-wide"
             >
-              Verify admin access
+              Verify Admin Access
             </button>
           </form>
 
@@ -330,23 +332,24 @@ export default function Admin() {
     );
   }
 
+  // 2. Main Authenticated Dashboard
   return (
     <div className="min-h-screen bg-slate-50/50 py-8 px-4 sm:px-6">
       <div className="max-w-6xl mx-auto space-y-6">
         
-        {/* Top Header & Quota Card */}
+        {/* Top Header & Stat Counters */}
         <div className="bg-white rounded-2xl p-6 border border-slate-200 shadow-xs flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div>
             <h1 className="text-2xl font-black text-slate-900 flex items-center gap-2.5">
-              <ShieldCheck className="text-[#0B4F8A]" size={28} /> All-India Sovereign Dashboard
+              <ShieldCheck className="text-[#0B4F8A]" size={28} /> BiharFast Sovereign Control
             </h1>
             <p className="text-xs text-slate-500 mt-1 font-medium">
-              Human-in-the-Loop Content Gate • Zero Token Waste Architecture
+              Human-in-the-Loop Content Gate • Class 10th Mock Engine • Zero Token Waste
             </p>
           </div>
 
           {/* Daily AI Quota Counter Card */}
-          <div className="bg-linear-to-br from-amber-50 to-orange-50 border border-amber-200/80 rounded-2xl p-3.5 min-w-60">
+          <div className="bg-linear-to-br from-amber-50 to-orange-50 border border-amber-200/80 rounded-2xl p-3.5 min-w-60 shadow-xs">
             <div className="flex items-center justify-between text-xs mb-1">
               <span className="font-extrabold text-amber-900 flex items-center gap-1.5">
                 <Sparkles size={14} className="text-amber-600" /> Daily AI Quota
@@ -358,7 +361,6 @@ export default function Admin() {
               </span>
             </div>
             
-            {/* Progress Bar */}
             <div className="w-full bg-amber-200/50 h-2 rounded-full overflow-hidden mt-1.5">
               <div 
                 className={`h-full transition-all duration-300 ${quotaStats.remaining > 0 ? "bg-amber-500" : "bg-rose-500"}`}
@@ -374,7 +376,7 @@ export default function Admin() {
         {/* Action Tabs Strip */}
         <div className="flex flex-wrap items-center justify-between gap-3 bg-white p-2.5 rounded-2xl border border-slate-200 shadow-xs">
           <div className="flex flex-wrap gap-2 items-center">
-            {/* 1. Raw Scraped Inbox */}
+            {/* 1. Scraped Inbox Tab */}
             <button
               onClick={() => setActiveTab("inbox")}
               className={`px-4 py-2 rounded-xl text-xs font-bold transition flex items-center gap-1.5 cursor-pointer ${
@@ -392,17 +394,31 @@ export default function Admin() {
               )}
             </button>
 
-            {/* 2. Live Posts */}
+            {/* 2. Live Posts Tab */}
             <button
               onClick={() => setActiveTab("all")}
               className={`px-4 py-2 rounded-xl text-xs font-bold transition flex items-center gap-1.5 cursor-pointer ${
                 activeTab === "all" ? "bg-slate-900 text-white shadow-xs" : "bg-slate-100 text-slate-700 hover:bg-slate-200"
               }`}
             >
+              <Layers size={15} />
               Live Posts ({posts.length})
             </button>
 
-            {/* 3. Manual New Post */}
+            {/* 3. Dedicated Class 10 Quiz Control Tab */}
+            <button
+              onClick={() => setActiveTab("quiz")}
+              className={`px-4 py-2 rounded-xl text-xs font-black transition flex items-center gap-1.5 cursor-pointer ${
+                activeTab === "quiz" 
+                  ? "bg-linear-to-r from-amber-500 to-orange-600 text-white shadow-md scale-[1.02]" 
+                  : "bg-amber-50 text-amber-900 border border-amber-200 hover:bg-amber-100"
+              }`}
+            >
+              <Trophy size={15} className={activeTab === "quiz" ? "text-yellow-200" : "text-amber-600"} /> 
+              🎯 10th Quiz Control Hub
+            </button>
+
+            {/* 4. Manual New Post Tab */}
             <button
               onClick={() => setActiveTab("new")}
               className={`px-4 py-2 rounded-xl text-xs font-bold transition flex items-center gap-1.5 cursor-pointer ${
@@ -441,7 +457,15 @@ export default function Admin() {
           </div>
         )}
 
-        {/* ==================== TAB 1: SCRAPED INBOX (HUMAN DECISION GATE) ==================== */}
+        {/* ==================== TAB: 10TH QUIZ CONTROL HUB ==================== */}
+        {activeTab === "quiz" && (
+          <AdminQuizManager 
+            adminToken={authPin} 
+            apiBaseUrl={API_BASE_URL} 
+          />
+        )}
+
+        {/* ==================== TAB 1: SCRAPED INBOX ==================== */}
         {activeTab === "inbox" && (
           <div className="bg-white rounded-2xl border border-slate-200 shadow-xs overflow-hidden">
             <div className="p-4 bg-slate-50/70 border-b border-slate-100 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
@@ -496,17 +520,14 @@ export default function Admin() {
                     filteredInbox.map((item) => (
                       <tr key={item.id} className={`transition ${item.is_already_published ? "bg-slate-50/50 opacity-80" : "hover:bg-slate-50/80"}`}>
                         <td className="p-4 max-w-md">
-                          <div className="flex items-start gap-2">
-                            <div className="font-bold text-slate-900 leading-snug">
-                              {item.title}
-                            </div>
+                          <div className="font-bold text-slate-900 leading-snug">
+                            {item.title}
                           </div>
                           <div className="flex flex-wrap items-center gap-2 mt-1.5">
                             <span className="bg-blue-50 text-[#0B4F8A] text-[10px] font-black px-2 py-0.5 rounded">
                               {item.department}
                             </span>
                             
-                            {/* Verification Badge */}
                             {item.is_already_published ? (
                               <span className="bg-emerald-100 text-emerald-800 border border-emerald-300 text-[10px] font-bold px-2 py-0.5 rounded-full flex items-center gap-1">
                                 <CheckCheck size={11} /> पहले से पोर्टल पर लाइव है
@@ -556,7 +577,6 @@ export default function Admin() {
 
                         <td className="p-4 text-right">
                           <div className="flex items-center justify-end gap-2">
-                            {/* Reject / Ignore Button */}
                             <button
                               onClick={() => handleRejectInboxItem(item.id)}
                               disabled={actionLoading === `rej_${item.id}`}
@@ -567,7 +587,6 @@ export default function Admin() {
                               Reject
                             </button>
 
-                            {/* Human Triggered AI Enrich & Publish Button */}
                             {item.is_already_published ? (
                               <a
                                 href={`/post/${item.expected_slug}`}
