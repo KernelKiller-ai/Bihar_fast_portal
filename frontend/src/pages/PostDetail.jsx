@@ -35,7 +35,6 @@ export default function PostDetail({ notices = [] }) {
 
   const localCandidate = notices.find((item) => item.slug === slug || String(item.id) === String(slug)) || null;
   
-  // Agar local post me Gemini fields pehle se available hain to local use karein, warna API se full record mangwayein
   const hasEnrichedData = Boolean(localCandidate && (localCandidate.short_desc || localCandidate.how_to_apply));
   const localPost = hasEnrichedData ? localCandidate : null;
 
@@ -51,14 +50,17 @@ export default function PostDetail({ notices = [] }) {
       return;
     }
 
-    let isMounted = true;
+    const controller = new AbortController();
+    
     async function fetchSinglePost() {
       try {
         setLoading(true);
-        const res = await fetch(`${API_BASE_URL}/api/posts/${slug}`);
+        const res = await fetch(`${API_BASE_URL}/api/posts/${slug}`, {
+          signal: controller.signal
+        });
         const json = await res.json();
         
-        if (isMounted && json.success && json.data) {
+        if (json.success && json.data) {
           const item = json.data;
           setFetchedPost({
             ...item,
@@ -74,7 +76,6 @@ export default function PostDetail({ notices = [] }) {
             pdfUrl: item.pdf_url || item.pdfUrl,
             applyUrl: item.apply_url || item.applyUrl || item.pdf_url || item.pdfUrl,
             download_url: item.download_url || item.apply_url || item.pdf_url,
-            // Gemini Generated Dynamic Fields
             short_desc: item.short_desc || "",
             how_to_apply: Array.isArray(item.how_to_apply) ? item.how_to_apply : [],
             selection_process: Array.isArray(item.selection_process) ? item.selection_process : [],
@@ -82,25 +83,28 @@ export default function PostDetail({ notices = [] }) {
           });
         }
       } catch (err) {
-        console.error("Failed to fetch post detail:", err);
+        if (err.name !== "AbortError") {
+          console.error("Failed to fetch post detail:", err);
+        }
       } finally {
-        if (isMounted) setLoading(false);
+        setLoading(false);
       }
     }
 
     fetchSinglePost();
 
     return () => {
-      isMounted = false;
+      controller.abort();
     };
   }, [slug, localPost]);
 
   const post = localPost || fetchedPost;
 
-  // Dynamic SEO Injection with High-Value Descriptions
+  // Strict SEO & Canonical Injection (Targets www.biharfast.in)
   useEffect(() => {
     if (!post) return;
 
+    const currentSlug = post.slug || slug;
     document.title = `${post.title} | BiharFast Official`;
 
     const setMeta = (attr, val, content) => {
@@ -113,7 +117,6 @@ export default function PostDetail({ notices = [] }) {
       tag.setAttribute("content", content);
     };
 
-    // Use authentic AI summary for Google Meta Description if available
     const desc = post.short_desc 
       ? post.short_desc.slice(0, 155) + "..." 
       : `${post.department || "Bihar Govt"}: ${post.title}. Eligibility: ${post.eligibility || "See Details"}. Last Date: ${post.lastDate || "Active"}. Direct Apply Online & Official Notification PDF.`;
@@ -122,14 +125,23 @@ export default function PostDetail({ notices = [] }) {
     setMeta("property", "og:title", `${post.title} - BiharFast`);
     setMeta("property", "og:description", desc);
     setMeta("property", "og:type", "article");
+    setMeta("property", "og:url", `https://www.biharfast.in/post/${currentSlug}`);
 
+    // Fix: Strict canonical URL matching your verified Search Console property
     let canonical = document.querySelector('link[rel="canonical"]');
     if (!canonical) {
       canonical = document.createElement("link");
       canonical.setAttribute("rel", "canonical");
       document.head.appendChild(canonical);
     }
-    canonical.setAttribute("href", `https://biharfast.in/post/${post.slug || slug}`);
+    canonical.setAttribute("href", `https://www.biharfast.in/post/${currentSlug}`);
+
+    return () => {
+      // Revert base canonical on unmount
+      if (canonical) {
+        canonical.setAttribute("href", "https://www.biharfast.in/");
+      }
+    };
   }, [post, slug]);
 
   if (loading) {
