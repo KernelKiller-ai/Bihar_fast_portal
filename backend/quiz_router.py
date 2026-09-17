@@ -86,7 +86,7 @@ def enforce_ip_rate_limit(supabase, ip_hash: str, today_str: str) -> int:
             logger.warning(f"Rate limit exceeded for IP Hash {ip_hash[:10]}...")
             raise HTTPException(
                 status_code=status.HTTP_429_TOO_MANY_REQUESTS,
-                detail=f"सुरक्षा सीमा समाप्त: एक IP पते से एक दिन में केवल {DAILY_ATTEMPT_LIMIT} बार टेस्ट दिया जा सकता है। कृपया कल पुनः प्रयास करें।"
+                detail=f"सुरक्षा सीमा समाप्त: आपके IP पते से आज के सभी {DAILY_ATTEMPT_LIMIT} टेस्ट प्रयास पूरे हो चुके हैं। कृपया कल पुनः प्रयास करें।"
             )
 
         new_count = current_attempts + 1
@@ -109,14 +109,14 @@ def enforce_ip_rate_limit(supabase, ip_hash: str, today_str: str) -> int:
 # ==================== PYDANTIC SCHEMAS ====================
 
 class TimingStatus(BaseModel):
-    is_live: bool
-    active_slot: Optional[str] = None
-    slot_name: Optional[str] = None
-    message: str
-    window_start: Optional[str] = None
-    window_end: Optional[str] = None
+    is_live: bool = True
+    active_slot: Optional[str] = "24x7_live"
+    slot_name: Optional[str] = "Daily Practice Set"
+    message: str = "🟢 लाइव टेस्ट 24x7 सक्रिय है! कभी भी टेस्ट दें।"
+    window_start: Optional[str] = "00:00"
+    window_end: Optional[str] = "23:59"
     window_end_at: Optional[str] = None
-    next_slot_time: Optional[str] = None
+    next_slot_time: Optional[str] = "Always Live"
 
 class QuestionOut(BaseModel):
     id: str
@@ -196,7 +196,7 @@ class LeaderboardEntry(BaseModel):
     accuracy: float
     submitted_at: str
 
-# Admin Request Schemas
+# Admin Schemas
 class AdminQuizCreateRequest(BaseModel):
     title: str = Field(..., min_length=3)
     subject: str = Field("science", min_length=2)
@@ -219,65 +219,20 @@ class AdminBatchQuestionRequest(BaseModel):
     questions: List[AdminQuestionItem]
 
 
-# ==================== AUTOMATIC TIME SENSING ENGINE ====================
+# ==================== 24x7 ALL-TIME ACTIVE ENGINE ====================
 
 def evaluate_exam_window(current_dt: Optional[datetime] = None) -> TimingStatus:
-    now = current_dt or get_current_ist_time()
-    t = now.time()
-
-    t_0700 = time(7, 0)
-    t_1300 = time(13, 0)
-    t_1700 = time(17, 0)
-    t_2230 = time(22, 30)
-
-    def window_end_at(end_time: time, day_offset: int = 0) -> str:
-        end_dt = datetime.combine(now.date(), end_time, tzinfo=IST_ZONE) + timedelta(days=day_offset)
-        return end_dt.isoformat()
-
-    if t_0700 <= t < t_1300:
-        return TimingStatus(
-            is_live=True,
-            active_slot="slot_1",
-            slot_name="Morning Set (Slot 1)",
-            message="🌅 Morning Test Live hai! 01:00 PM tak submit karein.",
-            window_start="07:00 AM",
-            window_end="01:00 PM",
-            window_end_at=window_end_at(t_1300),
-            next_slot_time="05:00 PM"
-        )
-    elif t_1300 <= t < t_1700:
-        return TimingStatus(
-            is_live=False,
-            active_slot=None,
-            slot_name=None,
-            message="🔒 Morning Set band ho chuka hai. Agla Evening Set 05:00 PM par live hoga.",
-            window_start="01:00 PM",
-            window_end="05:00 PM",
-            window_end_at=window_end_at(t_1700),
-            next_slot_time="05:00 PM"
-        )
-    elif t_1700 <= t < t_2230:
-        return TimingStatus(
-            is_live=True,
-            active_slot="slot_2",
-            slot_name="Evening Set (Slot 2)",
-            message="🌆 Evening Test Live hai! 10:30 PM tak submit karein.",
-            window_start="05:00 PM",
-            window_end="10:30 PM",
-            window_end_at=window_end_at(t_2230),
-            next_slot_time="07:00 AM (Kal)"
-        )
-    else:
-        return TimingStatus(
-            is_live=False,
-            active_slot=None,
-            slot_name=None,
-            message="🔒 Aaj ke dono sets band ho chuke hain. Kal subah 07:00 AM par naya set live hoga.",
-            window_start="10:30 PM",
-            window_end="07:00 AM",
-            window_end_at=window_end_at(t_0700, 1),
-            next_slot_time="07:00 AM"
-        )
+    """Quiz remains active 24x7 with zero time window lockouts."""
+    return TimingStatus(
+        is_live=True,
+        active_slot="anytime",
+        slot_name="24x7 Live Mock Test",
+        message="🟢 टेस्ट 24x7 सक्रिय है! कभी भी टेस्ट दें और अपनी तैयारी परखें।",
+        window_start="00:00 AM",
+        window_end="11:59 PM",
+        window_end_at=None,
+        next_slot_time="Always Live"
+    )
 
 
 # ==================== PUBLIC QUIZ ENDPOINTS ====================
@@ -285,55 +240,46 @@ def evaluate_exam_window(current_dt: Optional[datetime] = None) -> TimingStatus:
 @quiz_router.get(
     "/today",
     response_model=TodayQuizResponse,
-    summary="Fetch current active quiz batch using automated IST time detection"
+    summary="Fetch active quiz batch anytime with fallback support"
 )
 def get_today_quiz(
-    subject: Optional[str] = Query(None, description="Optional subject filter (e.g. hindi, science)")
+    subject: Optional[str] = Query(None, description="Optional subject filter (e.g. science, math)")
 ):
     timing = evaluate_exam_window()
-
-    if not timing.is_live or not timing.active_slot:
-        return TodayQuizResponse(
-            is_live=False,
-            timing_status=timing,
-            quiz=None,
-            questions=[],
-            message=timing.message
-        )
-
     supabase = get_db()
     if not supabase:
         raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail="Database unavailable")
 
     now_ist = get_current_ist_time()
     today_str = now_ist.date().isoformat()
-    target_slot = timing.active_slot
 
     try:
+        # 1. Look for today's active quiz first
         query = (
             supabase.table("class10_quizzes")
             .select("id, title, subject, slot, total_questions, duration_minutes")
             .eq("quiz_date", today_str)
-            .eq("slot", target_slot)
             .eq("is_active", True)
         )
         if subject:
             query = query.eq("subject", subject.strip().lower())
             
-        q_res = query.limit(1).execute()
+        q_res = query.order("created_at", desc=True).limit(1).execute()
         quiz_data = q_res.data[0] if q_res.data else None
 
-        # Fallback to most recent active set
+        # 2. Fallback to the latest active quiz if today's date doesn't have one
         if not quiz_data:
-            fb_res = (
+            fb_query = (
                 supabase.table("class10_quizzes")
                 .select("id, title, subject, slot, total_questions, duration_minutes")
                 .eq("is_active", True)
-                .order("created_at", desc=True)
-                .limit(1)
-                .execute()
             )
+            if subject:
+                fb_query = fb_query.eq("subject", subject.strip().lower())
+                
+            fb_res = fb_query.order("quiz_date", desc=True).order("created_at", desc=True).limit(1).execute()
             quiz_data = fb_res.data[0] if fb_res.data else None
+
     except Exception as e:
         logger.error(f"Error querying active quiz: {e}")
         quiz_data = None
@@ -344,7 +290,7 @@ def get_today_quiz(
             timing_status=timing,
             quiz=None,
             questions=[],
-            message="Aaj ka prashn patra abhi available nahi hai. Kripya thodi der me dekhein."
+            message="वर्तमान में कोई टेस्ट उपलब्ध नहीं है। कृपया जल्द ही देखें।"
         )
 
     try:
@@ -385,7 +331,7 @@ def get_today_quiz(
 @quiz_router.post(
     "/submit",
     response_model=SubmitQuizResponse,
-    summary="Evaluate candidate submissions with IP rate limits & leaderboard registration"
+    summary="Evaluate candidate submissions with 6 attempts/day limit"
 )
 def submit_quiz_answers(sub: SubmitAnswersRequest, request: Request):
     supabase = get_db()
@@ -395,20 +341,15 @@ def submit_quiz_answers(sub: SubmitAnswersRequest, request: Request):
     now_ist = get_current_ist_time()
     today_str = now_ist.date().isoformat()
 
-    # 1. Strict IP Rate Limiting (Max 6 attempts per day)
+    # 1. Strict IP Rate Limiting (Strictly Max 6 attempts/day per IP)
     client_ip = extract_client_ip(request)
     ip_hash = get_secure_ip_hash(client_ip, today_str)
     attempts_used = enforce_ip_rate_limit(supabase, ip_hash, today_str)
     remaining_attempts = max(0, DAILY_ATTEMPT_LIMIT - attempts_used)
 
-    # 2. Timing and Session Check
-    timing = evaluate_exam_window()
-    if not timing.is_live or not timing.active_slot:
-        raise HTTPException(status_code=409, detail="Test submission window has closed")
-
     clean_quiz_id = sub.quiz_id.strip()
 
-    # 3. Fetch Master Answer Key
+    # 2. Fetch Master Answer Key
     try:
         db_res = (
             supabase.table("class10_questions")
@@ -430,7 +371,7 @@ def submit_quiz_answers(sub: SubmitAnswersRequest, request: Request):
     if unknown_question_ids:
         raise HTTPException(status_code=422, detail="Answers contain invalid question IDs")
 
-    # 4. Scoring Engine
+    # 3. Accurate Scoring
     total = len(db_questions)
     correct = 0
     wrong = 0
@@ -465,7 +406,7 @@ def submit_quiz_answers(sub: SubmitAnswersRequest, request: Request):
 
     accuracy = round((correct / (correct + wrong)) * 100, 1) if (correct + wrong) > 0 else 0.0
 
-    # 5. Leaderboard Entry Insert
+    # 4. Save to District Leaderboard
     try:
         supabase.table("class10_leaderboard").insert({
             "quiz_id": clean_quiz_id,
@@ -612,7 +553,6 @@ def admin_add_questions_batch(payload: AdminBatchQuestionRequest, _: bool = Depe
 
     clean_quiz_id = payload.quiz_id.strip()
 
-    # Get current question count for order_index
     try:
         count_res = supabase.table("class10_questions").select("id", count="exact").eq("quiz_id", clean_quiz_id).execute()
         existing_count = count_res.count or 0
@@ -636,7 +576,6 @@ def admin_add_questions_batch(payload: AdminBatchQuestionRequest, _: bool = Depe
     if formatted:
         try:
             supabase.table("class10_questions").insert(formatted).execute()
-            # Update total question count in parent quiz
             supabase.table("class10_quizzes").update({"total_questions": existing_count + len(formatted)}).eq("id", clean_quiz_id).execute()
         except Exception as e:
             logger.error(f"Error saving questions: {e}")
