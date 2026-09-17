@@ -12,7 +12,7 @@ import {
   Camera, Calculator, Flame, Sparkles, Briefcase, 
   Search, ArrowRight, Award, IdCard, Send, MessageSquare, 
   ExternalLink, Zap, TrendingUp, ShieldCheck, Loader2,
-  GraduationCap, Wrench, CheckCircle2
+  GraduationCap, Wrench, CheckCircle2, Trophy, Clock
 } from "lucide-react";
 
 // Lazy Loaded Pages (Bundle Size Optimization)
@@ -255,6 +255,7 @@ export default function App() {
                             </div>
                           </div>
 
+                          {/* Quick Navigation Icons (Includes Quiz Engine) */}
                           <div className="grid grid-cols-5 gap-2 pt-2 max-w-lg mx-auto lg:mx-0">
                             <button
                               type="button"
@@ -267,6 +268,20 @@ export default function App() {
                               <span className="text-[10px] sm:text-[11px] font-bold text-slate-900 mt-1 leading-tight">Government<br />Jobs</span>
                             </button>
 
+                            {/* 10th Mock Test Quick Icon */}
+                            <Link
+                              to="/class-10-quiz"
+                              className="flex flex-col items-center justify-center p-1.5 rounded-xl hover:bg-amber-50/80 transition group cursor-pointer text-center relative"
+                            >
+                              <span className="absolute -top-1 -right-1 bg-red-600 text-white text-[9px] font-black px-1.5 py-0.2 rounded-full animate-pulse shadow-xs">
+                                LIVE
+                              </span>
+                              <div className="w-10 h-10 sm:w-11 sm:h-11 rounded-full bg-linear-to-tr from-amber-600 to-yellow-500 text-white flex items-center justify-center shadow-xs group-hover:scale-105 transition">
+                                <Trophy size={18} />
+                              </div>
+                              <span className="text-[10px] sm:text-[11px] font-black text-amber-900 mt-1 leading-tight">10th Daily<br />Mock Test</span>
+                            </Link>
+
                             <Link
                               to="/rtps-bihar"
                               className="flex flex-col items-center justify-center p-1.5 rounded-xl hover:bg-emerald-50/80 transition group cursor-pointer text-center"
@@ -275,16 +290,6 @@ export default function App() {
                                 <ShieldCheck size={18} />
                               </div>
                               <span className="text-[10px] sm:text-[11px] font-bold text-slate-900 mt-1 leading-tight">RTPS<br />Services</span>
-                            </Link>
-
-                            <Link
-                              to="/upcoming-2026"
-                              className="flex flex-col items-center justify-center p-1.5 rounded-xl hover:bg-amber-50/80 transition group cursor-pointer text-center"
-                            >
-                              <div className="w-10 h-10 sm:w-11 sm:h-11 rounded-full bg-[#D97706] text-white flex items-center justify-center shadow-xs group-hover:scale-105 transition">
-                                <GraduationCap size={18} />
-                              </div>
-                              <span className="text-[10px] sm:text-[11px] font-bold text-slate-900 mt-1 leading-tight">Upcoming<br />& Portals</span>
                             </Link>
 
                             <button
@@ -337,6 +342,13 @@ export default function App() {
                           <span className="text-amber-400 flex items-center gap-1 shrink-0 font-extrabold text-[11px] uppercase tracking-wider mr-1">
                             <Sparkles size={13} /> Fast Hubs:
                           </span>
+                          <Link 
+                            to="/class-10-quiz" 
+                            className="px-3 py-1 rounded-lg bg-linear-to-r from-amber-500 to-orange-600 hover:from-amber-600 hover:to-orange-700 text-white font-extrabold transition shrink-0 shadow-xs flex items-center gap-1.5"
+                          >
+                            <Trophy size={13} className="text-yellow-200" />
+                            🎯 10th Mock Test & Rank
+                          </Link>
                           <Link 
                             to="/bseb-matric-10th" 
                             className="px-3 py-1 rounded-lg bg-blue-600/30 hover:bg-blue-600 border border-blue-500/40 transition shrink-0"
@@ -404,11 +416,17 @@ export default function App() {
 
                     <div className="bg-slate-50 border-t border-slate-200/80 py-2 px-4 flex items-center justify-center gap-1.5 flex-wrap text-xs text-slate-700 font-medium">
                       <span className="font-bold text-slate-700 text-[11px]">Trending:</span>
-                      {["BPSC", "BPSSC", "CSBC पुलिस", "BCECEB", "BTSC", "BSSC Inter"].map((tag) => (
+                      {["10th Mock Test", "BPSC", "BPSSC", "CSBC पुलिस", "BCECEB", "BTSC", "BSSC Inter"].map((tag) => (
                         <button
                           key={tag}
                           type="button"
-                          onClick={() => setSearchQuery(tag)}
+                          onClick={() => {
+                            if (tag === "10th Mock Test") {
+                              window.location.href = "/class-10-quiz";
+                            } else {
+                              setSearchQuery(tag);
+                            }
+                          }}
                           className="px-2.5 py-0.5 rounded-full bg-white hover:bg-blue-50 text-slate-800 hover:text-blue-800 text-[11px] font-bold border border-slate-300 transition cursor-pointer shadow-xs"
                         >
                           #{tag}
@@ -418,6 +436,39 @@ export default function App() {
                   </section>
 
                   <main className="max-w-7xl mx-auto px-4 sm:px-6 pt-6 pb-20">
+                    {/* High-Converting Quiz Callout Banner */}
+                    <div className="mb-6 bg-linear-to-r from-blue-700 via-indigo-700 to-purple-800 text-white rounded-2xl p-4 sm:p-5 shadow-lg border border-indigo-400/30 flex flex-col sm:flex-row items-center justify-between gap-4">
+                      <div className="flex items-center gap-3.5">
+                        <div className="w-12 h-12 rounded-xl bg-amber-400/20 border border-amber-300/40 flex items-center justify-center shrink-0">
+                          <Trophy size={26} className="text-amber-300 animate-bounce" />
+                        </div>
+                        <div>
+                          <div className="flex items-center gap-2">
+                            <span className="bg-amber-400 text-slate-950 text-[10px] font-black px-2 py-0.5 rounded-full uppercase tracking-wider">
+                              Daily Live Exam
+                            </span>
+                            <span className="text-[11px] text-blue-200 font-bold flex items-center gap-1">
+                              <Clock size={12} /> 15 Min Instant Test
+                            </span>
+                          </div>
+                          <h2 className="text-base sm:text-lg font-black text-white mt-1">
+                            BSEB 10th मैट्रिक लाइव मॉक टेस्ट & बिहार स्टेट लीडरबोर्ड
+                          </h2>
+                          <p className="text-xs text-blue-100 font-medium">
+                            अपनी तैयारी परखें, जिलावार रैंक देखें और दोस्तों के साथ व्हाट्सएप पर स्कोरकार्ड शेयर करें।
+                          </p>
+                        </div>
+                      </div>
+
+                      <Link
+                        to="/class-10-quiz"
+                        className="w-full sm:w-auto px-6 py-3 bg-amber-400 hover:bg-amber-300 text-slate-950 font-black text-xs sm:text-sm rounded-xl shadow-md transition flex items-center justify-center gap-2 shrink-0 group active:scale-95"
+                      >
+                        <span>अभी फ्री टेस्ट दें</span>
+                        <ArrowRight size={16} className="group-hover:translate-x-1 transition" />
+                      </Link>
+                    </div>
+
                     {topAlertItem && (
                       <div className="mb-6 bg-linear-to-r from-red-600 via-rose-600 to-amber-600 text-white rounded-2xl p-3.5 sm:p-4 shadow-lg flex items-center justify-between gap-3 border border-red-300/40">
                         <div className="flex items-center gap-3 text-xs sm:text-sm font-bold truncate">
@@ -563,6 +614,15 @@ export default function App() {
                           </div>
 
                           <div className="space-y-2 text-xs">
+                            <Link to="/class-10-quiz" className="p-2.5 rounded-xl border border-amber-200 bg-amber-50/50 hover:bg-amber-100/70 flex items-center justify-between transition group">
+                              <div>
+                                <p className="font-black text-amber-950 group-hover:text-amber-800 flex items-center gap-1">
+                                  <Trophy size={13} className="text-amber-600" /> 10th बोर्ड लाइव टेस्ट 2026
+                                </p>
+                                <span className="text-[10px] text-amber-700 font-semibold">अंक, सटीकता और राज्य रैंक</span>
+                              </div>
+                              <ArrowRight size={13} className="text-amber-700 transition group-hover:translate-x-0.5" />
+                            </Link>
                             <Link to="/bseb-matric-10th" className="p-2.5 rounded-xl border border-slate-100 hover:border-blue-500 hover:bg-blue-50/40 flex items-center justify-between transition group">
                               <div>
                                 <p className="font-bold text-slate-900 group-hover:text-blue-700">बिहार बोर्ड 10वीं रिजल्ट 2026</p>
@@ -709,6 +769,9 @@ export default function App() {
             <Route path="/udyami-yojana" element={<UdyamiYojana />} />
             <Route path="/kyp-bihar" element={<KushalYuvaProgram />} />
             <Route path="/student-credit-card" element={<StudentCreditCard />} />
+            
+            {/* Dual Routes for Class 10th Mock Test */}
+            <Route path="/class-10-quiz" element={<MockTestPage />} />
             <Route path="/mock-test/class-10" element={<MockTestPage />} />
             
             <Route path="/upcoming-2026" element={<Upcoming2026 />} />
