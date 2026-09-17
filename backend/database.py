@@ -4,13 +4,20 @@ import hashlib
 import logging
 from urllib.parse import urlparse
 from typing import Optional, List, Dict, Any, Tuple
-from datetime import datetime, timezone, date
+from datetime import datetime, timezone, timedelta, date
 from supabase import create_client, Client
 from dotenv import load_dotenv
 
 load_dotenv(override=False)
 
 logger = logging.getLogger("biharfast_db")
+
+# Indian Standard Time (UTC+05:30) Timezone
+IST_ZONE = timezone(timedelta(hours=5, minutes=30))
+
+def get_current_ist_date() -> str:
+    """Returns the current date formatted as YYYY-MM-DD anchored strictly to Indian Standard Time (IST)."""
+    return datetime.now(timezone.utc).astimezone(IST_ZONE).date().isoformat()
 
 # ==================== SUPABASE CLIENT CONFIGURATION ====================
 
@@ -67,7 +74,7 @@ OFFICIAL_ALLOWED_DOMAINS = {
     "rrbpatna.gov.in", "ssc.gov.in", "upsc.gov.in", "upsconline.nic.in",
     "ibps.in", "sbi.co.in", "rbi.org.in", "indianrailways.gov.in",
     "rrbapply.gov.in", "indiapostgdsonline.gov.in", "nta.ac.in",
-    "joinindianarmy.nic.in", "joinindianavy.gov.in", "agnipathvayu.cdac.in",
+    "joinindianarmy.nic.in", "joinindiannavy.gov.in", "agnipathvayu.cdac.in",
     "crpf.gov.in", "bsf.gov.in", "cisf.gov.in", "itbpolice.nic.in", "ssb.gov.in"
 }
 
@@ -108,7 +115,6 @@ def generate_expected_slug(title: str, dept: str) -> str:
 # ==================== SCRAPED INBOX (RAW NOTICES PIPELINE) ====================
 
 def insert_inbox_notice(record: Dict[str, Any]) -> Optional[Dict[str, Any]]:
-    """Inserts raw scraped notices into scraped_inbox with safe deduplication."""
     client = get_db()
     if not client:
         raise RuntimeError("Database client not available")
@@ -141,11 +147,10 @@ def insert_inbox_notice(record: Dict[str, Any]) -> Optional[Dict[str, Any]]:
         ).execute()
         return res.data[0] if res.data else None
     except Exception as e:
-        logger.warning(f"Skipping inbox notice insert (duplicate or constraint violation): {e}")
+        logger.warning(f"Skipping inbox notice insert: {e}")
         return None
 
 def fetch_inbox_notices(status: str = "unprocessed", limit: int = 100) -> List[Dict[str, Any]]:
-    """Fetches raw notices for admin moderation and annotates already published posts."""
     client = get_db()
     if not client:
         raise RuntimeError("Database client not available")
@@ -156,29 +161,21 @@ def fetch_inbox_notices(status: str = "unprocessed", limit: int = 100) -> List[D
 
     res = query.order("created_at", desc=True).limit(limit).execute()
     inbox_items = res.data or []
-
     if not inbox_items:
         return []
 
-    # Fetch live slugs for cross-verification
     live_slugs = set()
     live_titles = set()
     try:
-        live_res = (
-            client.table("notices")
-            .select("slug, title")
-            .limit(1000)
-            .execute()
-        )
+        live_res = client.table("notices").select("slug, title").limit(1000).execute()
         for row in (live_res.data or []):
-            if "slug" in row and row["slug"]:
+            if row.get("slug"):
                 live_slugs.add(row["slug"])
-            if "title" in row and row["title"]:
+            if row.get("title"):
                 live_titles.add(row["title"].strip().lower())
     except Exception as e:
         logger.error(f"Error fetching live notices for cross-verification: {e}")
 
-    # Annotate items with duplicate/published status
     for item in inbox_items:
         expected_slug = generate_expected_slug(item.get("title", ""), item.get("department", ""))
         clean_title = (item.get("title") or "").strip().lower()
@@ -188,7 +185,6 @@ def fetch_inbox_notices(status: str = "unprocessed", limit: int = 100) -> List[D
     return inbox_items
 
 def fetch_inbox_item_by_id(item_id: str) -> Optional[Dict[str, Any]]:
-    """Fetches a single raw inbox notice by ID."""
     client = get_db()
     if not client:
         raise RuntimeError("Database client not available")
@@ -196,7 +192,6 @@ def fetch_inbox_item_by_id(item_id: str) -> Optional[Dict[str, Any]]:
     return res.data[0] if res.data else None
 
 def update_inbox_status(item_id: str, status: str) -> Optional[Dict[str, Any]]:
-    """Updates notice status: 'unprocessed', 'enriched', or 'rejected'."""
     client = get_db()
     if not client:
         raise RuntimeError("Database client not available")
@@ -206,12 +201,11 @@ def update_inbox_status(item_id: str, status: str) -> Optional[Dict[str, Any]]:
 # ==================== DAILY AI USAGE LEDGER ====================
 
 def check_and_increment_daily_llm_quota(max_limit: int = 10) -> bool:
-    """Atomically reserves one daily AI quota slot in PostgreSQL."""
     client = get_db()
     if not client:
         raise RuntimeError("Database client not available")
 
-    today_str = date.today().isoformat()
+    today_str = get_current_ist_date()
     try:
         result = client.rpc(
             "increment_daily_llm_quota",
@@ -224,12 +218,11 @@ def check_and_increment_daily_llm_quota(max_limit: int = 10) -> bool:
     return bool(result.data)
 
 def get_today_llm_usage() -> Dict[str, int]:
-    """Retrieves current quota metrics for today."""
     client = get_db()
     if not client:
         return {"used": 0, "remaining": 10, "limit": 10}
 
-    today_str = date.today().isoformat()
+    today_str = get_current_ist_date()
     res = client.table("ai_usage_ledger").select("posts_generated").eq("usage_date", today_str).limit(1).execute()
     used = res.data[0].get("posts_generated", 0) if res.data else 0
     return {
@@ -241,7 +234,6 @@ def get_today_llm_usage() -> Dict[str, int]:
 # ==================== RECRUITMENT NOTICES (PUBLIC & ADMIN) ====================
 
 def fetch_feed_notices(category: Optional[str] = None, limit: int = 50) -> List[Dict[str, Any]]:
-    """Fetches public home feed recruitment notices."""
     client = get_db()
     if not client:
         raise RuntimeError("Database client not available")
@@ -262,7 +254,6 @@ def fetch_feed_notices(category: Optional[str] = None, limit: int = 50) -> List[
     return res.data or []
 
 def fetch_notice_by_slug(slug: str, include_unapproved: bool = False) -> Optional[Dict[str, Any]]:
-    """Retrieves full post information by URL slug."""
     client = get_db()
     if not client:
         raise RuntimeError("Database client not available")
@@ -275,7 +266,6 @@ def fetch_notice_by_slug(slug: str, include_unapproved: bool = False) -> Optiona
     return res.data[0] if res.data else None
 
 def fetch_all_slugs_for_sitemap() -> List[Dict[str, Any]]:
-    """Retrieves active slugs for dynamic sitemap generation."""
     client = get_db()
     if not client:
         return []
@@ -295,7 +285,6 @@ def fetch_all_slugs_for_sitemap() -> List[Dict[str, Any]]:
         return []
 
 def fetch_admin_notices(status: Optional[str] = None, limit: int = 100) -> List[Dict[str, Any]]:
-    """Fetches notices for administrative review."""
     client = get_db()
     if not client:
         raise RuntimeError("Database client not available")
@@ -308,7 +297,6 @@ def fetch_admin_notices(status: Optional[str] = None, limit: int = 100) -> List[
     return res.data or []
 
 def fetch_notice_by_id(post_id: str) -> Optional[Dict[str, Any]]:
-    """Fetches a single notice by UUID."""
     client = get_db()
     if not client:
         raise RuntimeError("Database client not available")
@@ -316,7 +304,6 @@ def fetch_notice_by_id(post_id: str) -> Optional[Dict[str, Any]]:
     return res.data[0] if res.data else None
 
 def update_notice_by_id(post_id: str, updates: Dict[str, Any]) -> Optional[Dict[str, Any]]:
-    """Updates notice metadata."""
     client = get_db()
     if not client:
         raise RuntimeError("Database client not available")
@@ -333,7 +320,6 @@ def update_notice_by_id(post_id: str, updates: Dict[str, Any]) -> Optional[Dict[
     return res.data[0] if res.data else None
 
 def upsert_notice(record: Dict[str, Any]) -> Any:
-    """Upserts enriched notice into notices table."""
     client = get_db()
     if not client:
         raise RuntimeError("Database client not available")
@@ -342,39 +328,48 @@ def upsert_notice(record: Dict[str, Any]) -> Any:
     return client.table("notices").upsert(record, on_conflict="slug").execute()
 
 def add_subscriber(email: str) -> Any:
-    """Stores candidate newsletter subscriptions."""
     client = get_db()
     if not client:
         raise RuntimeError("Database client not available")
     return client.table("subscribers").upsert({"email": email.strip().lower()}, on_conflict="email").execute()
 
-# ==================== CLASS 10TH MOCK TEST HELPERS ====================
+# ==================== CLASS 10TH MOCK TEST CORE ENGINE ====================
 
 def fetch_today_quiz_record(slot: str = "slot_1", subject: Optional[str] = None) -> Optional[Dict[str, Any]]:
-    """Retrieves today's quiz metadata or the latest active quiz fallback."""
+    """Retrieves today's quiz metadata using Indian Standard Time (IST) or the latest active quiz fallback."""
     client = get_db()
     if not client:
         raise RuntimeError("Database client not available")
 
-    today_str = date.today().isoformat()
-    query = client.table("class10_quizzes").select("*").eq("quiz_date", today_str).eq("slot", slot).eq("is_active", True)
+    today_str = get_current_ist_date()
+    query = (
+        client.table("class10_quizzes")
+        .select("id, title, subject, slot, quiz_date, total_questions, duration_minutes, is_active")
+        .eq("quiz_date", today_str)
+        .eq("slot", slot)
+        .eq("is_active", True)
+    )
     if subject:
-        query = query.eq("subject", subject)
+        query = query.eq("subject", subject.strip().lower())
 
     res = query.limit(1).execute()
     if res.data:
         return res.data[0]
 
-    # Fallback to latest active quiz
-    fallback_query = client.table("class10_quizzes").select("*").eq("slot", slot).eq("is_active", True)
+    # Fallback to latest active quiz across slots
+    fallback_query = (
+        client.table("class10_quizzes")
+        .select("id, title, subject, slot, quiz_date, total_questions, duration_minutes, is_active")
+        .eq("is_active", True)
+    )
     if subject:
-        fallback_query = fallback_query.eq("subject", subject)
-    fallback_res = fallback_query.order("created_at", desc=True).limit(1).execute()
+        fallback_query = fallback_query.eq("subject", subject.strip().lower())
 
+    fallback_res = fallback_query.order("created_at", desc=True).limit(1).execute()
     return fallback_res.data[0] if fallback_res.data else None
 
 def fetch_quiz_questions_for_student(quiz_id: str) -> List[Dict[str, Any]]:
-    """Fetches questions without leaking correct_option and explanation to students."""
+    """Fetches questions strictly masking correct_option and explanation for candidate safety."""
     client = get_db()
     if not client:
         raise RuntimeError("Database client not available")
@@ -382,63 +377,155 @@ def fetch_quiz_questions_for_student(quiz_id: str) -> List[Dict[str, Any]]:
     res = (
         client.table("class10_questions")
         .select("id, question_text, option_a, option_b, option_c, option_d, order_index")
-        .eq("quiz_id", quiz_id)
+        .eq("quiz_id", quiz_id.strip())
         .order("order_index", desc=False)
         .execute()
     )
     return res.data or []
 
-def evaluate_student_answers(quiz_id: str, answers: Dict[str, str]) -> Dict[str, Any]:
-    """Calculates official score and returns questions breakdown with explanations."""
+def insert_leaderboard_record(
+    quiz_id: str,
+    student_name: str,
+    district: str,
+    score: int,
+    total_questions: int,
+    accuracy: float,
+    phone: Optional[str] = None
+) -> Optional[Dict[str, Any]]:
+    """Inserts candidate score record into the district-based leaderboard."""
     client = get_db()
     if not client:
-        raise RuntimeError("Database client not available")
+        return None
 
-    db_questions = (
-        client.table("class10_questions")
-        .select("id, question_text, correct_option, explanation")
-        .eq("quiz_id", quiz_id)
-        .order("order_index", desc=False)
-        .execute()
-    ).data or []
+    try:
+        res = client.table("class10_leaderboard").insert({
+            "quiz_id": quiz_id.strip(),
+            "student_name": student_name.strip() or "छात्र",
+            "district": district.strip() or "बिहार",
+            "phone": phone.strip() if phone else None,
+            "score": score,
+            "total_questions": total_questions,
+            "accuracy": accuracy
+        }).execute()
+        return res.data[0] if res.data else None
+    except Exception as e:
+        logger.error(f"Failed to record leaderboard entry: {e}")
+        return None
 
-    if not db_questions:
-        raise ValueError("No questions found for the given quiz ID")
+def fetch_quiz_leaderboard_db(quiz_id: str, limit: int = 25) -> List[Dict[str, Any]]:
+    """Retrieves sorted district leaderboard rankers for a quiz."""
+    client = get_db()
+    if not client:
+        return []
 
-    total = len(db_questions)
-    correct = 0
-    wrong = 0
-    results = []
+    try:
+        res = (
+            client.table("class10_leaderboard")
+            .select("student_name, district, score, total_questions, accuracy, created_at")
+            .eq("quiz_id", quiz_id.strip())
+            .order("score", desc=True)
+            .order("created_at", desc=False)
+            .limit(limit)
+            .execute()
+        )
+        return res.data or []
+    except Exception as e:
+        logger.error(f"Failed to fetch leaderboard from DB: {e}")
+        return []
 
-    for q in db_questions:
-        q_id = str(q["id"])
-        user_choice = answers.get(q_id, "").upper().strip()
-        actual_choice = str(q["correct_option"]).upper().strip()
-        is_correct = (user_choice == actual_choice)
+# ==================== ADMIN QUIZ MANAGEMENT HELPERS ====================
 
-        if user_choice:
-            if is_correct:
-                correct += 1
-            else:
-                wrong += 1
+def admin_fetch_all_quizzes_db(limit: int = 50) -> List[Dict[str, Any]]:
+    """Fetches all quiz slots with status for the admin panel."""
+    client = get_db()
+    if not client:
+        return []
 
-        results.append({
-            "id": q_id,
-            "question_text": q["question_text"],
-            "user_choice": user_choice if user_choice else None,
-            "correct_option": actual_choice,
-            "is_correct": is_correct,
-            "explanation": q.get("explanation")
-        })
+    try:
+        res = (
+            client.table("class10_quizzes")
+            .select("id, title, subject, slot, quiz_date, total_questions, duration_minutes, is_active, created_at")
+            .order("quiz_date", desc=True)
+            .limit(limit)
+            .execute()
+        )
+        return res.data or []
+    except Exception as e:
+        logger.error(f"Admin fetch all quizzes DB error: {e}")
+        return []
 
-    accuracy = round((correct / total) * 100, 1) if total > 0 else 0
+def admin_create_quiz_db(
+    title: str,
+    subject: str,
+    slot: str,
+    quiz_date: str,
+    duration_minutes: int,
+    is_active: bool = True
+) -> Optional[Dict[str, Any]]:
+    """Admin: Creates and schedules a new quiz slot."""
+    client = get_db()
+    if not client:
+        return None
 
-    return {
-        "total_questions": total,
-        "attempted": len([v for v in answers.values() if v]),
-        "correct_count": correct,
-        "wrong_count": wrong,
-        "score": correct,
-        "accuracy_percentage": accuracy,
-        "results": results
-    }
+    try:
+        payload = {
+            "title": title.strip(),
+            "subject": subject.strip().lower(),
+            "slot": slot.strip(),
+            "quiz_date": quiz_date,
+            "duration_minutes": duration_minutes,
+            "total_questions": 0,
+            "is_active": is_active
+        }
+        res = client.table("class10_quizzes").insert(payload).execute()
+        return res.data[0] if res.data else None
+    except Exception as e:
+        logger.error(f"Admin create quiz DB error: {e}")
+        return None
+
+def admin_toggle_quiz_status_db(quiz_id: str, is_active: bool) -> bool:
+    """Admin: Toggles is_active status of any quiz."""
+    client = get_db()
+    if not client:
+        return False
+
+    try:
+        client.table("class10_quizzes").update({"is_active": is_active}).eq("id", quiz_id.strip()).execute()
+        return True
+    except Exception as e:
+        logger.error(f"Admin toggle quiz DB error: {e}")
+        return False
+
+def admin_add_questions_batch_db(quiz_id: str, questions: List[Dict[str, Any]]) -> int:
+    """Admin: Batch inserts questions and updates total_questions count atomically."""
+    client = get_db()
+    if not client or not questions:
+        return 0
+
+    clean_quiz_id = quiz_id.strip()
+    try:
+        # Get existing count for index offset
+        cnt_res = client.table("class10_questions").select("id", count="exact").eq("quiz_id", clean_quiz_id).execute()
+        offset = cnt_res.count or 0
+
+        formatted = []
+        for idx, q in enumerate(questions, start=offset + 1):
+            formatted.append({
+                "quiz_id": clean_quiz_id,
+                "question_text": q["question_text"].strip(),
+                "option_a": q["option_a"].strip(),
+                "option_b": q["option_b"].strip(),
+                "option_c": q["option_c"].strip(),
+                "option_d": q["option_d"].strip(),
+                "correct_option": q["correct_option"].strip().upper(),
+                "explanation": q.get("explanation", "").strip() or "NCERT आधिकारिक मॉडल उत्तर।",
+                "order_index": idx
+            })
+
+        client.table("class10_questions").insert(formatted).execute()
+        new_total = offset + len(formatted)
+        client.table("class10_quizzes").update({"total_questions": new_total}).eq("id", clean_quiz_id).execute()
+        return len(formatted)
+    except Exception as e:
+        logger.error(f"Admin add questions batch DB error: {e}")
+        return 0

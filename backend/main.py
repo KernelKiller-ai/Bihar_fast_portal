@@ -3,10 +3,10 @@ import re
 import json
 import hmac
 import logging
-from datetime import date, datetime, timezone
+from datetime import datetime, timezone
 from urllib.parse import urlparse
 from typing import Optional, Any, List, Dict
-from fastapi import Depends, FastAPI, HTTPException, BackgroundTasks, Header, Query, Response, status
+from fastapi import Depends, FastAPI, HTTPException, BackgroundTasks, Header, Query, Request, Response, status
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.middleware.gzip import GZipMiddleware
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
@@ -31,6 +31,13 @@ INTERNAL_SYNC_SECRET = os.getenv("INTERNAL_SYNC_SECRET", "").strip()
 ADMIN_API_TOKEN = os.getenv("ADMIN_API_TOKEN", "").strip()
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY", "").strip('"\'')
 bearer_scheme = HTTPBearer(auto_error=False)
+
+# Admin Brute-Force Shield Config
+MAX_ADMIN_ATTEMPTS = 4
+ADMIN_LOCKOUT_SECONDS = 3600  # 1 Hour lockout
+
+# In-memory fallback if Redis is unreachable
+_MEMORY_ATTEMPTS: Dict[str, Dict[str, Any]] = {}
 
 # Persistent Redis Client
 redis: Optional[Redis] = None
@@ -136,7 +143,89 @@ class PostUpdateRequest(BaseModel):
 class StatusUpdateRequest(BaseModel):
     status: str
 
-# ==================== HELPER FUNCTIONS ====================
+# ==================== HELPER & SECURITY FUNCTIONS ====================
+
+def extract_client_ip(request: Request) -> str:
+    """Safely extracts client IP behind reverse proxies (Render / Cloudflare / Vercel)."""
+    cf_connecting_ip = request.headers.get("cf-connecting-ip")
+    if cf_connecting_ip:
+        return cf_connecting_ip.strip()
+
+    x_forwarded_for = request.headers.get("x-forwarded-for")
+    if x_forwarded_for:
+        return x_forwarded_for.split(",")[0].strip()
+
+    return request.client.host if request.client else "unknown_client"
+
+def check_admin_lockout(client_ip: str):
+    """Enforces strict block if IP exceeds 4 failed attempts."""
+    cache_key = f"admin_lock:{client_ip}"
+    attempts = 0
+
+    if redis:
+        try:
+            val = redis.get(cache_key)
+            if val is not None:
+                attempts = int(val)
+        except Exception:
+            pass
+    else:
+        record = _MEMORY_ATTEMPTS.get(client_ip)
+        if record:
+            if datetime.now(timezone.utc).timestamp() < record["locked_until"]:
+                attempts = record["count"]
+            else:
+                _MEMORY_ATTEMPTS.pop(client_ip, None)
+
+    if attempts >= MAX_ADMIN_ATTEMPTS:
+        logger.warning(f"Admin access blocked for IP {client_ip}. Max attempts exceeded.")
+        raise HTTPException(
+            status_code=status.HTTP_429_TOO_MANY_REQUESTS,
+            detail=f"सुरक्षा लॉक: लगातार {MAX_ADMIN_ATTEMPTS} बार गलत प्रयास किए गए हैं। यह IP 1 घंटे के लिए ब्लॉक कर दी गई है।"
+        )
+
+def record_failed_attempt(client_ip: str):
+    """Increments failure count and locks for 3600 seconds."""
+    cache_key = f"admin_lock:{client_ip}"
+    current_attempts = 1
+
+    if redis:
+        try:
+            current = redis.incr(cache_key)
+            current_attempts = int(current)
+            if current_attempts == 1:
+                redis.expire(cache_key, ADMIN_LOCKOUT_SECONDS)
+        except Exception as e:
+            logger.error(f"Redis lockout record error: {e}")
+    else:
+        now = datetime.now(timezone.utc).timestamp()
+        record = _MEMORY_ATTEMPTS.get(client_ip, {"count": 0, "locked_until": now + ADMIN_LOCKOUT_SECONDS})
+        record["count"] += 1
+        record["locked_until"] = now + ADMIN_LOCKOUT_SECONDS
+        _MEMORY_ATTEMPTS[client_ip] = record
+        current_attempts = record["count"]
+
+    remaining = max(0, MAX_ADMIN_ATTEMPTS - current_attempts)
+    if remaining == 0:
+        raise HTTPException(
+            status_code=status.HTTP_429_TOO_MANY_REQUESTS,
+            detail=f"सुरक्षा लॉक: लगातार {MAX_ADMIN_ATTEMPTS} गलत टोकन। आपका IP 1 घंटे के लिए ब्लॉक कर दिया गया है।"
+        )
+
+    raise HTTPException(
+        status_code=status.HTTP_401_UNAUTHORIZED,
+        detail=f"गलत Admin Token! आपके पास {remaining} प्रयास शेष हैं।"
+    )
+
+def reset_failed_attempts(client_ip: str):
+    """Clears failure counter upon verified admin login."""
+    cache_key = f"admin_lock:{client_ip}"
+    if redis:
+        try:
+            redis.delete(cache_key)
+        except Exception:
+            pass
+    _MEMORY_ATTEMPTS.pop(client_ip, None)
 
 def slugify(title: str, dept: str) -> str:
     combined = f"{dept}-{title}"
@@ -156,17 +245,28 @@ def is_url_whitelisted(url: Optional[str]) -> bool:
         return False
 
 def require_admin(
+    request: Request,
     credentials: Optional[HTTPAuthorizationCredentials] = Depends(bearer_scheme),
 ):
     if not ADMIN_API_TOKEN:
         logger.critical("ADMIN_API_TOKEN is not configured; administrative access is disabled.")
         raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail="Admin authentication is unavailable")
+
+    client_ip = extract_client_ip(request)
+    
+    # 1. Check lockout status
+    check_admin_lockout(client_ip)
+
+    # 2. Verify token
     if (
         not credentials
         or credentials.scheme.lower() != "bearer"
-        or not hmac.compare_digest(credentials.credentials, ADMIN_API_TOKEN)
+        or not hmac.compare_digest(credentials.credentials.strip(), ADMIN_API_TOKEN)
     ):
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Authentication required")
+        record_failed_attempt(client_ip)
+
+    # 3. Reset failed counters on success
+    reset_failed_attempts(client_ip)
     return True
 
 def require_sync_or_admin(
@@ -177,7 +277,7 @@ def require_sync_or_admin(
         credentials
         and credentials.scheme.lower() == "bearer"
         and ADMIN_API_TOKEN
-        and hmac.compare_digest(credentials.credentials, ADMIN_API_TOKEN)
+        and hmac.compare_digest(credentials.credentials.strip(), ADMIN_API_TOKEN)
     )
     sync_valid = bool(
         INTERNAL_SYNC_SECRET
@@ -325,7 +425,6 @@ def sync_raw_to_inbox(
     payload: InboxSyncPayload,
     _: None = Depends(require_sync_or_admin),
 ):
-    """Cron scraper sends raw notices here. Stored in inbox without invoking LLM."""
     if not is_url_whitelisted(payload.pdf_url) or not is_url_whitelisted(payload.apply_url):
         raise HTTPException(status_code=400, detail="Domain not in official whitelist")
 
@@ -342,12 +441,10 @@ def sync_raw_to_inbox(
 
 @app.get("/api/admin/quota-stats")
 def get_quota_stats(_: None = Depends(require_admin)):
-    """Returns today's LLM consumption (max 10/day)."""
     return db.get_today_llm_usage()
 
 @app.get("/api/admin/inbox")
 def get_scraped_inbox(status: str = Query("unprocessed"), _: None = Depends(require_admin)):
-    """Fetches raw notices waiting for Admin review."""
     items = db.fetch_inbox_notices(status=status, limit=100)
     return Response(
         content=orjson.dumps({"success": True, "count": len(items), "data": items}),
@@ -356,7 +453,6 @@ def get_scraped_inbox(status: str = Query("unprocessed"), _: None = Depends(requ
 
 @app.post("/api/admin/inbox/{inbox_id}/reject")
 def reject_inbox_item(inbox_id: str, _: None = Depends(require_admin)):
-    """Admin ignores/rejects an unimportant notice with zero LLM consumption."""
     updated = db.update_inbox_status(inbox_id, "rejected")
     if not updated:
         raise HTTPException(status_code=404, detail="Inbox item not found")
@@ -364,10 +460,6 @@ def reject_inbox_item(inbox_id: str, _: None = Depends(require_admin)):
 
 @app.post("/api/admin/inbox/{inbox_id}/enrich-and-publish")
 def enrich_and_publish_with_llm(inbox_id: str, bg: BackgroundTasks, _: None = Depends(require_admin)):
-    """
-    Human-in-the-loop: Admin confirms enrichment.
-    Checks quota -> calls Gemini 2.5 Flash -> stores in notices table -> flushes Redis.
-    """
     inbox_item = db.fetch_inbox_item_by_id(inbox_id)
     if not inbox_item:
         raise HTTPException(status_code=404, detail="Inbox item not found")
@@ -375,7 +467,6 @@ def enrich_and_publish_with_llm(inbox_id: str, bg: BackgroundTasks, _: None = De
     if inbox_item.get("status") == "enriched":
         raise HTTPException(status_code=400, detail="Notice has already been processed with AI.")
 
-    # Enforce strict 10/day quota
     allowed = db.check_and_increment_daily_llm_quota(max_limit=10)
     if not allowed:
         raise HTTPException(
@@ -541,7 +632,7 @@ def change_post_status(post_id: str, payload: StatusUpdateRequest, bg: Backgroun
         media_type="application/json"
     )
 
-# ==================== DYNAMIC SITEMAP ====================
+# ==================== DYNAMIC SITEMAP (IST SYNCHRONIZED) ====================
 
 @app.get("/api/sitemap-posts.xml")
 def dynamic_posts_sitemap():
@@ -559,7 +650,7 @@ def dynamic_posts_sitemap():
             logger.warning(f"Redis read bypass for sitemap: {e}")
 
     site_base = "https://www.biharfast.in"
-    today = date.today().isoformat()
+    today = db.get_current_ist_date()
 
     try:
         posts = db.fetch_all_slugs_for_sitemap()

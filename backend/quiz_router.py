@@ -1,9 +1,12 @@
+import os
+import hmac
 import logging
 import hashlib
 import re
 from typing import Dict, Any, List, Optional
 from datetime import datetime, timezone, timedelta, time
-from fastapi import APIRouter, HTTPException, Query, Request, status
+from fastapi import APIRouter, HTTPException, Query, Request, Depends, status
+from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from pydantic import BaseModel, Field, field_validator
 from database import get_db
 
@@ -14,7 +17,32 @@ quiz_router = APIRouter(prefix="/api/quiz", tags=["Class 10 Quiz"])
 IST_ZONE = timezone(timedelta(hours=5, minutes=30))
 DAILY_ATTEMPT_LIMIT = 6
 
-# ==================== SECURITY & HELPER UTILITIES ====================
+bearer_scheme = HTTPBearer(auto_error=False)
+ADMIN_API_TOKEN = os.getenv("ADMIN_API_TOKEN", "").strip()
+
+
+# ==================== SECURITY & AUTHENTICATION ====================
+
+def verify_quiz_admin(
+    credentials: Optional[HTTPAuthorizationCredentials] = Depends(bearer_scheme)
+):
+    """Admin Token verification for managing quizzes from frontend."""
+    if not ADMIN_API_TOKEN:
+        logger.critical("ADMIN_API_TOKEN is not configured on server!")
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE, 
+            detail="ADMIN_API_TOKEN not configured"
+        )
+    if (
+        not credentials 
+        or credentials.scheme.lower() != "bearer" 
+        or not hmac.compare_digest(credentials.credentials.strip(), ADMIN_API_TOKEN)
+    ):
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED, 
+            detail="Invalid or missing admin token"
+        )
+    return True
 
 def get_current_ist_time() -> datetime:
     """Returns current system time anchored strictly to Indian Standard Time (IST)."""
@@ -28,7 +56,6 @@ def extract_client_ip(request: Request) -> str:
 
     x_forwarded_for = request.headers.get("x-forwarded-for")
     if x_forwarded_for:
-        # First IP in the list represents the authentic client
         return x_forwarded_for.split(",")[0].strip()
 
     return request.client.host if request.client else "unknown_ip"
@@ -44,7 +71,6 @@ def enforce_ip_rate_limit(supabase, ip_hash: str, today_str: str) -> int:
     Raises HTTP 429 when quota is consumed.
     """
     try:
-        # 1. Fetch current attempt count
         res = (
             supabase.table("quiz_ip_rate_limits")
             .select("attempt_count")
@@ -57,13 +83,12 @@ def enforce_ip_rate_limit(supabase, ip_hash: str, today_str: str) -> int:
         current_attempts = res.data[0]["attempt_count"] if res.data else 0
 
         if current_attempts >= DAILY_ATTEMPT_LIMIT:
-            logger.warning(f"Rate limit exceeded: IP Hash {ip_hash[:10]}... has attempted {current_attempts} times.")
+            logger.warning(f"Rate limit exceeded for IP Hash {ip_hash[:10]}...")
             raise HTTPException(
                 status_code=status.HTTP_429_TOO_MANY_REQUESTS,
                 detail=f"सुरक्षा सीमा समाप्त: एक IP पते से एक दिन में केवल {DAILY_ATTEMPT_LIMIT} बार टेस्ट दिया जा सकता है। कृपया कल पुनः प्रयास करें।"
             )
 
-        # 2. Increment attempts atomically
         new_count = current_attempts + 1
         supabase.table("quiz_ip_rate_limits").upsert({
             "ip_hash": ip_hash,
@@ -118,15 +143,11 @@ class TodayQuizResponse(BaseModel):
     message: Optional[str] = None
 
 class SubmitAnswersRequest(BaseModel):
-    quiz_id: str = Field(..., min_length=1, max_length=100, description="UUID of the quiz batch")
+    quiz_id: str = Field(..., min_length=1, max_length=100)
     student_name: str = Field("छात्र", min_length=2, max_length=50)
     district: str = Field("बिहार", min_length=2, max_length=50)
     phone: Optional[str] = Field(None, max_length=15)
-    answers: Dict[str, str] = Field(
-        default_factory=dict,
-        max_length=100,
-        description="Map of question_id to selected option (A, B, C, D)"
-    )
+    answers: Dict[str, str] = Field(default_factory=dict, max_length=100)
 
     @field_validator("student_name", "district")
     @classmethod
@@ -174,6 +195,28 @@ class LeaderboardEntry(BaseModel):
     total_questions: int
     accuracy: float
     submitted_at: str
+
+# Admin Request Schemas
+class AdminQuizCreateRequest(BaseModel):
+    title: str = Field(..., min_length=3)
+    subject: str = Field("science", min_length=2)
+    slot: str = Field("slot_1")
+    quiz_date: str = Field(...)
+    duration_minutes: int = Field(15, ge=1, le=180)
+    is_active: bool = True
+
+class AdminQuestionItem(BaseModel):
+    question_text: str
+    option_a: str
+    option_b: str
+    option_c: str
+    option_d: str
+    correct_option: str
+    explanation: Optional[str] = ""
+
+class AdminBatchQuestionRequest(BaseModel):
+    quiz_id: str
+    questions: List[AdminQuestionItem]
 
 
 # ==================== AUTOMATIC TIME SENSING ENGINE ====================
@@ -237,7 +280,7 @@ def evaluate_exam_window(current_dt: Optional[datetime] = None) -> TimingStatus:
         )
 
 
-# ==================== ENDPOINTS ====================
+# ==================== PUBLIC QUIZ ENDPOINTS ====================
 
 @quiz_router.get(
     "/today",
@@ -280,7 +323,7 @@ def get_today_quiz(
         q_res = query.limit(1).execute()
         quiz_data = q_res.data[0] if q_res.data else None
 
-        # Robust Fallback to most recent active set
+        # Fallback to most recent active set
         if not quiz_data:
             fb_res = (
                 supabase.table("class10_quizzes")
@@ -358,7 +401,7 @@ def submit_quiz_answers(sub: SubmitAnswersRequest, request: Request):
     attempts_used = enforce_ip_rate_limit(supabase, ip_hash, today_str)
     remaining_attempts = max(0, DAILY_ATTEMPT_LIMIT - attempts_used)
 
-    # 2. Timing and Exam Session Validity
+    # 2. Timing and Session Check
     timing = evaluate_exam_window()
     if not timing.is_live or not timing.active_slot:
         raise HTTPException(status_code=409, detail="Test submission window has closed")
@@ -387,7 +430,7 @@ def submit_quiz_answers(sub: SubmitAnswersRequest, request: Request):
     if unknown_question_ids:
         raise HTTPException(status_code=422, detail="Answers contain invalid question IDs")
 
-    # 4. Accurate Scoring Engine
+    # 4. Scoring Engine
     total = len(db_questions)
     correct = 0
     wrong = 0
@@ -422,7 +465,7 @@ def submit_quiz_answers(sub: SubmitAnswersRequest, request: Request):
 
     accuracy = round((correct / (correct + wrong)) * 100, 1) if (correct + wrong) > 0 else 0.0
 
-    # 5. Insert Record to District Leaderboard
+    # 5. Leaderboard Entry Insert
     try:
         supabase.table("class10_leaderboard").insert({
             "quiz_id": clean_quiz_id,
@@ -487,3 +530,116 @@ def get_quiz_leaderboard(quiz_id: str, limit: int = 25):
     except Exception as e:
         logger.error(f"Error fetching leaderboard: {e}")
         return []
+
+
+# ==================== ADMIN CONTROL ENDPOINTS ====================
+
+@quiz_router.get(
+    "/admin/all-quizzes",
+    summary="Admin: Fetch all test slots with question counts"
+)
+def admin_get_all_quizzes(_: bool = Depends(verify_quiz_admin)):
+    supabase = get_db()
+    if not supabase:
+        raise HTTPException(status_code=503, detail="Database unavailable")
+    
+    try:
+        res = (
+            supabase.table("class10_quizzes")
+            .select("id, title, subject, slot, quiz_date, total_questions, duration_minutes, is_active, created_at")
+            .order("quiz_date", desc=True)
+            .limit(50)
+            .execute()
+        )
+        return {"success": True, "data": res.data or []}
+    except Exception as e:
+        logger.error(f"Error fetching admin quizzes: {e}")
+        return {"success": True, "data": []}
+
+
+@quiz_router.post(
+    "/admin/create-quiz",
+    summary="Admin: Schedule or create a new quiz slot"
+)
+def admin_create_quiz(payload: AdminQuizCreateRequest, _: bool = Depends(verify_quiz_admin)):
+    supabase = get_db()
+    if not supabase:
+        raise HTTPException(status_code=503, detail="Database unavailable")
+
+    data = {
+        "title": payload.title.strip(),
+        "subject": payload.subject.strip().lower(),
+        "slot": payload.slot.strip(),
+        "quiz_date": payload.quiz_date,
+        "duration_minutes": payload.duration_minutes,
+        "total_questions": 0,
+        "is_active": payload.is_active
+    }
+    
+    try:
+        res = supabase.table("class10_quizzes").insert(data).execute()
+        return {"success": True, "data": res.data[0] if res.data else None}
+    except Exception as e:
+        logger.error(f"Error creating quiz: {e}")
+        raise HTTPException(status_code=500, detail=f"Failed to create quiz: {e}")
+
+
+@quiz_router.post(
+    "/admin/toggle-status/{quiz_id}",
+    summary="Admin: Turn ON/OFF live test instantly"
+)
+def admin_toggle_quiz_status(quiz_id: str, is_active: bool = Query(...), _: bool = Depends(verify_quiz_admin)):
+    supabase = get_db()
+    if not supabase:
+        raise HTTPException(status_code=503, detail="Database unavailable")
+
+    try:
+        supabase.table("class10_quizzes").update({"is_active": is_active}).eq("id", quiz_id.strip()).execute()
+        return {"success": True, "message": f"Quiz status updated to {is_active}"}
+    except Exception as e:
+        logger.error(f"Error toggling quiz status: {e}")
+        raise HTTPException(status_code=500, detail="Failed to update status")
+
+
+@quiz_router.post(
+    "/admin/add-questions",
+    summary="Admin: Add questions to a selected quiz batch"
+)
+def admin_add_questions_batch(payload: AdminBatchQuestionRequest, _: bool = Depends(verify_quiz_admin)):
+    supabase = get_db()
+    if not supabase:
+        raise HTTPException(status_code=503, detail="Database unavailable")
+
+    clean_quiz_id = payload.quiz_id.strip()
+
+    # Get current question count for order_index
+    try:
+        count_res = supabase.table("class10_questions").select("id", count="exact").eq("quiz_id", clean_quiz_id).execute()
+        existing_count = count_res.count or 0
+    except Exception:
+        existing_count = 0
+
+    formatted = []
+    for idx, q in enumerate(payload.questions, start=existing_count + 1):
+        formatted.append({
+            "quiz_id": clean_quiz_id,
+            "question_text": q.question_text.strip(),
+            "option_a": q.option_a.strip(),
+            "option_b": q.option_b.strip(),
+            "option_c": q.option_c.strip(),
+            "option_d": q.option_d.strip(),
+            "correct_option": q.correct_option.strip().upper(),
+            "explanation": q.explanation.strip() if q.explanation else "NCERT आधिकारिक मॉडल उत्तर।",
+            "order_index": idx
+        })
+
+    if formatted:
+        try:
+            supabase.table("class10_questions").insert(formatted).execute()
+            # Update total question count in parent quiz
+            supabase.table("class10_quizzes").update({"total_questions": existing_count + len(formatted)}).eq("id", clean_quiz_id).execute()
+        except Exception as e:
+            logger.error(f"Error saving questions: {e}")
+            raise HTTPException(status_code=500, detail="Failed to save questions")
+
+    return {"success": True, "count": len(formatted)}
