@@ -2,19 +2,64 @@ import React, { useState, useEffect } from "react";
 import PropTypes from "prop-types";
 import { 
   Plus, Power, Trash2, ListOrdered, RefreshCw, 
-  Layers, CheckCircle2, AlertCircle, FileCode, ChevronDown, GraduationCap
+  Layers, GraduationCap
 } from "lucide-react";
 
-// Exam Categories mapping for clean UI badges
-const EXAM_LABELS = {
-  class_10: "BSEB 10th मैट्रिक",
-  bseb_12_science: "BSEB 12th Science",
-  bseb_12_arts: "BSEB 12th Arts/Comm",
-  bihar_police_constable: "CSBC बिहार पुलिस",
-  bihar_daroga_si: "BPSSC बिहार दारोगा",
-  bssc_inter_level: "BSSC इंटर स्तरीय",
-  ssc_gd_constable: "SSC GD कांस्टेबल",
-  rrb_group_d_alp: "Railway RRB"
+// Official BSEB 2026 & Competitive Exam Subject Mapping
+const EXAM_SUBJECT_MAP = {
+  // ==================== BSEB CLASS 10TH (MATRIC) ====================
+  bseb_10_110: { code: "110", name: "10th Mathematics (गणित)", group: "BSEB 10th (Matric)" },
+  bseb_10_112: { code: "112", name: "10th Science (विज्ञान)", group: "BSEB 10th (Matric)" },
+  bseb_10_111: { code: "111", name: "10th Social Science (सामाजिक विज्ञान)", group: "BSEB 10th (Matric)" },
+  bseb_10_101: { code: "101", name: "10th MIL-Hindi (हिंदी)", group: "BSEB 10th (Matric)" },
+  bseb_10_105: { code: "105", name: "10th SIL-Sanskrit (संस्कृत)", group: "BSEB 10th (Matric)" },
+  bseb_10_103: { code: "103", name: "10th MIL-Urdu (उर्दू)", group: "BSEB 10th (Matric)" },
+  bseb_10_104: { code: "104", name: "10th MIL-Maithili (मैथिली)", group: "BSEB 10th (Matric)" },
+  bseb_10_102: { code: "102", name: "10th MIL-Bangla (बांग्ला)", group: "BSEB 10th (Matric)" },
+  bseb_10_106: { code: "106", name: "10th SIL-Hindi (Non-Hindi)", group: "BSEB 10th (Matric)" },
+  bseb_10_113: { code: "113", name: "10th English (अंग्रेजी)", group: "BSEB 10th (Matric)" },
+  bseb_10_114: { code: "114", name: "10th Advanced Math (ऐच्छिक गणित)", group: "BSEB 10th (Matric)" },
+  bseb_10_115: { code: "115", name: "10th Commerce (वाणिज्य)", group: "BSEB 10th (Matric)" },
+  bseb_10_116: { code: "116", name: "10th Economics (अर्थशास्त्र)", group: "BSEB 10th (Matric)" },
+
+  // ==================== BSEB CLASS 12TH (INTER SCIENCE) ====================
+  bseb_12_117: { code: "117", name: "12th Physics (भौतिक विज्ञान)", group: "BSEB 12th Science" },
+  bseb_12_118: { code: "118", name: "12th Chemistry (रसायन विज्ञान)", group: "BSEB 12th Science" },
+  bseb_12_119: { code: "119", name: "12th Biology (जीव विज्ञान)", group: "BSEB 12th Science" },
+  bseb_12_121: { code: "121", name: "12th Mathematics (गणित - Science)", group: "BSEB 12th Science" },
+  bseb_12_120: { code: "120", name: "12th Agriculture (कृषि)", group: "BSEB 12th Science" },
+  bseb_12_122: { code: "122", name: "12th Computer Science", group: "BSEB 12th Science" },
+
+  // ==================== BSEB CLASS 12TH (INTER ARTS) ====================
+  bseb_12_321: { code: "321", name: "12th History (इतिहास)", group: "BSEB 12th Arts" },
+  bseb_12_322: { code: "322", name: "12th Political Science (राजनीति शास्त्र)", group: "BSEB 12th Arts" },
+  bseb_12_323: { code: "323", name: "12th Geography (भूगोल)", group: "BSEB 12th Arts" },
+  bseb_12_326: { code: "326", name: "12th Economics (अर्थशास्त्र - Arts)", group: "BSEB 12th Arts" },
+  bseb_12_324: { code: "324", name: "12th Psychology (मनोविज्ञान)", group: "BSEB 12th Arts" },
+  bseb_12_325: { code: "325", name: "12th Sociology (समाजशास्त्र)", group: "BSEB 12th Arts" },
+  bseb_12_319: { code: "319", name: "12th Home Science (गृह विज्ञान)", group: "BSEB 12th Arts" },
+  bseb_12_320: { code: "320", name: "12th Philosophy (दर्शनशास्त्र)", group: "BSEB 12th Arts" },
+  bseb_12_318: { code: "318", name: "12th Music (संगीत)", group: "BSEB 12th Arts" },
+
+  // ==================== BSEB CLASS 12TH (INTER COMMERCE) ====================
+  bseb_12_220: { code: "220", name: "12th Accountancy (लेखाशास्त्र)", group: "BSEB 12th Commerce" },
+  bseb_12_217: { code: "217", name: "12th Business Studies (व्यवसाय अध्ययन)", group: "BSEB 12th Commerce" },
+  bseb_12_218: { code: "218", name: "12th Entrepreneurship (उद्यमिता)", group: "BSEB 12th Commerce" },
+  bseb_12_219: { code: "219", name: "12th Economics (अर्थशास्त्र - Commerce)", group: "BSEB 12th Commerce" },
+
+  // ==================== BSEB CLASS 12TH (LANGUAGES) ====================
+  bseb_12_lang_hindi: { code: "106/206/306", name: "12th Hindi (हिंदी - Sc/Com/Arts)", group: "BSEB 12th Languages" },
+  bseb_12_lang_eng: { code: "105/124/205", name: "12th English (अंग्रेजी - Sc/Com/Arts)", group: "BSEB 12th Languages" },
+  bseb_12_lang_urdu: { code: "107/207/307", name: "12th Urdu (उर्दू)", group: "BSEB 12th Languages" },
+  bseb_12_lang_sanskrit: { code: "109/209/309", name: "12th Sanskrit (संस्कृत)", group: "BSEB 12th Languages" },
+  bseb_12_lang_maithili: { code: "108/208/308", name: "12th Maithili (मैथिली)", group: "BSEB 12th Languages" },
+
+  // ==================== COMPETITIVE & SARKARI EXAMS ====================
+  bihar_police_constable: { code: "CSBC", name: "CSBC बिहार पुलिस कांस्टेबल", group: "Govt Job Exams" },
+  bihar_daroga_si: { code: "BPSSC", name: "BPSSC बिहार दारोगा (SI)", group: "Govt Job Exams" },
+  bssc_inter_level: { code: "BSSC", name: "BSSC इंटर स्तरीय (10+2)", group: "Govt Job Exams" },
+  ssc_gd_constable: { code: "SSC", name: "SSC GD कांस्टेबल (10th Pass)", group: "Govt Job Exams" },
+  rrb_group_d_alp: { code: "RRB", name: "Railway RRB (Group D / ALP)", group: "Govt Job Exams" }
 };
 
 export default function AdminQuizManager({ adminToken, apiBaseUrl }) {
@@ -24,20 +69,17 @@ export default function AdminQuizManager({ adminToken, apiBaseUrl }) {
   const [quizQuestions, setQuizQuestions] = useState([]);
   const [loadingQuestions, setLoadingQuestions] = useState(false);
 
-  // Mode: 'single' | 'bulk'
   const [entryMode, setEntryMode] = useState("single");
   const [bulkJsonText, setBulkJsonText] = useState("");
 
-  // New Quiz Form State
   const [newQuiz, setNewQuiz] = useState({
     title: "",
-    subject: "class_10",
+    subject: "bseb_10_110",
     slot: "slot_1",
     quiz_date: new Date().toISOString().split("T")[0],
     duration_minutes: 15
   });
 
-  // Single Question Form State
   const [questionText, setQuestionText] = useState("");
   const [optA, setOptA] = useState("");
   const [optB, setOptB] = useState("");
@@ -100,7 +142,7 @@ export default function AdminQuizManager({ adminToken, apiBaseUrl }) {
       });
       const data = await res.json();
       if (data.success) {
-        alert("नया टेस्ट स्लॉट बन गया!");
+        alert("नया टेस्ट स्लॉट सफलतापूर्वक बन गया!");
         setNewQuiz({ ...newQuiz, title: "" });
         fetchQuizzes();
       }
@@ -208,7 +250,7 @@ export default function AdminQuizManager({ adminToken, apiBaseUrl }) {
       parsed = JSON.parse(bulkJsonText);
       if (!Array.isArray(parsed)) throw new Error("JSON array hona chahiye");
     } catch (err) {
-      alert("अमान्य JSON फॉर्मेट! कृपया सही JSON पेस्ट करें।");
+      alert("अमान्य JSON फॉर्मेट! कृपया सही JSON ऐरे पेस्ट करें।");
       return;
     }
 
@@ -237,7 +279,9 @@ export default function AdminQuizManager({ adminToken, apiBaseUrl }) {
           <h1 className="text-lg font-black text-slate-900 flex items-center gap-2">
             <GraduationCap className="text-blue-700" size={22} /> BiharFast Universal Quiz Control Station
           </h1>
-          <p className="text-xs text-slate-500">सभी परीक्षाओं के लिए टेस्ट बनाएं, डिलीट करें, लाइव ऑन/ऑफ करें और प्रश्न जोड़ें</p>
+          <p className="text-xs text-slate-500">
+            BSEB 10th, 12th (Science/Arts/Commerce) और सरकारी नौकरी परीक्षाओं के लिए टेस्ट व प्रश्न प्रबंधित करें
+          </p>
         </div>
         <button
           onClick={fetchQuizzes}
@@ -261,39 +305,79 @@ export default function AdminQuizManager({ adminToken, apiBaseUrl }) {
               <input
                 type="text"
                 required
-                placeholder="उदा. बिहार पुलिस स्पेशल मॉडल सेट 01"
+                placeholder="उदा. BSEB 10th गणित Official Model Paper 2026 Set 01"
                 value={newQuiz.title}
                 onChange={(e) => setNewQuiz({ ...newQuiz, title: e.target.value })}
                 className="w-full p-2.5 rounded-xl border border-slate-300 font-semibold focus:outline-blue-600"
               />
             </div>
 
-            {/* Target Exam Category Selector */}
+            {/* Target Subject Selector with Official Codes */}
             <div>
-              <label className="block mb-1">लक्षित परीक्षा (Target Exam) *</label>
+              <label className="block mb-1">परीक्षा व विषय (Official Code) *</label>
               <select
                 value={newQuiz.subject}
                 onChange={(e) => setNewQuiz({ ...newQuiz, subject: e.target.value })}
-                className="w-full p-2.5 rounded-xl border border-slate-300 font-semibold bg-white text-xs focus:outline-blue-600"
+                className="w-full p-2.5 rounded-xl border border-slate-300 font-semibold bg-white text-xs focus:outline-blue-600 max-h-56"
               >
-                <optgroup label="BSEB Board Exams">
-                  <option value="class_10">BSEB 10th मैट्रिक (Class 10)</option>
-                  <option value="bseb_12_science">BSEB 12th इंटर (Science)</option>
-                  <option value="bseb_12_arts">BSEB 12th इंटर (Arts & Commerce)</option>
+                <optgroup label="BSEB Class 10th (Matric Official)">
+                  <option value="bseb_10_110">110 - Mathematics (गणित)</option>
+                  <option value="bseb_10_112">112 - Science (विज्ञान)</option>
+                  <option value="bseb_10_111">111 - Social Science (सामाजिक विज्ञान)</option>
+                  <option value="bseb_10_101">101 - MIL-Hindi (हिंदी)</option>
+                  <option value="bseb_10_105">105 - SIL-Sanskrit (संस्कृत)</option>
+                  <option value="bseb_10_103">103 - MIL-Urdu (उर्दू)</option>
+                  <option value="bseb_10_104">104 - MIL-Maithili (मैथिली)</option>
+                  <option value="bseb_10_102">102 - MIL-Bangla (बांग्ला)</option>
+                  <option value="bseb_10_106">106 - SIL-Hindi (Non-Hindi)</option>
+                  <option value="bseb_10_113">113 - English (अंग्रेजी)</option>
+                  <option value="bseb_10_114">114 - Advanced Mathematics</option>
+                  <option value="bseb_10_115">115 - Commerce</option>
+                  <option value="bseb_10_116">116 - Economics</option>
                 </optgroup>
 
-                <optgroup label="Bihar Police & Uniform">
+                <optgroup label="BSEB Class 12th (Inter Science)">
+                  <option value="bseb_12_117">117 - Physics (भौतिक विज्ञान)</option>
+                  <option value="bseb_12_118">118 - Chemistry (रसायन विज्ञान)</option>
+                  <option value="bseb_12_119">119 - Biology (जीव विज्ञान)</option>
+                  <option value="bseb_12_121">121 - Mathematics (गणित)</option>
+                  <option value="bseb_12_120">120 - Agriculture (कृषि)</option>
+                  <option value="bseb_12_122">122 - Computer Science</option>
+                </optgroup>
+
+                <optgroup label="BSEB Class 12th (Inter Arts)">
+                  <option value="bseb_12_321">321 - History (इतिहास)</option>
+                  <option value="bseb_12_322">322 - Political Science (राजनीति शास्त्र)</option>
+                  <option value="bseb_12_323">323 - Geography (भूगोल)</option>
+                  <option value="bseb_12_326">326 - Economics (अर्थशास्त्र)</option>
+                  <option value="bseb_12_324">324 - Psychology (मनोविज्ञान)</option>
+                  <option value="bseb_12_325">325 - Sociology (समाजशास्त्र)</option>
+                  <option value="bseb_12_319">319 - Home Science (गृह विज्ञान)</option>
+                  <option value="bseb_12_320">320 - Philosophy (दर्शनशास्त्र)</option>
+                  <option value="bseb_12_318">318 - Music (संगीत)</option>
+                </optgroup>
+
+                <optgroup label="BSEB Class 12th (Inter Commerce)">
+                  <option value="bseb_12_220">220 - Accountancy (लेखाशास्त्र)</option>
+                  <option value="bseb_12_217">217 - Business Studies (व्यवसाय अध्ययन)</option>
+                  <option value="bseb_12_218">218 - Entrepreneurship (उद्यमिता)</option>
+                  <option value="bseb_12_219">219 - Economics (अर्थशास्त्र)</option>
+                </optgroup>
+
+                <optgroup label="BSEB Class 12th (Languages)">
+                  <option value="bseb_12_lang_hindi">106/206/306 - Hindi (हिंदी)</option>
+                  <option value="bseb_12_lang_eng">105/124/205 - English (अंग्रेजी)</option>
+                  <option value="bseb_12_lang_urdu">107/207/307 - Urdu (उर्दू)</option>
+                  <option value="bseb_12_lang_sanskrit">109/209/309 - Sanskrit (संस्कृत)</option>
+                  <option value="bseb_12_lang_maithili">108/208/308 - Maithili (मैथिली)</option>
+                </optgroup>
+
+                <optgroup label="Bihar Government Competitive Exams">
                   <option value="bihar_police_constable">CSBC बिहार पुलिस कांस्टेबल</option>
-                  <option value="bihar_daroga_si">BPSSC बिहार दारोगा (SI)</option>
-                </optgroup>
-
-                <optgroup label="Bihar Staff Selection">
+                  <option value="bihar_daroga_si">BPSSC बिहार दारोga (SI)</option>
                   <option value="bssc_inter_level">BSSC इंटर स्तरीय (10+2)</option>
-                </optgroup>
-
-                <optgroup label="All India & Central Exams">
-                  <option value="ssc_gd_constable">SSC GD कांस्टेबल (10th Pass)</option>
-                  <option value="rrb_group_d_alp">Railway RRB (Group D / ALP / NTPC)</option>
+                  <option value="ssc_gd_constable">SSC GD कांस्टेबल</option>
+                  <option value="rrb_group_d_alp">Railway RRB (Group D/ALP)</option>
                 </optgroup>
               </select>
             </div>
@@ -347,7 +431,11 @@ export default function AdminQuizManager({ adminToken, apiBaseUrl }) {
             ) : (
               quizzes.map((q) => {
                 const isSelected = selectedQuiz?.id === q.id;
-                const examName = EXAM_LABELS[q.subject] || q.subject || "10th Board";
+                const subjectInfo = EXAM_SUBJECT_MAP[q.subject] || {
+                  code: "EXAM",
+                  name: q.subject || "General",
+                  group: "General"
+                };
 
                 return (
                   <div
@@ -358,12 +446,15 @@ export default function AdminQuizManager({ adminToken, apiBaseUrl }) {
                     }`}
                   >
                     <div className="space-y-1 flex-1 min-w-0">
-                      <div className="flex items-center gap-1.5">
-                        <span className="px-1.5 py-0.5 rounded bg-slate-100 border border-slate-200 text-slate-700 text-[9px] font-black uppercase shrink-0">
-                          {examName}
+                      <div className="flex items-center gap-1.5 flex-wrap">
+                        <span className="px-1.5 py-0.5 rounded bg-blue-50 border border-blue-200 text-blue-800 text-[9px] font-black uppercase shrink-0">
+                          {subjectInfo.code}
                         </span>
-                        <p className="font-black text-xs text-slate-900 truncate">{q.title}</p>
+                        <span className="text-[10px] font-bold text-slate-600 truncate">
+                          {subjectInfo.name}
+                        </span>
                       </div>
+                      <p className="font-black text-xs text-slate-900 truncate">{q.title}</p>
                       <p className="text-[10px] text-slate-500 font-medium">
                         📅 {q.quiz_date} | {q.total_questions || 0} प्रश्न | {q.duration_minutes || 15} मिनट
                       </p>
