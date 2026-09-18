@@ -13,7 +13,6 @@ from database import get_db
 logger = logging.getLogger("class10_quiz")
 quiz_router = APIRouter(prefix="/api/quiz", tags=["Class 10 Quiz"])
 
-# Indian Standard Time (UTC+05:30) Timezone Constant
 IST_ZONE = timezone(timedelta(hours=5, minutes=30))
 DAILY_ATTEMPT_LIMIT = 6
 
@@ -45,11 +44,9 @@ def verify_quiz_admin(
     return True
 
 def get_current_ist_time() -> datetime:
-    """Returns current system time anchored strictly to Indian Standard Time (IST)."""
     return datetime.now(timezone.utc).astimezone(IST_ZONE)
 
 def extract_client_ip(request: Request) -> str:
-    """Safely extract client IP behind reverse proxies (Render / Cloudflare / Vercel)."""
     cf_connecting_ip = request.headers.get("cf-connecting-ip")
     if cf_connecting_ip:
         return cf_connecting_ip.strip()
@@ -61,15 +58,10 @@ def extract_client_ip(request: Request) -> str:
     return request.client.host if request.client else "unknown_ip"
 
 def get_secure_ip_hash(ip_address: str, target_date: str) -> str:
-    """Cryptographic one-way hash for zero-raw-IP privacy and tamper proofing."""
     secret_salt = "BIHARFAST_IP_SHIELD_2026"
     return hashlib.sha256(f"{secret_salt}:{ip_address}:{target_date}".encode()).hexdigest()
 
 def enforce_ip_rate_limit(supabase, ip_hash: str, today_str: str) -> int:
-    """
-    Strict atomic check to ensure maximum 6 attempts per day per IP.
-    Raises HTTP 429 when quota is consumed.
-    """
     try:
         res = (
             supabase.table("quiz_ip_rate_limits")
@@ -111,8 +103,8 @@ def enforce_ip_rate_limit(supabase, ip_hash: str, today_str: str) -> int:
 class TimingStatus(BaseModel):
     is_live: bool = True
     active_slot: Optional[str] = "24x7_live"
-    slot_name: Optional[str] = "Daily Practice Set"
-    message: str = "🟢 लाइव टेस्ट 24x7 सक्रिय है! कभी भी टेस्ट दें।"
+    slot_name: Optional[str] = "Live Practice Set"
+    message: str = "🟢 लाइव टेस्ट 24x7 सक्रिय है!"
     window_start: Optional[str] = "00:00"
     window_end: Optional[str] = "23:59"
     window_end_at: Optional[str] = None
@@ -196,10 +188,9 @@ class LeaderboardEntry(BaseModel):
     accuracy: float
     submitted_at: str
 
-# Admin Schemas
 class AdminQuizCreateRequest(BaseModel):
     title: str = Field(..., min_length=3)
-    subject: str = Field("science", min_length=2)
+    subject: str = Field("class_10", min_length=2)
     slot: str = Field("slot_1")
     quiz_date: str = Field(...)
     duration_minutes: int = Field(15, ge=1, le=180)
@@ -219,10 +210,9 @@ class AdminBatchQuestionRequest(BaseModel):
     questions: List[AdminQuestionItem]
 
 
-# ==================== 24x7 ALL-TIME ACTIVE ENGINE ====================
+# ==================== 24x7 ACTIVE ENGINE ====================
 
 def evaluate_exam_window(current_dt: Optional[datetime] = None) -> TimingStatus:
-    """Quiz remains active 24x7 with zero time window lockouts."""
     return TimingStatus(
         is_live=True,
         active_slot="anytime",
@@ -235,15 +225,15 @@ def evaluate_exam_window(current_dt: Optional[datetime] = None) -> TimingStatus:
     )
 
 
-# ==================== PUBLIC QUIZ ENDPOINTS ====================
+# ==================== PUBLIC QUIZ ENDPOINTS (STRICT ISOLATION) ====================
 
 @quiz_router.get(
     "/today",
     response_model=TodayQuizResponse,
-    summary="Fetch active quiz batch anytime with fallback support"
+    summary="Fetch active quiz batch with strict subject/exam isolation"
 )
 def get_today_quiz(
-    subject: Optional[str] = Query(None, description="Optional subject filter (e.g. science, math)")
+    subject: Optional[str] = Query(None, description="Exam ID (e.g. class_10, bihar_police_constable)")
 ):
     timing = evaluate_exam_window()
     supabase = get_db()
@@ -252,45 +242,63 @@ def get_today_quiz(
 
     now_ist = get_current_ist_time()
     today_str = now_ist.date().isoformat()
+    clean_subject = subject.strip().lower() if subject else None
 
+    quiz_data = None
     try:
-        # 1. Look for today's active quiz first
+        # 1. Look for today's active quiz for this EXACT exam/subject
         query = (
             supabase.table("class10_quizzes")
             .select("id, title, subject, slot, total_questions, duration_minutes")
             .eq("quiz_date", today_str)
             .eq("is_active", True)
         )
-        if subject:
-            query = query.eq("subject", subject.strip().lower())
+        if clean_subject:
+            query = query.eq("subject", clean_subject)
             
         q_res = query.order("created_at", desc=True).limit(1).execute()
         quiz_data = q_res.data[0] if q_res.data else None
 
-        # 2. Fallback to the latest active quiz if today's date doesn't have one
-        if not quiz_data:
-            fb_query = (
+        # 2. Strict Fallback: ONLY look for the latest quiz of the SAME exam/subject
+        if not quiz_data and clean_subject:
+            fb_res = (
+                supabase.table("class10_quizzes")
+                .select("id, title, subject, slot, total_questions, duration_minutes")
+                .eq("subject", clean_subject)
+                .eq("is_active", True)
+                .order("quiz_date", desc=True)
+                .order("created_at", desc=True)
+                .limit(1)
+                .execute()
+            )
+            quiz_data = fb_res.data[0] if fb_res.data else None
+
+        # 3. If no subject was provided at all (default to class_10)
+        elif not quiz_data and not clean_subject:
+            fb_res = (
                 supabase.table("class10_quizzes")
                 .select("id, title, subject, slot, total_questions, duration_minutes")
                 .eq("is_active", True)
+                .order("quiz_date", desc=True)
+                .order("created_at", desc=True)
+                .limit(1)
+                .execute()
             )
-            if subject:
-                fb_query = fb_query.eq("subject", subject.strip().lower())
-                
-            fb_res = fb_query.order("quiz_date", desc=True).order("created_at", desc=True).limit(1).execute()
             quiz_data = fb_res.data[0] if fb_res.data else None
 
     except Exception as e:
         logger.error(f"Error querying active quiz: {e}")
         quiz_data = None
 
+    # Agar us exam ka koi question paper nahi hai, toh doosra paper nahi kholna hai
     if not quiz_data:
+        timing.is_live = False
         return TodayQuizResponse(
             is_live=False,
             timing_status=timing,
             quiz=None,
             questions=[],
-            message="वर्तमान में कोई टेस्ट उपलब्ध नहीं है। कृपया जल्द ही देखें।"
+            message="इस परीक्षा के लिए वर्तमान में कोई टेस्ट सक्रिय नहीं है।"
         )
 
     try:
@@ -305,6 +313,16 @@ def get_today_quiz(
     except Exception as e:
         logger.error(f"Error fetching questions: {e}")
         raise HTTPException(status_code=500, detail="Failed to retrieve test questions")
+
+    if not raw_questions:
+        timing.is_live = False
+        return TodayQuizResponse(
+            is_live=False,
+            timing_status=timing,
+            quiz=None,
+            questions=[],
+            message="इस टेस्ट में अभी कोई प्रश्न अपलोड नहीं किए गए हैं।"
+        )
 
     formatted_questions = [
         QuestionOut(
@@ -341,7 +359,6 @@ def submit_quiz_answers(sub: SubmitAnswersRequest, request: Request):
     now_ist = get_current_ist_time()
     today_str = now_ist.date().isoformat()
 
-    # 1. Strict IP Rate Limiting (Strictly Max 6 attempts/day per IP)
     client_ip = extract_client_ip(request)
     ip_hash = get_secure_ip_hash(client_ip, today_str)
     attempts_used = enforce_ip_rate_limit(supabase, ip_hash, today_str)
@@ -349,7 +366,6 @@ def submit_quiz_answers(sub: SubmitAnswersRequest, request: Request):
 
     clean_quiz_id = sub.quiz_id.strip()
 
-    # 2. Fetch Master Answer Key
     try:
         db_res = (
             supabase.table("class10_questions")
@@ -371,7 +387,6 @@ def submit_quiz_answers(sub: SubmitAnswersRequest, request: Request):
     if unknown_question_ids:
         raise HTTPException(status_code=422, detail="Answers contain invalid question IDs")
 
-    # 3. Accurate Scoring
     total = len(db_questions)
     correct = 0
     wrong = 0
@@ -406,7 +421,6 @@ def submit_quiz_answers(sub: SubmitAnswersRequest, request: Request):
 
     accuracy = round((correct / (correct + wrong)) * 100, 1) if (correct + wrong) > 0 else 0.0
 
-    # 4. Save to District Leaderboard
     try:
         supabase.table("class10_leaderboard").insert({
             "quiz_id": clean_quiz_id,
@@ -473,12 +487,9 @@ def get_quiz_leaderboard(quiz_id: str, limit: int = 25):
         return []
 
 
-# ==================== ADMIN CONTROL ENDPOINTS ====================
+# ==================== ADMIN FULL-CONTROL SUITE ====================
 
-@quiz_router.get(
-    "/admin/all-quizzes",
-    summary="Admin: Fetch all test slots with question counts"
-)
+@quiz_router.get("/admin/all-quizzes", summary="Admin: Fetch all test slots")
 def admin_get_all_quizzes(_: bool = Depends(verify_quiz_admin)):
     supabase = get_db()
     if not supabase:
@@ -498,10 +509,26 @@ def admin_get_all_quizzes(_: bool = Depends(verify_quiz_admin)):
         return {"success": True, "data": []}
 
 
-@quiz_router.post(
-    "/admin/create-quiz",
-    summary="Admin: Schedule or create a new quiz slot"
-)
+@quiz_router.get("/admin/quiz-questions/{quiz_id}", summary="Admin: Fetch questions of a quiz")
+def admin_get_quiz_questions(quiz_id: str, _: bool = Depends(verify_quiz_admin)):
+    supabase = get_db()
+    if not supabase:
+        raise HTTPException(status_code=503, detail="Database unavailable")
+    try:
+        res = (
+            supabase.table("class10_questions")
+            .select("*")
+            .eq("quiz_id", quiz_id.strip())
+            .order("order_index", desc=False)
+            .execute()
+        )
+        return {"success": True, "data": res.data or []}
+    except Exception as e:
+        logger.error(f"Error fetching quiz questions: {e}")
+        return {"success": True, "data": []}
+
+
+@quiz_router.post("/admin/create-quiz", summary="Admin: Create or schedule new quiz slot")
 def admin_create_quiz(payload: AdminQuizCreateRequest, _: bool = Depends(verify_quiz_admin)):
     supabase = get_db()
     if not supabase:
@@ -525,10 +552,7 @@ def admin_create_quiz(payload: AdminQuizCreateRequest, _: bool = Depends(verify_
         raise HTTPException(status_code=500, detail=f"Failed to create quiz: {e}")
 
 
-@quiz_router.post(
-    "/admin/toggle-status/{quiz_id}",
-    summary="Admin: Turn ON/OFF live test instantly"
-)
+@quiz_router.post("/admin/toggle-status/{quiz_id}", summary="Admin: Turn ON/OFF test")
 def admin_toggle_quiz_status(quiz_id: str, is_active: bool = Query(...), _: bool = Depends(verify_quiz_admin)):
     supabase = get_db()
     if not supabase:
@@ -542,10 +566,39 @@ def admin_toggle_quiz_status(quiz_id: str, is_active: bool = Query(...), _: bool
         raise HTTPException(status_code=500, detail="Failed to update status")
 
 
-@quiz_router.post(
-    "/admin/add-questions",
-    summary="Admin: Add questions to a selected quiz batch"
-)
+@quiz_router.delete("/admin/question/{question_id}", summary="Admin: Delete a specific question")
+def admin_delete_question(question_id: str, quiz_id: str = Query(...), _: bool = Depends(verify_quiz_admin)):
+    supabase = get_db()
+    if not supabase:
+        raise HTTPException(status_code=503, detail="Database unavailable")
+    try:
+        clean_quiz_id = quiz_id.strip()
+        supabase.table("class10_questions").delete().eq("id", question_id.strip()).execute()
+        
+        cnt_res = supabase.table("class10_questions").select("id", count="exact").eq("quiz_id", clean_quiz_id).execute()
+        new_count = cnt_res.count or 0
+        supabase.table("class10_quizzes").update({"total_questions": new_count}).eq("id", clean_quiz_id).execute()
+        
+        return {"success": True, "remaining": new_count}
+    except Exception as e:
+        logger.error(f"Error deleting question: {e}")
+        raise HTTPException(status_code=500, detail="Failed to delete question")
+
+
+@quiz_router.delete("/admin/quiz/{quiz_id}", summary="Admin: Delete entire quiz")
+def admin_delete_entire_quiz(quiz_id: str, _: bool = Depends(verify_quiz_admin)):
+    supabase = get_db()
+    if not supabase:
+        raise HTTPException(status_code=503, detail="Database unavailable")
+    try:
+        supabase.table("class10_quizzes").delete().eq("id", quiz_id.strip()).execute()
+        return {"success": True, "message": "Quiz deleted permanently"}
+    except Exception as e:
+        logger.error(f"Error deleting entire quiz: {e}")
+        raise HTTPException(status_code=500, detail="Failed to delete quiz")
+
+
+@quiz_router.post("/admin/add-questions", summary="Admin: Add questions batch")
 def admin_add_questions_batch(payload: AdminBatchQuestionRequest, _: bool = Depends(verify_quiz_admin)):
     supabase = get_db()
     if not supabase:
