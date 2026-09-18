@@ -7,6 +7,7 @@ from datetime import datetime, timezone
 from urllib.parse import urlparse
 from typing import Optional, Any, List, Dict
 from fastapi import Depends, FastAPI, HTTPException, BackgroundTasks, Header, Query, Request, Response, status
+from fastapi.responses import JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.middleware.gzip import GZipMiddleware
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
@@ -32,14 +33,11 @@ ADMIN_API_TOKEN = os.getenv("ADMIN_API_TOKEN", "").strip()
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY", "").strip('"\'')
 bearer_scheme = HTTPBearer(auto_error=False)
 
-# Admin Brute-Force Shield Config
 MAX_ADMIN_ATTEMPTS = 4
-ADMIN_LOCKOUT_SECONDS = 3600  # 1 Hour lockout
+ADMIN_LOCKOUT_SECONDS = 3600
 
-# In-memory fallback if Redis is unreachable
 _MEMORY_ATTEMPTS: Dict[str, Dict[str, Any]] = {}
 
-# Persistent Redis Client
 redis: Optional[Redis] = None
 if UPSTASH_URL and UPSTASH_TOKEN:
     try:
@@ -48,7 +46,6 @@ if UPSTASH_URL and UPSTASH_TOKEN:
     except Exception as e:
         logger.error(f"Redis connection failed: {e}")
 
-# Gemini Client for Human-Triggered Generation
 ai_client: Optional[genai.Client] = None
 if GEMINI_API_KEY:
     try:
@@ -64,10 +61,8 @@ app = FastAPI(
     redoc_url="/redoc"
 )
 
-# Compression Middleware
 app.add_middleware(GZipMiddleware, minimum_size=1000)
 
-# Robust CORS Configuration (Allows Local Vite Frontend + Live Domains)
 ALLOWED_ORIGINS = [
     "http://localhost:5173",
     "http://localhost:3000",
@@ -81,37 +76,43 @@ ALLOWED_ORIGINS = [
 app.add_middleware(
     CORSMiddleware,
     allow_origins=ALLOWED_ORIGINS,
-    allow_origin_regex=r"^https?://(localhost|127\.0\.0\.1)(:[0-9]+)?$",
+    allow_origin_regex=r"^https?://(localhost|127\.0\.0\.1)(:[0-9]+)?$\vert{}^https?://.*biharfast\.in.*$",
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
-# Connect Class 10th Mock Test Router
+# Crash hone par bhi CORS header bhejne ke liye global handler
+@app.exception_handler(Exception)
+async def global_exception_handler(request: Request, exc: Exception):
+    logger.error(f"Unhandled Exception on {request.url.path}: {exc}", exc_info=True)
+    req_origin = request.headers.get("origin", "*")
+    return JSONResponse(
+        status_code=500,
+        content={"success": False, "detail": str(exc), "path": request.url.path},
+        headers={
+            "Access-Control-Allow-Origin": req_origin,
+            "Access-Control-Allow-Credentials": "true",
+            "Access-Control-Allow-Methods": "*",
+            "Access-Control-Allow-Headers": "*",
+        }
+    )
+
 app.include_router(quiz_router)
 
-# ==================== DOMAIN SAFETY WHITELIST ====================
-
 OFFICIAL_ALLOWED_DOMAINS = {
-    # Bihar State Boards
     "bceceboard.bihar.gov.in", "bpsc.bih.nic.in", "bpsc.bihar.gov.in",
     "onlinebpsc.bihar.gov.in", "csbc.bih.nic.in", "csbc.bihar.gov.in",
     "bpssc.bih.nic.in", "bssc.bihar.gov.in", "btsc.bihar.gov.in",
     "biharboardonline.bihar.gov.in", "patnahighcourt.gov.in",
     "dlrs.bihar.gov.in", "rrbpatna.gov.in",
-
-    # Central Govt & All-India Commissions
     "ssc.gov.in", "upsc.gov.in", "upsconline.nic.in",
     "ibps.in", "sbi.co.in", "rbi.org.in",
     "indianrailways.gov.in", "rrbapply.gov.in",
     "indiapostgdsonline.gov.in", "nta.ac.in",
-
-    # Defence & Paramilitary
     "joinindianarmy.nic.in", "joinindiannavy.gov.in", "agnipathvayu.cdac.in",
     "crpf.gov.in", "bsf.gov.in", "cisf.gov.in", "itbpolice.nic.in", "ssb.gov.in"
 }
-
-# ==================== PYDANTIC SCHEMAS ====================
 
 class InboxSyncPayload(BaseModel):
     title: str
@@ -143,25 +144,18 @@ class PostUpdateRequest(BaseModel):
 class StatusUpdateRequest(BaseModel):
     status: str
 
-# ==================== HELPER & SECURITY FUNCTIONS ====================
-
 def extract_client_ip(request: Request) -> str:
-    """Safely extracts client IP behind reverse proxies (Render / Cloudflare / Vercel)."""
     cf_connecting_ip = request.headers.get("cf-connecting-ip")
     if cf_connecting_ip:
         return cf_connecting_ip.strip()
-
     x_forwarded_for = request.headers.get("x-forwarded-for")
     if x_forwarded_for:
         return x_forwarded_for.split(",")[0].strip()
-
     return request.client.host if request.client else "unknown_client"
 
 def check_admin_lockout(client_ip: str):
-    """Enforces strict block if IP exceeds 4 failed attempts."""
     cache_key = f"admin_lock:{client_ip}"
     attempts = 0
-
     if redis:
         try:
             val = redis.get(cache_key)
@@ -185,10 +179,8 @@ def check_admin_lockout(client_ip: str):
         )
 
 def record_failed_attempt(client_ip: str):
-    """Increments failure count and locks for 3600 seconds."""
     cache_key = f"admin_lock:{client_ip}"
     current_attempts = 1
-
     if redis:
         try:
             current = redis.incr(cache_key)
@@ -218,7 +210,6 @@ def record_failed_attempt(client_ip: str):
     )
 
 def reset_failed_attempts(client_ip: str):
-    """Clears failure counter upon verified admin login."""
     cache_key = f"admin_lock:{client_ip}"
     if redis:
         try:
@@ -253,11 +244,8 @@ def require_admin(
         raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail="Admin authentication is unavailable")
 
     client_ip = extract_client_ip(request)
-    
-    # 1. Check lockout status
     check_admin_lockout(client_ip)
 
-    # 2. Verify token
     if (
         not credentials
         or credentials.scheme.lower() != "bearer"
@@ -265,7 +253,6 @@ def require_admin(
     ):
         record_failed_attempt(client_ip)
 
-    # 3. Reset failed counters on success
     reset_failed_attempts(client_ip)
     return True
 
@@ -303,8 +290,6 @@ def flush_cache(slug: Optional[str] = None):
                 redis.delete(k)
         except Exception as e:
             logger.error(f"Redis flush error: {e}")
-
-# ==================== ULTRA-LOW LATENCY PUBLIC FEEDS ====================
 
 @app.get("/")
 def health_check():
@@ -418,8 +403,6 @@ def get_post_detail(slug: str):
         headers={"Cache-Control": "public, max-age=300, s-maxage=1800"}
     )
 
-# ==================== SCRAPED INBOX RECEIVER ====================
-
 @app.post("/api/inbox/sync")
 def sync_raw_to_inbox(
     payload: InboxSyncPayload,
@@ -436,8 +419,6 @@ def sync_raw_to_inbox(
         content=orjson.dumps({"success": True, "data": res}),
         media_type="application/json"
     )
-
-# ==================== ADMIN MODERATION & LLM ENRICHMENT ====================
 
 @app.get("/api/admin/quota-stats")
 def get_quota_stats(_: None = Depends(require_admin)):
@@ -537,13 +518,15 @@ Generate a JSON object matching this schema:
                 )
             )
             if response.text:
-                ai_data = json.loads(response.text)
+                cleaned_json = response.text.strip().removeprefix("```json").removeprefix("```").removesuffix("```").strip()
+                ai_data = json.loads(cleaned_json)
         except Exception as e:
-            logger.error(f"Gemini processing error: {e}")
+            logger.error(f"Gemini processing error (falling back to template): {e}")
 
+    # Fallback to prevent route failure if AI fails or is offline
     final_title = ai_data.get("title") or title
     slug = slugify(final_title, dept)
-    normalized_cat = "results" if "result" in cat else ("admit_card" if "admit" in cat else "jobs")
+    normalized_cat = "results" if "result" in cat.lower() else ("admit_card" if "admit" in cat.lower() else "jobs")
 
     record = {
         "slug": slug,
@@ -556,7 +539,7 @@ Generate a JSON object matching this schema:
         "fees": ai_data.get("fees") or "निःशुल्क (₹0)",
         "apply_url": apply_url,
         "pdf_url": pdf_url,
-        "short_desc": ai_data.get("short_desc") or f"{dept} official recruitment notification.",
+        "short_desc": ai_data.get("short_desc") or f"{dept} द्वारा जारी आधिकारिक सूचना।",
         "important_dates": ai_data.get("important_dates") or {},
         "application_fees": ai_data.get("application_fees") or {},
         "age_limit": ai_data.get("age_limit") or {},
@@ -583,8 +566,6 @@ Generate a JSON object matching this schema:
         }),
         media_type="application/json"
     )
-
-# ==================== LIVE POSTS EDIT & STATUS ====================
 
 @app.get("/api/admin/posts")
 def get_admin_posts(status: Optional[str] = Query(None), _: None = Depends(require_admin)):
@@ -632,8 +613,6 @@ def change_post_status(post_id: str, payload: StatusUpdateRequest, bg: Backgroun
         media_type="application/json"
     )
 
-# ==================== DYNAMIC SITEMAP (IST SYNCHRONIZED) ====================
-
 @app.get("/api/sitemap-posts.xml")
 def dynamic_posts_sitemap():
     cache_key = "seo:dynamic_sitemap"
@@ -649,7 +628,7 @@ def dynamic_posts_sitemap():
         except Exception as e:
             logger.warning(f"Redis read bypass for sitemap: {e}")
 
-    site_base = "https://www.biharfast.in"
+    site_base = "[https://www.biharfast.in](https://www.biharfast.in)"
     today = db.get_current_ist_date()
 
     try:
@@ -660,7 +639,7 @@ def dynamic_posts_sitemap():
 
     xml_lines = [
         '<?xml version="1.0" encoding="UTF-8"?>',
-        '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">'
+        '<urlset xmlns="[http://www.sitemaps.org/schemas/sitemap/0.9](http://www.sitemaps.org/schemas/sitemap/0.9)">'
     ]
 
     for item in posts:
