@@ -11,7 +11,7 @@ from pydantic import BaseModel, Field, field_validator
 from database import get_db
 
 logger = logging.getLogger("class10_quiz")
-quiz_router = APIRouter(prefix="/api/quiz", tags=["Class 10 Quiz"])
+quiz_router = APIRouter(prefix="/api/quiz", tags=["Universal Exam & Quiz Engine"])
 
 IST_ZONE = timezone(timedelta(hours=5, minutes=30))
 DAILY_ATTEMPT_LIMIT = 6
@@ -58,7 +58,8 @@ def extract_client_ip(request: Request) -> str:
     return request.client.host if request.client else "unknown_ip"
 
 def get_secure_ip_hash(ip_address: str, target_date: str) -> str:
-    secret_salt = "BIHARFAST_IP_SHIELD_2026"
+    # Future-proof dynamic salt (changes automatically by year)
+    secret_salt = f"BIHARFAST_IP_SHIELD_{target_date[:4]}"
     return hashlib.sha256(f"{secret_salt}:{ip_address}:{target_date}".encode()).hexdigest()
 
 def enforce_ip_rate_limit(supabase, ip_hash: str, today_str: str) -> int:
@@ -139,7 +140,7 @@ class SubmitAnswersRequest(BaseModel):
     student_name: str = Field("छात्र", min_length=2, max_length=50)
     district: str = Field("बिहार", min_length=2, max_length=50)
     phone: Optional[str] = Field(None, max_length=15)
-    answers: Dict[str, str] = Field(default_factory=dict, max_length=100)
+    answers: Dict[str, str] = Field(default_factory=dict, max_length=150)
 
     @field_validator("student_name", "district")
     @classmethod
@@ -193,7 +194,7 @@ class AdminQuizCreateRequest(BaseModel):
     subject: str = Field("class_10", min_length=2)
     slot: str = Field("slot_1")
     quiz_date: str = Field(...)
-    duration_minutes: int = Field(15, ge=1, le=180)
+    duration_minutes: int = Field(15, ge=1, le=240)
     is_active: bool = True
 
 class AdminQuestionItem(BaseModel):
@@ -225,15 +226,40 @@ def evaluate_exam_window(current_dt: Optional[datetime] = None) -> TimingStatus:
     )
 
 
-# ==================== PUBLIC QUIZ ENDPOINTS (STRICT ISOLATION) ====================
+# ==================== PUBLIC ENDPOINTS (FUTURE-PROOF SELECTION) ====================
+
+@quiz_router.get(
+    "/available",
+    summary="Get all available live tests for student selection cards"
+)
+def get_available_quizzes():
+    supabase = get_db()
+    if not supabase:
+        raise HTTPException(status_code=503, detail="Database unavailable")
+
+    try:
+        res = (
+            supabase.table("class10_quizzes")
+            .select("id, title, subject, slot, quiz_date, total_questions, duration_minutes")
+            .eq("is_active", True)
+            .order("quiz_date", desc=True)
+            .order("created_at", desc=True)
+            .execute()
+        )
+        return {"success": True, "data": res.data or []}
+    except Exception as e:
+        logger.error(f"Error fetching available quizzes: {e}")
+        return {"success": False, "data": []}
+
 
 @quiz_router.get(
     "/today",
     response_model=TodayQuizResponse,
-    summary="Fetch active quiz batch with strict subject/exam isolation"
+    summary="Fetch chosen test or latest active fallback with zero random jumping"
 )
 def get_today_quiz(
-    subject: Optional[str] = Query(None, description="Exam ID (e.g. class_10, bihar_police_constable)")
+    quiz_id: Optional[str] = Query(None, description="Direct Quiz UUID selected by student"),
+    subject: Optional[str] = Query(None, description="Exam ID (e.g. bseb_10_110, bihar_police_constable)")
 ):
     timing = evaluate_exam_window()
     supabase = get_db()
@@ -242,39 +268,54 @@ def get_today_quiz(
 
     now_ist = get_current_ist_time()
     today_str = now_ist.date().isoformat()
+    clean_quiz_id = quiz_id.strip() if quiz_id else None
     clean_subject = subject.strip().lower() if subject else None
 
     quiz_data = None
     try:
-        # 1. Look for today's active quiz for this EXACT exam/subject
-        query = (
-            supabase.table("class10_quizzes")
-            .select("id, title, subject, slot, total_questions, duration_minutes")
-            .eq("quiz_date", today_str)
-            .eq("is_active", True)
-        )
-        if clean_subject:
-            query = query.eq("subject", clean_subject)
-            
-        q_res = query.order("created_at", desc=True).limit(1).execute()
-        quiz_data = q_res.data[0] if q_res.data else None
+        # 1. User chose specific quiz card (Highest Priority)
+        if clean_quiz_id:
+            q_res = (
+                supabase.table("class10_quizzes")
+                .select("id, title, subject, slot, total_questions, duration_minutes")
+                .eq("id", clean_quiz_id)
+                .eq("is_active", True)
+                .limit(1)
+                .execute()
+            )
+            quiz_data = q_res.data[0] if q_res.data else None
 
-        # 2. Strict Fallback: ONLY look for the latest quiz of the SAME exam/subject
-        if not quiz_data and clean_subject:
-            fb_res = (
+        # 2. User chose specific subject/stream
+        elif clean_subject:
+            # Look for today's active quiz for this exact subject
+            q_res = (
                 supabase.table("class10_quizzes")
                 .select("id, title, subject, slot, total_questions, duration_minutes")
                 .eq("subject", clean_subject)
+                .eq("quiz_date", today_str)
                 .eq("is_active", True)
-                .order("quiz_date", desc=True)
                 .order("created_at", desc=True)
                 .limit(1)
                 .execute()
             )
-            quiz_data = fb_res.data[0] if fb_res.data else None
+            quiz_data = q_res.data[0] if q_res.data else None
 
-        # 3. If no subject was provided at all (default to class_10)
-        elif not quiz_data and not clean_subject:
+            # Fallback to latest active quiz for this exact subject
+            if not quiz_data:
+                fb_res = (
+                    supabase.table("class10_quizzes")
+                    .select("id, title, subject, slot, total_questions, duration_minutes")
+                    .eq("subject", clean_subject)
+                    .eq("is_active", True)
+                    .order("quiz_date", desc=True)
+                    .order("created_at", desc=True)
+                    .limit(1)
+                    .execute()
+                )
+                quiz_data = fb_res.data[0] if fb_res.data else None
+
+        # 3. Default fallback if nothing passed
+        else:
             fb_res = (
                 supabase.table("class10_quizzes")
                 .select("id, title, subject, slot, total_questions, duration_minutes")
@@ -290,7 +331,6 @@ def get_today_quiz(
         logger.error(f"Error querying active quiz: {e}")
         quiz_data = None
 
-    # Agar us exam ka koi question paper nahi hai, toh doosra paper nahi kholna hai
     if not quiz_data:
         timing.is_live = False
         return TodayQuizResponse(
@@ -500,7 +540,7 @@ def admin_get_all_quizzes(_: bool = Depends(verify_quiz_admin)):
             supabase.table("class10_quizzes")
             .select("id, title, subject, slot, quiz_date, total_questions, duration_minutes, is_active, created_at")
             .order("quiz_date", desc=True)
-            .limit(50)
+            .limit(100)
             .execute()
         )
         return {"success": True, "data": res.data or []}
