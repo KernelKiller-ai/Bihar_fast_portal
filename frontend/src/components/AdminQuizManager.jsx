@@ -2,8 +2,20 @@ import React, { useState, useEffect } from "react";
 import PropTypes from "prop-types";
 import { 
   Plus, Power, Trash2, ListOrdered, RefreshCw, 
-  Layers, CheckCircle2, AlertCircle, FileCode, ChevronDown
+  Layers, CheckCircle2, AlertCircle, FileCode, ChevronDown, GraduationCap
 } from "lucide-react";
+
+// Exam Categories mapping for clean UI badges
+const EXAM_LABELS = {
+  class_10: "BSEB 10th मैट्रिक",
+  bseb_12_science: "BSEB 12th Science",
+  bseb_12_arts: "BSEB 12th Arts/Comm",
+  bihar_police_constable: "CSBC बिहार पुलिस",
+  bihar_daroga_si: "BPSSC बिहार दारोगा",
+  bssc_inter_level: "BSSC इंटर स्तरीय",
+  ssc_gd_constable: "SSC GD कांस्टेबल",
+  rrb_group_d_alp: "Railway RRB"
+};
 
 export default function AdminQuizManager({ adminToken, apiBaseUrl }) {
   const [quizzes, setQuizzes] = useState([]);
@@ -19,7 +31,7 @@ export default function AdminQuizManager({ adminToken, apiBaseUrl }) {
   // New Quiz Form State
   const [newQuiz, setNewQuiz] = useState({
     title: "",
-    subject: "science",
+    subject: "class_10",
     slot: "slot_1",
     quiz_date: new Date().toISOString().split("T")[0],
     duration_minutes: 15
@@ -222,12 +234,14 @@ export default function AdminQuizManager({ adminToken, apiBaseUrl }) {
       {/* Top Header Controls */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-white p-4 rounded-2xl border border-slate-200 shadow-xs">
         <div>
-          <h1 className="text-lg font-black text-slate-900">BiharFast Full Quiz Control Station</h1>
-          <p className="text-xs text-slate-500">टेस्ट बनाएं, डिलीट करें, लाइव ऑन/ऑफ करें और प्रश्न मैनेज करें</p>
+          <h1 className="text-lg font-black text-slate-900 flex items-center gap-2">
+            <GraduationCap className="text-blue-700" size={22} /> BiharFast Universal Quiz Control Station
+          </h1>
+          <p className="text-xs text-slate-500">सभी परीक्षाओं के लिए टेस्ट बनाएं, डिलीट करें, लाइव ऑन/ऑफ करें और प्रश्न जोड़ें</p>
         </div>
         <button
           onClick={fetchQuizzes}
-          className="px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-xl text-xs flex items-center gap-1.5 transition self-start sm:self-auto"
+          className="px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-xl text-xs flex items-center gap-1.5 transition self-start sm:self-auto cursor-pointer"
         >
           <RefreshCw size={13} className={loading ? "animate-spin" : ""} /> रिफ्रेश लिस्ट
         </button>
@@ -247,39 +261,41 @@ export default function AdminQuizManager({ adminToken, apiBaseUrl }) {
               <input
                 type="text"
                 required
-                placeholder="उदा. BSEB 10th विज्ञान टेस्ट 01"
+                placeholder="उदा. बिहार पुलिस स्पेशल मॉडल सेट 01"
                 value={newQuiz.title}
                 onChange={(e) => setNewQuiz({ ...newQuiz, title: e.target.value })}
                 className="w-full p-2.5 rounded-xl border border-slate-300 font-semibold focus:outline-blue-600"
               />
             </div>
 
-            <div className="grid grid-cols-2 gap-2">
-              <div>
-                <label className="block mb-1">विषय</label>
-                <select
-                  value={newQuiz.subject}
-                  onChange={(e) => setNewQuiz({ ...newQuiz, subject: e.target.value })}
-                  className="w-full p-2.5 rounded-xl border border-slate-300 font-semibold bg-white"
-                >
-                  <option value="science">Science</option>
-                  <option value="math">Math</option>
-                  <option value="hindi">Hindi</option>
-                  <option value="social_science">SST</option>
-                  <option value="sanskrit">Sanskrit</option>
-                </select>
-              </div>
-              <div>
-                <label className="block mb-1">स्लॉट</label>
-                <select
-                  value={newQuiz.slot}
-                  onChange={(e) => setNewQuiz({ ...newQuiz, slot: e.target.value })}
-                  className="w-full p-2.5 rounded-xl border border-slate-300 font-semibold bg-white"
-                >
-                  <option value="slot_1">Slot 1 (Morning)</option>
-                  <option value="slot_2">Slot 2 (Evening)</option>
-                </select>
-              </div>
+            {/* Target Exam Category Selector */}
+            <div>
+              <label className="block mb-1">लक्षित परीक्षा (Target Exam) *</label>
+              <select
+                value={newQuiz.subject}
+                onChange={(e) => setNewQuiz({ ...newQuiz, subject: e.target.value })}
+                className="w-full p-2.5 rounded-xl border border-slate-300 font-semibold bg-white text-xs focus:outline-blue-600"
+              >
+                <optgroup label="BSEB Board Exams">
+                  <option value="class_10">BSEB 10th मैट्रिक (Class 10)</option>
+                  <option value="bseb_12_science">BSEB 12th इंटर (Science)</option>
+                  <option value="bseb_12_arts">BSEB 12th इंटर (Arts & Commerce)</option>
+                </optgroup>
+
+                <optgroup label="Bihar Police & Uniform">
+                  <option value="bihar_police_constable">CSBC बिहार पुलिस कांस्टेबल</option>
+                  <option value="bihar_daroga_si">BPSSC बिहार दारोगा (SI)</option>
+                </optgroup>
+
+                <optgroup label="Bihar Staff Selection">
+                  <option value="bssc_inter_level">BSSC इंटर स्तरीय (10+2)</option>
+                </optgroup>
+
+                <optgroup label="All India & Central Exams">
+                  <option value="ssc_gd_constable">SSC GD कांस्टेबल (10th Pass)</option>
+                  <option value="rrb_group_d_alp">Railway RRB (Group D / ALP / NTPC)</option>
+                </optgroup>
+              </select>
             </div>
 
             <div className="grid grid-cols-2 gap-2">
@@ -297,7 +313,7 @@ export default function AdminQuizManager({ adminToken, apiBaseUrl }) {
                 <input
                   type="number"
                   min="5"
-                  max="120"
+                  max="180"
                   value={newQuiz.duration_minutes}
                   onChange={(e) => setNewQuiz({ ...newQuiz, duration_minutes: Number(e.target.value) })}
                   className="w-full p-2 rounded-xl border border-slate-300 font-semibold"
@@ -307,7 +323,7 @@ export default function AdminQuizManager({ adminToken, apiBaseUrl }) {
 
             <button
               type="submit"
-              className="w-full py-3 bg-blue-600 hover:bg-blue-700 text-white font-black rounded-xl shadow-xs transition"
+              className="w-full py-3 bg-blue-600 hover:bg-blue-700 text-white font-black rounded-xl shadow-xs transition cursor-pointer"
             >
               स्लॉट सेव करें
             </button>
@@ -320,55 +336,68 @@ export default function AdminQuizManager({ adminToken, apiBaseUrl }) {
             <h2 className="text-sm font-black text-slate-900 flex items-center gap-1.5">
               <Layers size={16} className="text-indigo-600" /> 2. टेस्ट लिस्ट ({quizzes.length})
             </h2>
-            <span className="text-[10px] text-slate-400 font-bold">क्लिक करके सेलेक्ट करें</span>
+            <span className="text-[10px] text-slate-400 font-bold">क्लिक करके चुनें</span>
           </div>
 
           <div className="space-y-2 max-h-130 overflow-y-auto pr-1">
-            {quizzes.map((q) => {
-              const isSelected = selectedQuiz?.id === q.id;
-              return (
-                <div
-                  key={q.id}
-                  onClick={() => handleSelectQuiz(q)}
-                  className={`p-3 rounded-xl border transition cursor-pointer flex items-center justify-between gap-2 ${
-                    isSelected ? "border-blue-600 bg-blue-50/60 shadow-xs" : "border-slate-200 hover:border-slate-300"
-                  }`}
-                >
-                  <div className="space-y-0.5 flex-1 min-w-0">
-                    <p className="font-black text-xs text-slate-900 truncate">{q.title}</p>
-                    <p className="text-[10px] text-slate-500 font-medium">
-                      📅 {q.quiz_date} | {q.total_questions || 0} प्रश्न
-                    </p>
-                  </div>
+            {quizzes.length === 0 ? (
+              <div className="text-center py-10 text-xs text-slate-400 font-bold">
+                कोई टेस्ट स्लॉट नहीं मिला। नया स्लॉट बनाएं।
+              </div>
+            ) : (
+              quizzes.map((q) => {
+                const isSelected = selectedQuiz?.id === q.id;
+                const examName = EXAM_LABELS[q.subject] || q.subject || "10th Board";
 
-                  <div className="flex items-center gap-1 shrink-0">
-                    <button
-                      type="button"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        toggleStatus(q.id, q.is_active);
-                      }}
-                      className={`px-2 py-1 rounded-lg font-black text-[10px] flex items-center gap-1 ${
-                        q.is_active ? "bg-emerald-100 text-emerald-800" : "bg-rose-100 text-rose-800"
-                      }`}
-                    >
-                      <Power size={11} /> {q.is_active ? "LIVE" : "OFF"}
-                    </button>
-                    <button
-                      type="button"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleDeleteQuiz(q.id);
-                      }}
-                      className="p-1 text-slate-400 hover:text-rose-600 rounded"
-                      title="Delete Test"
-                    >
-                      <Trash2 size={13} />
-                    </button>
+                return (
+                  <div
+                    key={q.id}
+                    onClick={() => handleSelectQuiz(q)}
+                    className={`p-3 rounded-xl border transition cursor-pointer flex items-center justify-between gap-2 ${
+                      isSelected ? "border-blue-600 bg-blue-50/70 shadow-xs" : "border-slate-200 hover:border-slate-300 bg-white"
+                    }`}
+                  >
+                    <div className="space-y-1 flex-1 min-w-0">
+                      <div className="flex items-center gap-1.5">
+                        <span className="px-1.5 py-0.5 rounded bg-slate-100 border border-slate-200 text-slate-700 text-[9px] font-black uppercase shrink-0">
+                          {examName}
+                        </span>
+                        <p className="font-black text-xs text-slate-900 truncate">{q.title}</p>
+                      </div>
+                      <p className="text-[10px] text-slate-500 font-medium">
+                        📅 {q.quiz_date} | {q.total_questions || 0} प्रश्न | {q.duration_minutes || 15} मिनट
+                      </p>
+                    </div>
+
+                    <div className="flex items-center gap-1 shrink-0">
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          toggleStatus(q.id, q.is_active);
+                        }}
+                        className={`px-2 py-1 rounded-lg font-black text-[10px] flex items-center gap-1 cursor-pointer ${
+                          q.is_active ? "bg-emerald-100 text-emerald-800" : "bg-rose-100 text-rose-800"
+                        }`}
+                      >
+                        <Power size={11} /> {q.is_active ? "LIVE" : "OFF"}
+                      </button>
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleDeleteQuiz(q.id);
+                        }}
+                        className="p-1 text-slate-400 hover:text-rose-600 rounded cursor-pointer"
+                        title="Delete Entire Test"
+                      >
+                        <Trash2 size={13} />
+                      </button>
+                    </div>
                   </div>
-                </div>
-              );
-            })}
+                );
+              })
+            )}
           </div>
         </div>
 
@@ -382,14 +411,14 @@ export default function AdminQuizManager({ adminToken, apiBaseUrl }) {
               <button
                 type="button"
                 onClick={() => setEntryMode("single")}
-                className={`px-2 py-0.5 rounded-md ${entryMode === "single" ? "bg-white shadow-xs text-blue-700" : "text-slate-600"}`}
+                className={`px-2 py-0.5 rounded-md cursor-pointer ${entryMode === "single" ? "bg-white shadow-xs text-blue-700" : "text-slate-600"}`}
               >
                 Single Form
               </button>
               <button
                 type="button"
                 onClick={() => setEntryMode("bulk")}
-                className={`px-2 py-0.5 rounded-md ${entryMode === "bulk" ? "bg-white shadow-xs text-blue-700" : "text-slate-600"}`}
+                className={`px-2 py-0.5 rounded-md cursor-pointer ${entryMode === "bulk" ? "bg-white shadow-xs text-blue-700" : "text-slate-600"}`}
               >
                 Bulk JSON
               </button>
@@ -435,7 +464,7 @@ export default function AdminQuizManager({ adminToken, apiBaseUrl }) {
                     </select>
                     <input type="text" placeholder="स्पष्टीकरण..." value={explanation} onChange={e => setExplanation(e.target.value)} className="col-span-2 p-2 border rounded-lg font-medium" />
                   </div>
-                  <button type="submit" className="w-full py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white font-black rounded-xl transition">
+                  <button type="submit" className="w-full py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white font-black rounded-xl transition cursor-pointer">
                     + प्रश्न सेव करें
                   </button>
                 </form>
@@ -452,7 +481,7 @@ export default function AdminQuizManager({ adminToken, apiBaseUrl }) {
                     onChange={(e) => setBulkJsonText(e.target.value)}
                     className="w-full p-2 border font-mono text-[10px] rounded-xl focus:outline-blue-600"
                   />
-                  <button type="submit" className="w-full py-2.5 bg-purple-600 hover:bg-purple-700 text-white font-black rounded-xl text-xs">
+                  <button type="submit" className="w-full py-2.5 bg-purple-600 hover:bg-purple-700 text-white font-black rounded-xl text-xs cursor-pointer">
                     Bulk JSON इंपोर्ट करें
                   </button>
                 </form>
@@ -475,7 +504,8 @@ export default function AdminQuizManager({ adminToken, apiBaseUrl }) {
                         <button
                           type="button"
                           onClick={() => handleDeleteQuestion(q.id)}
-                          className="text-rose-500 hover:text-rose-700 shrink-0"
+                          className="text-rose-500 hover:text-rose-700 shrink-0 cursor-pointer"
+                          title="Delete Question"
                         >
                           <Trash2 size={12} />
                         </button>

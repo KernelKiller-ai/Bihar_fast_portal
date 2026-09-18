@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback, useId } from "react";
+import PropTypes from "prop-types";
 import { 
   Trophy, 
   Share2, 
@@ -21,7 +22,8 @@ const BIHAR_DISTRICTS = [
   "Samastipur", "Rohtas", "Vaishali", "Saharsa", "Katihar"
 ];
 
-export default function Class10QuizPlayer() {
+// Ab yeh examId prop accept karega (default: "class_10")
+export default function Class10QuizPlayer({ examId = "class_10" }) {
   const studentNameId = useId();
   const districtId = useId();
   const phoneId = useId();
@@ -42,17 +44,23 @@ export default function Class10QuizPlayer() {
   const [result, setResult] = useState(null);
   const [loadingQuiz, setLoadingQuiz] = useState(true);
 
-  // Initial Load: Active Quiz
+  // Initial Load: Target Exam specific query
   useEffect(() => {
     let isMounted = true;
     async function fetchQuiz() {
+      setLoadingQuiz(true);
       try {
-        const res = await fetch(`${API_BASE_URL}/api/quiz/today`);
+        // Targeted Exam ID query parameter pass ho raha hai
+        const queryParam = examId ? `?subject=${encodeURIComponent(examId)}` : "";
+        const res = await fetch(`${API_BASE_URL}/api/quiz/today${queryParam}`);
         const data = await res.json();
         if (isMounted && data.is_live && data.quiz) {
           setQuizMeta(data.quiz);
           setQuestions(data.questions || []);
           setTimeLeft((data.quiz.duration_minutes || 10) * 60);
+        } else if (isMounted) {
+          setQuizMeta(null);
+          setQuestions([]);
         }
       } catch (err) {
         console.error("Quiz load error:", err);
@@ -65,7 +73,7 @@ export default function Class10QuizPlayer() {
     return () => {
       isMounted = false;
     };
-  }, []);
+  }, [examId]);
 
   // Submit Handler
   const handleSubmit = useCallback(async () => {
@@ -123,17 +131,17 @@ export default function Class10QuizPlayer() {
   const shareToWhatsApp = () => {
     if (!result || !quizMeta) return;
     const text = 
-`⚡ *BIHARFAST OFFICIAL - मैट्रिक डेली मॉक टेस्ट* ⚡
+`⚡ *BIHARFAST OFFICIAL - ऑनलाइन मॉक टेस्ट* ⚡
 📝 *${quizMeta.title}*
 
-👤 *छात्र:* ${student.name}
+👤 *परीक्षार्थी:* ${student.name}
 📍 *जिला:* ${student.district}
 🏆 *स्कोर:* ${result.score}/${result.total_questions}
 🎯 *सटीकता:* ${result.accuracy_percentage}%
 
 🔥 *क्या आप मुझसे ज्यादा अंक ला सकते हैं?*
 अभी टेस्ट दें और अपना नाम बिहार के स्टेट लीडरबोर्ड पर देखें:
-👉 https://www.biharfast.in/class-10-quiz`;
+👉 https://www.biharfast.in/mock-test?exam=${encodeURIComponent(examId)}`;
 
     window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(text)}`, "_blank");
   };
@@ -156,7 +164,7 @@ export default function Class10QuizPlayer() {
     return (
       <div className="max-w-md mx-auto my-12 p-8 bg-white rounded-3xl text-center shadow-md border border-slate-200">
         <h3 className="text-lg font-black text-slate-800">सत्र वर्तमान में बंद है</h3>
-        <p className="text-xs text-slate-500 mt-2">अगला टेस्ट जल्द ही लाइव किया जाएगा।</p>
+        <p className="text-xs text-slate-500 mt-2">इस परीक्षा के लिए नया टेस्ट जल्द ही लाइव किया जाएगा।</p>
       </div>
     );
   }
@@ -229,7 +237,7 @@ export default function Class10QuizPlayer() {
 
           <button
             type="submit"
-            className="w-full mt-2 py-3.5 bg-linear-to-r from-blue-700 to-indigo-700 hover:from-blue-800 hover:to-indigo-800 text-white font-extrabold rounded-xl shadow-lg transition flex items-center justify-center gap-2"
+            className="w-full mt-2 py-3.5 bg-linear-to-r from-blue-700 to-indigo-700 hover:from-blue-800 hover:to-indigo-800 text-white font-extrabold rounded-xl shadow-lg transition flex items-center justify-center gap-2 cursor-pointer"
           >
             <span>टेस्ट शुरू करें ({questions.length} प्रश्न)</span>
             <ArrowRight size={16} />
@@ -281,7 +289,7 @@ export default function Class10QuizPlayer() {
                       key={opt}
                       type="button"
                       onClick={() => handleOptionSelect(q.id, opt)}
-                      className={`w-full text-left p-3 rounded-xl border font-semibold text-xs transition flex items-center gap-3 ${
+                      className={`w-full text-left p-3 rounded-xl border font-semibold text-xs transition flex items-center gap-3 cursor-pointer ${
                         isSelected
                           ? "bg-blue-600 text-white border-blue-600 shadow-sm"
                           : "bg-slate-50 hover:bg-blue-50/60 border-slate-200 text-slate-800"
@@ -309,7 +317,7 @@ export default function Class10QuizPlayer() {
             type="button"
             disabled={submitting}
             onClick={handleSubmit}
-            className="w-full py-4 bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold text-base rounded-2xl shadow-lg transition flex items-center justify-center gap-2"
+            className="w-full py-4 bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold text-base rounded-2xl shadow-lg transition flex items-center justify-center gap-2 cursor-pointer"
           >
             {submitting ? "परिणाम तैयार हो रहा है..." : "टेस्ट सबमिट करें"}
           </button>
@@ -324,7 +332,6 @@ export default function Class10QuizPlayer() {
       <div className="max-w-xl mx-auto my-8 px-4">
         {/* Shareable Card Frame */}
         <div className="bg-white rounded-3xl shadow-2xl border-4 border-blue-600 overflow-hidden text-center p-6 sm:p-8">
-          {/* Header */}
           <div className="pb-4 border-b border-slate-100">
             <span className="text-[10px] font-black uppercase tracking-widest bg-blue-100 text-blue-800 px-3 py-1 rounded-full">
               BiharFast Official Scorecard
@@ -334,7 +341,6 @@ export default function Class10QuizPlayer() {
             </h1>
           </div>
 
-          {/* Student Badge */}
           <div className="my-6">
             <div className="w-16 h-16 bg-amber-100 text-amber-600 rounded-full flex items-center justify-center mx-auto mb-3 shadow-inner">
               <Trophy size={32} />
@@ -346,7 +352,6 @@ export default function Class10QuizPlayer() {
             </p>
           </div>
 
-          {/* Score Stats Grid */}
           <div className="grid grid-cols-3 gap-3 bg-slate-50 p-4 rounded-2xl mb-6 border border-slate-200/80">
             <div>
               <span className="text-[11px] text-slate-500 font-bold">अंक</span>
@@ -362,12 +367,11 @@ export default function Class10QuizPlayer() {
             </div>
           </div>
 
-          {/* Action Buttons */}
           <div className="space-y-3">
             <button
               type="button"
               onClick={shareToWhatsApp}
-              className="w-full py-3.5 bg-[#25D366] hover:bg-[#20bd5a] text-white font-black rounded-xl shadow-lg transition flex items-center justify-center gap-2"
+              className="w-full py-3.5 bg-[#25D366] hover:bg-[#20bd5a] text-white font-black rounded-xl shadow-lg transition flex items-center justify-center gap-2 cursor-pointer"
             >
               <Share2 size={20} />
               <span>व्हाट्सएप पर शेयर करें (दोस्तों को चुनौती दें)</span>
@@ -380,7 +384,7 @@ export default function Class10QuizPlayer() {
                 setResult(null);
                 setStep("register");
               }}
-              className="w-full py-2.5 text-xs text-slate-600 hover:text-slate-900 font-bold transition flex items-center justify-center gap-1"
+              className="w-full py-2.5 text-xs text-slate-600 hover:text-slate-900 font-bold transition flex items-center justify-center gap-1 cursor-pointer"
             >
               <RotateCcw size={14} />
               <span>अन्य छात्र का टेस्ट दें</span>
@@ -388,7 +392,7 @@ export default function Class10QuizPlayer() {
           </div>
         </div>
 
-        {/* Detailed Solutions Breakdown */}
+        {/* Detailed Solutions */}
         <div className="mt-8 bg-white border border-slate-200 rounded-2xl p-5 shadow-xs">
           <h3 className="font-extrabold text-sm text-slate-900 mb-4 flex items-center gap-2">
             <Sparkles size={16} className="text-amber-500" />
@@ -421,7 +425,6 @@ export default function Class10QuizPlayer() {
           </div>
         </div>
 
-        {/* Live Leaderboard */}
         <Leaderboard quizId={quizMeta.id} />
       </div>
     );
@@ -429,3 +432,7 @@ export default function Class10QuizPlayer() {
 
   return null;
 }
+
+Class10QuizPlayer.propTypes = {
+  examId: PropTypes.string
+};
