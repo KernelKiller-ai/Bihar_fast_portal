@@ -9,26 +9,31 @@ import {
   ArrowRight, 
   Timer, 
   MapPin, 
-  Award,
-  Sparkles
+  Sparkles,
+  Award
 } from "lucide-react";
 import Leaderboard from "./Leaderboard";
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "https://bihar-fast-portal.onrender.com";
 
+// Bihar ke sabhi 38 Official Districts (Alphabetically Organized)
 const BIHAR_DISTRICTS = [
-  "Patna", "Gaya", "Muzaffarpur", "Bhagalpur", "Darbhanga", 
-  "Sheikhpura", "Nalanda", "Purnea", "Saran", "Begusarai", 
-  "Samastipur", "Rohtas", "Vaishali", "Saharsa", "Katihar"
+  "Araria", "Arwal", "Aurangabad", "Banka", "Begusarai", 
+  "Bhagalpur", "Bhojpur", "Buxar", "Darbhanga", "East Champaran (Motihari)", 
+  "Gaya", "Gopalganj", "Jamui", "Jehanabad", "Kaimur (Bhabua)", 
+  "Katihar", "Khagaria", "Kishanganj", "Lakhisarai", "Madhepura", 
+  "Madhubani", "Munger", "Muzaffarpur", "Nalanda", "Nawada", 
+  "Patna", "Purnea", "Rohtas (Sasaram)", "Saharsa", "Samastipur", 
+  "Saran (Chhapra)", "Sheikhpura", "Sheohar", "Sitamarhi", "Siwan", 
+  "Supaul", "Vaishali (Hajipur)", "West Champaran (Bettiah)"
 ];
 
-// Ab yeh examId prop accept karega (default: "class_10")
-export default function Class10QuizPlayer({ examId = "class_10" }) {
+export default function Class10QuizPlayer({ examId = "class_10", quizId = null }) {
   const studentNameId = useId();
   const districtId = useId();
   const phoneId = useId();
 
-  // Navigation Steps: 'register' | 'playing' | 'result'
+  // Steps: 'register' | 'playing' | 'result'
   const [step, setStep] = useState("register");
   const [student, setStudent] = useState({
     name: "",
@@ -44,26 +49,32 @@ export default function Class10QuizPlayer({ examId = "class_10" }) {
   const [result, setResult] = useState(null);
   const [loadingQuiz, setLoadingQuiz] = useState(true);
 
-  // Initial Load: Target Exam specific query
+  // Dynamic Query Fetch: Supports both explicit quizId and examId
   useEffect(() => {
     let isMounted = true;
     async function fetchQuiz() {
       setLoadingQuiz(true);
       try {
-        // Targeted Exam ID query parameter pass ho raha hai
-        const queryParam = examId ? `?subject=${encodeURIComponent(examId)}` : "";
-        const res = await fetch(`${API_BASE_URL}/api/quiz/today${queryParam}`);
+        let endpoint = `${API_BASE_URL}/api/quiz/today`;
+        if (quizId) {
+          endpoint += `?quiz_id=${encodeURIComponent(quizId)}`;
+        } else if (examId) {
+          endpoint += `?subject=${encodeURIComponent(examId)}`;
+        }
+
+        const res = await fetch(endpoint);
         const data = await res.json();
+        
         if (isMounted && data.is_live && data.quiz) {
           setQuizMeta(data.quiz);
           setQuestions(data.questions || []);
-          setTimeLeft((data.quiz.duration_minutes || 10) * 60);
+          setTimeLeft((data.quiz.duration_minutes || 15) * 60);
         } else if (isMounted) {
           setQuizMeta(null);
           setQuestions([]);
         }
       } catch (err) {
-        console.error("Quiz load error:", err);
+        console.error("Quiz dynamic load error:", err);
       } finally {
         if (isMounted) setLoadingQuiz(false);
       }
@@ -73,7 +84,7 @@ export default function Class10QuizPlayer({ examId = "class_10" }) {
     return () => {
       isMounted = false;
     };
-  }, [examId]);
+  }, [examId, quizId]);
 
   // Submit Handler
   const handleSubmit = useCallback(async () => {
@@ -128,8 +139,13 @@ export default function Class10QuizPlayer({ examId = "class_10" }) {
     setAnswers((prev) => ({ ...prev, [qId]: optionKey }));
   };
 
+  // WhatsApp Viral Share
   const shareToWhatsApp = () => {
     if (!result || !quizMeta) return;
+    const shareUrl = quizId 
+      ? `https://www.biharfast.in/mock-test?exam=${encodeURIComponent(examId)}&quiz_id=${encodeURIComponent(quizMeta.id)}`
+      : `https://www.biharfast.in/mock-test?exam=${encodeURIComponent(examId)}`;
+
     const text = 
 `⚡ *BIHARFAST OFFICIAL - ऑनलाइन मॉक टेस्ट* ⚡
 📝 *${quizMeta.title}*
@@ -141,7 +157,7 @@ export default function Class10QuizPlayer({ examId = "class_10" }) {
 
 🔥 *क्या आप मुझसे ज्यादा अंक ला सकते हैं?*
 अभी टेस्ट दें और अपना नाम बिहार के स्टेट लीडरबोर्ड पर देखें:
-👉 https://www.biharfast.in/mock-test?exam=${encodeURIComponent(examId)}`;
+👉 ${shareUrl}`;
 
     window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(text)}`, "_blank");
   };
@@ -155,7 +171,7 @@ export default function Class10QuizPlayer({ examId = "class_10" }) {
   if (loadingQuiz) {
     return (
       <div className="py-20 text-center text-sm font-bold text-slate-600">
-        प्रश्नावली लोड हो रही है...
+        प्रश्न पत्र लोड हो रहा है...
       </div>
     );
   }
@@ -330,7 +346,6 @@ export default function Class10QuizPlayer({ examId = "class_10" }) {
   if (step === "result" && result) {
     return (
       <div className="max-w-xl mx-auto my-8 px-4">
-        {/* Shareable Card Frame */}
         <div className="bg-white rounded-3xl shadow-2xl border-4 border-blue-600 overflow-hidden text-center p-6 sm:p-8">
           <div className="pb-4 border-b border-slate-100">
             <span className="text-[10px] font-black uppercase tracking-widest bg-blue-100 text-blue-800 px-3 py-1 rounded-full">
@@ -434,5 +449,6 @@ export default function Class10QuizPlayer({ examId = "class_10" }) {
 }
 
 Class10QuizPlayer.propTypes = {
-  examId: PropTypes.string
+  examId: PropTypes.string,
+  quizId: PropTypes.string
 };
