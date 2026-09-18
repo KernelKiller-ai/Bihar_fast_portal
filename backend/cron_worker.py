@@ -3,13 +3,19 @@ import re
 import sys
 import time
 import logging
+import urllib3
 import requests
+from requests.adapters import HTTPAdapter
+from urllib3.util.retry import Retry
 from datetime import datetime, date, timedelta
 from typing import Optional, Dict, Any, List
 from bs4 import BeautifulSoup
 from dotenv import load_dotenv
 
 load_dotenv()
+
+# Suppress self-signed certificate warnings from government servers
+urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
 logger = logging.getLogger("BiharFastAllIndiaScraper")
@@ -30,6 +36,17 @@ BROWSER_HEADERS = {
     "Connection": "keep-alive"
 }
 
+# Robust Scraper Session with Automatic Retries
+scraper_session = requests.Session()
+retries = Retry(
+    total=3,
+    backoff_factor=1,
+    status_forcelist=[500, 502, 503, 504],
+    raise_on_status=False
+)
+scraper_session.mount("https://", HTTPAdapter(max_retries=retries))
+scraper_session.mount("http://", HTTPAdapter(max_retries=retries))
+
 def clean_text(text: str) -> str:
     return re.sub(r"\s+", " ", text or "").strip()
 
@@ -48,7 +65,6 @@ def parse_notice_date(text: str) -> Optional[date]:
     if not text:
         return None
         
-    # Pattern 1: DD-MM-YYYY / DD/MM/YYYY
     m1 = re.search(r"(\d{1,2})[-/.](\d{1,2})[-/.](\d{4})", text)
     if m1:
         d, m, y = m1.groups()
@@ -57,7 +73,6 @@ def parse_notice_date(text: str) -> Optional[date]:
         except ValueError:
             pass
 
-    # Pattern 2: 15 Sep 2026 / 15 September 2026
     m2 = re.search(r"(\d{1,2})\s+([A-Za-z]{3,9})\s+(\d{4})", text)
     if m2:
         d, mon_str, y = m2.groups()
@@ -71,14 +86,13 @@ def parse_notice_date(text: str) -> Optional[date]:
 def is_fresh_notice(notice_date: Optional[date], max_age_days: int = 5) -> bool:
     """Returns True if the notice is within the last `max_age_days` days."""
     if not notice_date:
-        return True  # Date parse na hone par safe side notice miss nahi karte
+        return True
     age = (date.today() - notice_date).days
     return 0 <= age <= max_age_days
 
 # ==================== TELEGRAM BROADCASTER ====================
 
 def broadcast_to_telegram(notice: dict):
-    """Sends immediate formatted alert to Telegram channel."""
     if not TELEGRAM_BOT_TOKEN or not TELEGRAM_CHANNEL_ID:
         return
 
@@ -123,7 +137,7 @@ def scrape_upsc():
     notices = []
     url = "https://upsc.gov.in/whats-new"
     try:
-        r = requests.get(url, headers=BROWSER_HEADERS, timeout=(5, 15))
+        r = scraper_session.get(url, headers=BROWSER_HEADERS, timeout=(6, 18), verify=False)
         if r.status_code == 200:
             soup = BeautifulSoup(r.text, "html.parser")
             for row in soup.find_all("tr"):
@@ -152,10 +166,9 @@ def scrape_upsc():
 
 def scrape_ssc():
     notices = []
-    # 1. Official SSC Direct API Check
     api_url = "https://ssc.gov.in/api/notice"
     try:
-        r = requests.get(api_url, headers=BROWSER_HEADERS, timeout=(5, 12))
+        r = scraper_session.get(api_url, headers=BROWSER_HEADERS, timeout=(6, 18), verify=False)
         if r.status_code == 200:
             data = r.json()
             items = data.get("data", []) if isinstance(data, dict) else []
@@ -178,10 +191,9 @@ def scrape_ssc():
     except Exception:
         pass
 
-    # 2. HTML Fallback
     if not notices:
         try:
-            r = requests.get("https://ssc.gov.in", headers=BROWSER_HEADERS, timeout=(5, 15))
+            r = scraper_session.get("https://ssc.gov.in", headers=BROWSER_HEADERS, timeout=(6, 18), verify=False)
             if r.status_code == 200:
                 soup = BeautifulSoup(r.text, "html.parser")
                 for a in soup.find_all("a", href=True):
@@ -205,7 +217,7 @@ def scrape_ibps():
     notices = []
     url = "https://www.ibps.in"
     try:
-        r = requests.get(url, headers=BROWSER_HEADERS, timeout=(5, 15))
+        r = scraper_session.get(url, headers=BROWSER_HEADERS, timeout=(6, 18), verify=False)
         if r.status_code == 200:
             soup = BeautifulSoup(r.text, "html.parser")
             for a in soup.find_all("a", href=True):
@@ -231,7 +243,7 @@ def scrape_rrb_central():
     notices = []
     url = "https://www.rrbapply.gov.in"
     try:
-        r = requests.get(url, headers=BROWSER_HEADERS, timeout=(5, 15))
+        r = scraper_session.get(url, headers=BROWSER_HEADERS, timeout=(6, 18), verify=False)
         if r.status_code == 200:
             soup = BeautifulSoup(r.text, "html.parser")
             for a in soup.find_all("a", href=True):
@@ -256,7 +268,7 @@ def scrape_bpsc():
     notices = []
     url = "https://bpsc.bihar.gov.in/"
     try:
-        r = requests.get(url, headers=BROWSER_HEADERS, timeout=(5, 15))
+        r = scraper_session.get(url, headers=BROWSER_HEADERS, timeout=(6, 18), verify=False)
         if r.status_code == 200:
             soup = BeautifulSoup(r.text, "html.parser")
             table = soup.find("table")
@@ -290,7 +302,7 @@ def scrape_csbc():
     notices = []
     url = "https://csbc.bihar.gov.in"
     try:
-        r = requests.get(url, headers=BROWSER_HEADERS, timeout=(5, 15))
+        r = scraper_session.get(url, headers=BROWSER_HEADERS, timeout=(6, 18), verify=False)
         if r.status_code == 200:
             soup = BeautifulSoup(r.text, "html.parser")
             for row in soup.find_all("tr"):
@@ -318,42 +330,44 @@ def scrape_csbc():
     return notices[:20]
 
 def scrape_bpssc():
-    """BPSSC - Uses HTTP port 80 fallback to bypass NIC SSL firewall blocking."""
+    """BPSSC - Uses longer timeout and HTTP fallback to bypass firewall drops."""
     notices = []
-    url = "https://bpssc.bih.nic.in/"
-    try:
-        r = requests.get(url, headers=BROWSER_HEADERS, timeout=(5, 12))
-        if r.status_code == 200:
-            soup = BeautifulSoup(r.text, "html.parser")
-            for row in soup.find_all("tr"):
-                raw_row_text = row.get_text(separator=" ")
-                n_date = parse_notice_date(raw_row_text)
-                if not is_fresh_notice(n_date, max_age_days=5):
-                    continue
+    for url in ["https://bpssc.bih.nic.in/", "http://bpssc.bih.nic.in/"]:
+        try:
+            r = scraper_session.get(url, headers=BROWSER_HEADERS, timeout=(10, 25), verify=False)
+            if r.status_code == 200:
+                soup = BeautifulSoup(r.text, "html.parser")
+                for row in soup.find_all("tr"):
+                    raw_row_text = row.get_text(separator=" ")
+                    n_date = parse_notice_date(raw_row_text)
+                    if not is_fresh_notice(n_date, max_age_days=5):
+                        continue
 
-                link_tag = row.find("a", href=True)
-                if link_tag and ".pdf" in link_tag["href"].lower():
-                    title_text = clean_text(raw_row_text)
-                    if len(title_text) > 12:
-                        pdf_link = link_tag["href"]
-                        if not pdf_link.startswith("http"):
-                            pdf_link = "https://bpssc.bih.nic.in/" + pdf_link.lstrip("/")
-                        notices.append({
-                            "title": title_text[:140],
-                            "department": "BPSSC (Bihar Police SI)",
-                            "category": detect_category(title_text),
-                            "pdf_url": pdf_link,
-                            "apply_url": "https://bpssc.bih.nic.in"
-                        })
-    except Exception as e:
-        logger.warning(f"BPSSC scraping skipped: {e}")
+                    link_tag = row.find("a", href=True)
+                    if link_tag and ".pdf" in link_tag["href"].lower():
+                        title_text = clean_text(raw_row_text)
+                        if len(title_text) > 12:
+                            pdf_link = link_tag["href"]
+                            if not pdf_link.startswith("http"):
+                                pdf_link = "https://bpssc.bih.nic.in/" + pdf_link.lstrip("/")
+                            notices.append({
+                                "title": title_text[:140],
+                                "department": "BPSSC (Bihar Police SI)",
+                                "category": detect_category(title_text),
+                                "pdf_url": pdf_link,
+                                "apply_url": "https://bpssc.bih.nic.in"
+                            })
+                if notices:
+                    break
+        except Exception as e:
+            logger.warning(f"BPSSC attempt on {url} skipped: {e}")
     return notices[:15]
 
 def scrape_bssc():
     notices = []
     url = "https://bssc.bihar.gov.in/NoticeBoard.aspx"
     try:
-        r = requests.get(url, headers=BROWSER_HEADERS, timeout=(5, 15))
+        r = scraper_session.get(url, headers=BROWSER_HEADERS, timeout=(6, 18), verify=False)
         if r.status_code == 200:
             soup = BeautifulSoup(r.text, "html.parser")
             table = soup.find("table")
@@ -386,7 +400,7 @@ def scrape_btsc():
     notices = []
     url = "https://btsc.bihar.gov.in"
     try:
-        r = requests.get(url, headers=BROWSER_HEADERS, timeout=(5, 15))
+        r = scraper_session.get(url, headers=BROWSER_HEADERS, timeout=(6, 18), verify=False)
         if r.status_code == 200:
             soup = BeautifulSoup(r.text, "html.parser")
             for a in soup.find_all("a", href=True):
@@ -415,7 +429,7 @@ def scrape_bceceb():
     notices = []
     url = "https://bceceboard.bihar.gov.in"
     try:
-        r = requests.get(url, headers=BROWSER_HEADERS, timeout=(5, 15))
+        r = scraper_session.get(url, headers=BROWSER_HEADERS, timeout=(6, 18), verify=False)
         if r.status_code == 200:
             soup = BeautifulSoup(r.text, "html.parser")
             for a in soup.find_all("a", href=True):
@@ -452,7 +466,8 @@ def push_to_inbox(notice: dict):
     }
 
     try:
-        res = requests.post(sync_endpoint, json=notice, headers=headers, timeout=20)
+        # Timeout increased to 65s to comfortably absorb Render cold-start boots
+        res = scraper_session.post(sync_endpoint, json=notice, headers=headers, timeout=65)
         if res.status_code == 200:
             data = res.json()
             if data.get("status") == "duplicate_skipped":
@@ -464,6 +479,8 @@ def push_to_inbox(notice: dict):
             logger.error("Inbox sync unauthorized: INTERNAL_SYNC_SECRET mismatch!")
         else:
             logger.warning(f"Inbox sync status {res.status_code}: {res.text}")
+    except requests.exceptions.Timeout:
+        logger.error(f"Sync timed out for '{notice['title'][:30]}' (Render is booting, retrying next)")
     except Exception as e:
         logger.error(f"Backend inbox connection error: {e}")
 
