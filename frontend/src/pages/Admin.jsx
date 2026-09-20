@@ -1,13 +1,11 @@
 import { useState, useMemo } from "react";
 import { 
   PlusCircle, KeyRound, CheckCircle, AlertCircle, Loader2, 
-  FileText, Edit3, Check, RefreshCw, ExternalLink,
-  Search, Eye, Clock, ShieldCheck, X, Sparkles, Inbox, Ban,
-  CheckCheck, Trophy, Layers, Send
+  FileText, Edit3, Check, RefreshCw,
+  Search, Eye, Clock, ShieldCheck, X, Trophy, Layers, Trash2
 } from "lucide-react";
 import AdminQuizManager from "../components/AdminQuizManager";
 
-// Production Backend URL
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "https://bihar-fast-portal.onrender.com";
 
 export default function Admin() {
@@ -17,31 +15,37 @@ export default function Admin() {
   const [actionLoading, setActionLoading] = useState(null);
   const [feedback, setFeedback] = useState({ type: "", message: "" });
 
-  // Navigation Tabs: 'inbox' | 'all' | 'quiz' | 'new'
-  const [activeTab, setActiveTab] = useState("inbox");
+  // Navigation Tabs: 'all' | 'new' | 'quiz'
+  const [activeTab, setActiveTab] = useState("all");
   
-  // Data States
   const [posts, setPosts] = useState([]);
-  const [inboxItems, setInboxItems] = useState([]);
-  const [quotaStats, setQuotaStats] = useState({ used: 0, remaining: 10, limit: 10 });
   const [searchQuery, setSearchQuery] = useState("");
 
   // Edit Modal State
   const [editingPost, setEditingPost] = useState(null);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
 
-  // Manual Creation Form
+  // Manual Creation Form with 800+ Word Content & SEO Fields
   const [formData, setFormData] = useState({
     title: "",
-    department: "UPSC (All India)",
+    slug: "",
+    department: "BPSC",
     category: "jobs",
     total_posts: "",
     last_date: "",
     eligibility: "",
     apply_url: "",
     pdf_url: "",
-    fees: "Gen/OBC: ₹0 | SC/ST: ₹0",
     short_desc: "",
+    meta_title: "",
+    meta_desc: "",
+    content: "",
+    faqs: [
+      { q: "", a: "" },
+      { q: "", a: "" }
+    ],
+    how_to_apply: [""],
+    selection_process: [""]
   });
 
   const authHeaders = (token = authPin, includeJson = false) => ({
@@ -53,27 +57,11 @@ export default function Admin() {
     setLoading(true);
     setFeedback({ type: "", message: "" });
     try {
-      await Promise.all([
-        fetchPosts(token),
-        fetchInbox(token),
-        fetchQuota(token)
-      ]);
+      await fetchPosts(token);
     } catch (err) {
       console.error("Dashboard initial load error:", err);
     } finally {
       setLoading(false);
-    }
-  };
-
-  const fetchQuota = async (token = authPin) => {
-    try {
-      const res = await fetch(`${API_BASE_URL}/api/admin/quota-stats`, { headers: authHeaders(token) });
-      if (res.ok) {
-        const data = await res.json();
-        setQuotaStats(data);
-      }
-    } catch (err) {
-      console.warn("Quota fetch error:", err);
     }
   };
 
@@ -96,24 +84,13 @@ export default function Admin() {
     }
   };
 
-  const fetchInbox = async (token = authPin) => {
-    try {
-      const res = await fetch(`${API_BASE_URL}/api/admin/inbox?status=unprocessed`, { headers: authHeaders(token) });
-      if (!res.ok) throw new Error(`HTTP Error ${res.status}`);
-      const json = await res.json();
-      setInboxItems(Array.isArray(json.data) ? json.data : []);
-    } catch (err) {
-      console.error("Inbox fetch error:", err);
-    }
-  };
-
   const handleLogin = async (e) => {
     e.preventDefault();
     const token = authPin.trim();
     if (!token) return;
 
     try {
-      const res = await fetch(`${API_BASE_URL}/api/admin/quota-stats`, { headers: authHeaders(token) });
+      const res = await fetch(`${API_BASE_URL}/api/admin/posts`, { headers: authHeaders(token) });
       if (!res.ok) throw new Error(res.status === 401 ? "गलत Admin Token! कृपया सही Token डालें।" : `HTTP ${res.status}`);
       setIsAuthenticated(true);
       setFeedback({ type: "", message: "" });
@@ -124,63 +101,6 @@ export default function Admin() {
     }
   };
 
-  // Human-Triggered AI Enrichment (Strictly <= 10/day)
-  const handleEnrichAndPublish = async (inboxId) => {
-    if (quotaStats.remaining <= 0) {
-      alert("आज का 10 AI Posts का कोटा समाप्त हो चुका है! कल नया कोटा उपलब्ध होगा।");
-      return;
-    }
-
-    setActionLoading(`ai_${inboxId}`);
-    try {
-      const res = await fetch(`${API_BASE_URL}/api/admin/inbox/${inboxId}/enrich-and-publish`, {
-        method: "POST",
-        headers: authHeaders(),
-      });
-      const data = await res.json();
-
-      if (!res.ok) {
-        throw new Error(data.detail || "AI processing failed");
-      }
-
-      setInboxItems(prev => prev.filter(i => i.id !== inboxId));
-      if (data.quota) setQuotaStats(data.quota);
-      
-      setFeedback({ 
-        type: "success", 
-        message: `सफलता! नोटिस Gemini AI द्वारा तैयार करके पोर्टल पर लाइव पब्लिश कर दिया गया!` 
-      });
-
-      fetchPosts();
-    } catch (err) {
-      setFeedback({ type: "error", message: `AI Enrichment Failed: ${err.message}` });
-    } finally {
-      setActionLoading(null);
-    }
-  };
-
-  // Reject Raw Notice from Inbox (0 Tokens spent)
-  const handleRejectInboxItem = async (inboxId) => {
-    if (!window.confirm("क्या आप इस नोटिस को रिजेक्ट/हटाना चाहते हैं?")) return;
-
-    setActionLoading(`rej_${inboxId}`);
-    try {
-      const res = await fetch(`${API_BASE_URL}/api/admin/inbox/${inboxId}/reject`, {
-        method: "POST",
-        headers: authHeaders(),
-      });
-      if (!res.ok) throw new Error("Reject request failed");
-
-      setInboxItems(prev => prev.filter(i => i.id !== inboxId));
-      setFeedback({ type: "success", message: "नोटिस को रिजेक्ट कर दिया गया (Zero AI Tokens)." });
-    } catch (err) {
-      setFeedback({ type: "error", message: `Reject error: ${err.message}` });
-    } finally {
-      setActionLoading(null);
-    }
-  };
-
-  // Status Toggle for Existing Notice (Approve / Draft)
   const handleStatusChange = async (postId, newStatus) => {
     setActionLoading(postId);
     try {
@@ -200,7 +120,6 @@ export default function Admin() {
     }
   };
 
-  // Edit Existing Notice
   const openEditModal = (post) => {
     setEditingPost({ ...post });
     setIsEditModalOpen(true);
@@ -229,70 +148,84 @@ export default function Admin() {
     }
   };
 
-  // Manual New Post Submit
+  // Helper for dynamic form arrays
+  const handleFaqChange = (index, field, value) => {
+    const updated = [...formData.faqs];
+    updated[index][field] = value;
+    setFormData({ ...formData, faqs: updated });
+  };
+
+  const addFaqField = () => {
+    setFormData({ ...formData, faqs: [...formData.faqs, { q: "", a: "" }] });
+  };
+
+  const removeFaqField = (index) => {
+    setFormData({ ...formData, faqs: formData.faqs.filter((_, i) => i !== index) });
+  };
+
   const handleNewSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
     setFeedback({ type: "", message: "" });
+
+    // Clean empty FAQs and steps
+    const cleanedPayload = {
+      ...formData,
+      slug: formData.slug || formData.title.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, ""),
+      meta_title: formData.meta_title || formData.title,
+      meta_desc: formData.meta_desc || formData.short_desc,
+      faqs: formData.faqs.filter(f => f.q.trim() && f.a.trim()),
+      how_to_apply: formData.how_to_apply.filter(s => s.trim()),
+      selection_process: formData.selection_process.filter(s => s.trim())
+    };
+
     try {
-      const res = await fetch(`${API_BASE_URL}/api/inbox/sync`, {
+      const res = await fetch(`${API_BASE_URL}/api/admin/posts`, {
         method: "POST",
         headers: authHeaders(authPin, true),
-        body: JSON.stringify(formData),
+        body: JSON.stringify(cleanedPayload),
       });
       const data = await res.json().catch(() => ({}));
       if (!res.ok) throw new Error(data.detail || `HTTP ${res.status}`);
-      if (!data.success) throw new Error("Unexpected sync response");
 
-      setFeedback({ type: "success", message: "मैन्युअल पोस्ट लाइव पब्लिश हो गई!" });
+      setFeedback({ type: "success", message: "नया हाई-वैल्यू आर्टिकल सीधे पोर्टल पर लाइव हो गया!" });
       setFormData({
         title: "",
-        department: "UPSC (All India)",
+        slug: "",
+        department: "BPSC",
         category: "jobs",
         total_posts: "",
         last_date: "",
         eligibility: "",
         apply_url: "",
         pdf_url: "",
-        fees: "Gen/OBC: ₹0 | SC/ST: ₹0",
         short_desc: "",
+        meta_title: "",
+        meta_desc: "",
+        content: "",
+        faqs: [{ q: "", a: "" }, { q: "", a: "" }],
+        how_to_apply: [""],
+        selection_process: [""]
       });
       fetchPosts();
       setActiveTab("all");
     } catch (err) {
-      setFeedback({ type: "error", message: `Manual publish error: ${err.message}` });
+      setFeedback({ type: "error", message: `Publish error: ${err.message}` });
     } finally {
       setLoading(false);
     }
   };
 
-  // Filtered Live Posts
   const filteredPosts = useMemo(() => {
     if (!Array.isArray(posts)) return [];
     return posts.filter(post => {
       const q = searchQuery.toLowerCase().trim();
-      const match = !q || 
+      return !q || 
         (post.title && post.title.toLowerCase().includes(q)) ||
         (post.department && post.department.toLowerCase().includes(q));
-
-      if (activeTab === "pending") return match && post.status === "pending_approval";
-      if (activeTab === "all") return match;
-      return true;
     });
-  }, [posts, searchQuery, activeTab]);
+  }, [posts, searchQuery]);
 
-  // Filtered Inbox Items
-  const filteredInbox = useMemo(() => {
-    if (!Array.isArray(inboxItems)) return [];
-    const q = searchQuery.toLowerCase().trim();
-    if (!q) return inboxItems;
-    return inboxItems.filter(item => 
-      (item.title && item.title.toLowerCase().includes(q)) ||
-      (item.department && item.department.toLowerCase().includes(q))
-    );
-  }, [inboxItems, searchQuery]);
-
-  // 1. Login Screen
   if (!isAuthenticated) {
     return (
       <div className="min-h-[85vh] flex items-center justify-center px-4 bg-slate-50">
@@ -302,7 +235,7 @@ export default function Admin() {
           </div>
           <div>
             <h2 className="text-2xl font-black text-slate-900 tracking-tight">BiharFast Control Room</h2>
-            <p className="text-xs text-slate-500 mt-1.5 font-medium">Scraper Inbox • AI Publisher • Quiz Control</p>
+            <p className="text-xs text-slate-500 mt-1.5 font-medium">100% Manual Publishing • Class 10th Quiz Engine</p>
           </div>
 
           <form onSubmit={handleLogin} className="space-y-4">
@@ -332,43 +265,18 @@ export default function Admin() {
     );
   }
 
-  // 2. Main Authenticated Dashboard
   return (
     <div className="min-h-screen bg-slate-50/50 py-8 px-4 sm:px-6">
       <div className="max-w-6xl mx-auto space-y-6">
         
-        {/* Top Header & Stat Counters */}
+        {/* Top Header */}
         <div className="bg-white rounded-2xl p-6 border border-slate-200 shadow-xs flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div>
             <h1 className="text-2xl font-black text-slate-900 flex items-center gap-2.5">
-              <ShieldCheck className="text-[#0B4F8A]" size={28} /> BiharFast Sovereign Control
+              <ShieldCheck className="text-[#0B4F8A]" size={28} /> BiharFast Control Center
             </h1>
             <p className="text-xs text-slate-500 mt-1 font-medium">
-              Human-in-the-Loop Content Gate • Class 10th Mock Engine • Zero Token Waste
-            </p>
-          </div>
-
-          {/* Daily AI Quota Counter Card */}
-          <div className="bg-linear-to-br from-amber-50 to-orange-50 border border-amber-200/80 rounded-2xl p-3.5 min-w-60 shadow-xs">
-            <div className="flex items-center justify-between text-xs mb-1">
-              <span className="font-extrabold text-amber-900 flex items-center gap-1.5">
-                <Sparkles size={14} className="text-amber-600" /> Daily AI Quota
-              </span>
-              <span className={`font-black px-2 py-0.5 rounded-full text-[10px] ${
-                quotaStats.remaining > 0 ? "bg-amber-200 text-amber-900" : "bg-rose-200 text-rose-900"
-              }`}>
-                {quotaStats.used} / {quotaStats.limit} used
-              </span>
-            </div>
-            
-            <div className="w-full bg-amber-200/50 h-2 rounded-full overflow-hidden mt-1.5">
-              <div 
-                className={`h-full transition-all duration-300 ${quotaStats.remaining > 0 ? "bg-amber-500" : "bg-rose-500"}`}
-                style={{ width: `${(quotaStats.used / quotaStats.limit) * 100}%` }}
-              />
-            </div>
-            <p className="text-[10px] text-amber-800/80 mt-1 font-semibold text-right">
-              {quotaStats.remaining} generation{quotaStats.remaining === 1 ? "" : "s"} left today
+              Manual High-Value Authoring • AdSense Ready Architecture
             </p>
           </div>
         </div>
@@ -376,36 +284,24 @@ export default function Admin() {
         {/* Action Tabs Strip */}
         <div className="flex flex-wrap items-center justify-between gap-3 bg-white p-2.5 rounded-2xl border border-slate-200 shadow-xs">
           <div className="flex flex-wrap gap-2 items-center">
-            {/* 1. Scraped Inbox Tab */}
-            <button
-              onClick={() => setActiveTab("inbox")}
-              className={`px-4 py-2 rounded-xl text-xs font-bold transition flex items-center gap-1.5 cursor-pointer ${
-                activeTab === "inbox" 
-                  ? "bg-[#0B4F8A] text-white shadow-xs" 
-                  : "bg-slate-100 text-slate-700 hover:bg-slate-200"
-              }`}
-            >
-              <Inbox size={15} /> 
-              Scraped Inbox ({inboxItems.length})
-              {inboxItems.some(i => !i.is_already_published) && (
-                <span className="bg-amber-400 text-slate-900 text-[10px] px-1.5 py-0.2 rounded-full font-black ml-1">
-                  NEW
-                </span>
-              )}
-            </button>
-
-            {/* 2. Live Posts Tab */}
             <button
               onClick={() => setActiveTab("all")}
               className={`px-4 py-2 rounded-xl text-xs font-bold transition flex items-center gap-1.5 cursor-pointer ${
                 activeTab === "all" ? "bg-slate-900 text-white shadow-xs" : "bg-slate-100 text-slate-700 hover:bg-slate-200"
               }`}
             >
-              <Layers size={15} />
-              Live Posts ({posts.length})
+              <Layers size={15} /> Live Posts ({posts.length})
             </button>
 
-            {/* 3. Dedicated Class 10 Quiz Control Tab */}
+            <button
+              onClick={() => setActiveTab("new")}
+              className={`px-4 py-2 rounded-xl text-xs font-bold transition flex items-center gap-1.5 cursor-pointer ${
+                activeTab === "new" ? "bg-emerald-700 text-white shadow-xs" : "bg-slate-100 text-slate-700 hover:bg-slate-200"
+              }`}
+            >
+              <PlusCircle size={15} /> New In-Depth Post
+            </button>
+
             <button
               onClick={() => setActiveTab("quiz")}
               className={`px-4 py-2 rounded-xl text-xs font-black transition flex items-center gap-1.5 cursor-pointer ${
@@ -415,17 +311,7 @@ export default function Admin() {
               }`}
             >
               <Trophy size={15} className={activeTab === "quiz" ? "text-yellow-200" : "text-amber-600"} /> 
-              🎯 10th Quiz Control Hub
-            </button>
-
-            {/* 4. Manual New Post Tab */}
-            <button
-              onClick={() => setActiveTab("new")}
-              className={`px-4 py-2 rounded-xl text-xs font-bold transition flex items-center gap-1.5 cursor-pointer ${
-                activeTab === "new" ? "bg-emerald-700 text-white shadow-xs" : "bg-slate-100 text-slate-700 hover:bg-slate-200"
-              }`}
-            >
-              <PlusCircle size={15} /> New Post
+              🎯 10th Quiz Hub
             </button>
           </div>
 
@@ -457,7 +343,7 @@ export default function Admin() {
           </div>
         )}
 
-        {/* ==================== TAB: 10TH QUIZ CONTROL HUB ==================== */}
+        {/* TAB: 10TH QUIZ MANAGER */}
         {activeTab === "quiz" && (
           <AdminQuizManager 
             adminToken={authPin} 
@@ -465,164 +351,7 @@ export default function Admin() {
           />
         )}
 
-        {/* ==================== TAB 1: SCRAPED INBOX ==================== */}
-        {activeTab === "inbox" && (
-          <div className="bg-white rounded-2xl border border-slate-200 shadow-xs overflow-hidden">
-            <div className="p-4 bg-slate-50/70 border-b border-slate-100 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-              <div>
-                <h2 className="text-sm font-black text-slate-900 flex items-center gap-2">
-                  <Inbox className="text-[#0B4F8A]" size={17} /> Raw Scraped Feed (Zero AI Tokens Spent)
-                </h2>
-                <p className="text-[11px] text-slate-500 font-medium mt-0.5">
-                  Jo notices pehle se live hain unpar Green Badge hoga. Naye notices ko aap AI se live publish kar sakte hain.
-                </p>
-              </div>
-
-              <div className="relative max-w-xs w-full">
-                <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
-                <input
-                  type="text"
-                  placeholder="Filter inbox..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="w-full pl-8 pr-3 py-1.5 border border-slate-200 rounded-lg text-xs font-medium focus:outline-[#0B4F8A]"
-                />
-              </div>
-            </div>
-
-            <div className="overflow-x-auto">
-              <table className="w-full text-left border-collapse">
-                <thead>
-                  <tr className="bg-slate-50 text-[11px] font-black tracking-wider text-slate-500 uppercase border-b border-slate-200">
-                    <th className="p-4">Raw Notice Title & Board</th>
-                    <th className="p-4">Category</th>
-                    <th className="p-4">Source Links</th>
-                    <th className="p-4 text-right">Action (Decide)</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-slate-100 text-xs font-medium text-slate-700">
-                  {loading ? (
-                    <tr>
-                      <td colSpan="4" className="p-10 text-center text-slate-400 font-bold">
-                        <div className="flex items-center justify-center gap-2">
-                          <Loader2 className="animate-spin text-[#0B4F8A]" size={18} />
-                          Inbox लोड हो रहा है...
-                        </div>
-                      </td>
-                    </tr>
-                  ) : filteredInbox.length === 0 ? (
-                    <tr>
-                      <td colSpan="4" className="p-12 text-center text-slate-400 font-bold">
-                        Inbox खाली है! Scraper के अगले चक्र की प्रतीक्षा करें।
-                      </td>
-                    </tr>
-                  ) : (
-                    filteredInbox.map((item) => (
-                      <tr key={item.id} className={`transition ${item.is_already_published ? "bg-slate-50/50 opacity-80" : "hover:bg-slate-50/80"}`}>
-                        <td className="p-4 max-w-md">
-                          <div className="font-bold text-slate-900 leading-snug">
-                            {item.title}
-                          </div>
-                          <div className="flex flex-wrap items-center gap-2 mt-1.5">
-                            <span className="bg-blue-50 text-[#0B4F8A] text-[10px] font-black px-2 py-0.5 rounded">
-                              {item.department}
-                            </span>
-                            
-                            {item.is_already_published ? (
-                              <span className="bg-emerald-100 text-emerald-800 border border-emerald-300 text-[10px] font-bold px-2 py-0.5 rounded-full flex items-center gap-1">
-                                <CheckCheck size={11} /> पहले से पोर्टल पर लाइव है
-                              </span>
-                            ) : (
-                              <span className="bg-amber-100 text-amber-800 text-[10px] font-bold px-2 py-0.5 rounded-full">
-                                नया नोटिस
-                              </span>
-                            )}
-
-                            <span className="text-[10px] text-slate-400">
-                              {new Date(item.created_at).toLocaleDateString("hi-IN")}
-                            </span>
-                          </div>
-                        </td>
-
-                        <td className="p-4">
-                          <span className="capitalize font-semibold text-slate-600 bg-slate-100 px-2 py-1 rounded-md text-[11px]">
-                            {item.category}
-                          </span>
-                        </td>
-
-                        <td className="p-4">
-                          <div className="flex items-center gap-2">
-                            {item.pdf_url && (
-                              <a
-                                href={item.pdf_url}
-                                target="_blank"
-                                rel="noreferrer"
-                                className="text-rose-600 hover:text-rose-800 text-[11px] font-bold underline flex items-center gap-1"
-                              >
-                                PDF <ExternalLink size={11} />
-                              </a>
-                            )}
-                            {item.apply_url && (
-                              <a
-                                href={item.apply_url}
-                                target="_blank"
-                                rel="noreferrer"
-                                className="text-blue-600 hover:text-blue-800 text-[11px] font-bold underline flex items-center gap-1"
-                              >
-                                Portal <ExternalLink size={11} />
-                              </a>
-                            )}
-                          </div>
-                        </td>
-
-                        <td className="p-4 text-right">
-                          <div className="flex items-center justify-end gap-2">
-                            <button
-                              onClick={() => handleRejectInboxItem(item.id)}
-                              disabled={actionLoading === `rej_${item.id}`}
-                              className="px-2.5 py-1.5 border border-slate-200 text-slate-500 hover:text-rose-600 hover:bg-rose-50 rounded-lg text-xs font-bold transition flex items-center gap-1 cursor-pointer"
-                              title="Reject & Ignore Notice (0 Tokens)"
-                            >
-                              <Ban size={13} />
-                              Reject
-                            </button>
-
-                            {item.is_already_published ? (
-                              <a
-                                href={`/post/${item.expected_slug}`}
-                                target="_blank"
-                                rel="noreferrer"
-                                className="px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-300 rounded-lg text-xs font-bold transition flex items-center gap-1.5"
-                              >
-                                <Eye size={13} /> View Live
-                              </a>
-                            ) : (
-                              <button
-                                onClick={() => handleEnrichAndPublish(item.id)}
-                                disabled={actionLoading === `ai_${item.id}` || quotaStats.remaining <= 0}
-                                className="px-3 py-1.5 bg-linear-to-r from-amber-600 to-orange-600 hover:from-amber-700 hover:to-orange-700 text-white rounded-lg text-xs font-black transition flex items-center gap-1.5 shadow-xs cursor-pointer disabled:opacity-50"
-                                title="Enrich with Gemini AI & Publish Live"
-                              >
-                                {actionLoading === `ai_${item.id}` ? (
-                                  <Loader2 size={13} className="animate-spin" />
-                                ) : (
-                                  <Sparkles size={13} />
-                                )}
-                                AI Enrich & Publish
-                              </button>
-                            )}
-                          </div>
-                        </td>
-                      </tr>
-                    ))
-                  )}
-                </tbody>
-              </table>
-            </div>
-          </div>
-        )}
-
-        {/* ==================== TAB 2: LIVE NOTICES TABLE ==================== */}
+        {/* TAB: LIVE POSTS */}
         {activeTab === "all" && (
           <div className="bg-white rounded-2xl border border-slate-200 shadow-xs overflow-hidden">
             <div className="p-4 border-b border-slate-100 flex items-center justify-between gap-4">
@@ -637,7 +366,7 @@ export default function Admin() {
                 />
               </div>
               <span className="text-xs font-semibold text-slate-500">
-                Showing {filteredPosts.length} live posts
+                Total: {filteredPosts.length} posts
               </span>
             </div>
 
@@ -734,147 +463,238 @@ export default function Admin() {
           </div>
         )}
 
-        {/* ==================== TAB 3: MANUAL NEW POST CREATOR ==================== */}
+        {/* TAB: MANUAL NEW POST CREATOR */}
         {activeTab === "new" && (
           <div className="bg-white rounded-2xl p-6 sm:p-8 border border-slate-200 shadow-xs">
             <h2 className="text-lg font-black text-slate-900 border-b border-slate-100 pb-3 mb-6">
-              Create Direct Manual Notification (All India / State)
+              Create In-Depth High-Value Article (800+ Words Guide)
             </h2>
-            <form onSubmit={handleNewSubmit} className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div className="sm:col-span-2">
-                <label className="block text-xs font-black text-slate-700 mb-1">Notice / Job Title *</label>
-                <input
-                  type="text"
-                  value={formData.title}
-                  onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-                  placeholder="e.g. SSC CGL Recruitment 2026: Apply Online for 14,000+ Posts"
-                  required
-                  className="w-full border border-slate-300 rounded-xl p-3 text-xs font-semibold focus:outline-[#0B4F8A]"
-                />
-              </div>
+            <form onSubmit={handleNewSubmit} className="space-y-6">
+              
+              {/* Basic Details Grid */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="sm:col-span-2">
+                  <label className="block text-xs font-black text-slate-700 mb-1">Notice / Job Title *</label>
+                  <input
+                    type="text"
+                    value={formData.title}
+                    onChange={(e) => setFormData({ ...formData, title: e.target.value })}
+                    placeholder="e.g. BPSC 70th Combined Competitive Exam 2026: Notification, Syllabus & Apply"
+                    required
+                    className="w-full border border-slate-300 rounded-xl p-3 text-xs font-semibold focus:outline-[#0B4F8A]"
+                  />
+                </div>
 
-              <div>
-                <label className="block text-xs font-black text-slate-700 mb-1">Board / Commission *</label>
-                <select
-                  value={formData.department}
-                  onChange={(e) => setFormData({ ...formData, department: e.target.value })}
-                  className="w-full border border-slate-300 rounded-xl p-3 text-xs font-semibold focus:outline-[#0B4F8A]"
-                >
-                  <optgroup label="Central & All-India">
-                    <option value="UPSC (All India)">UPSC (Civil Services & Defence)</option>
-                    <option value="SSC (All India)">SSC (CGL, CHSL, GD, MTS)</option>
-                    <option value="Railway RRB (Central)">Railway RRB Central</option>
-                    <option value="IBPS Banking">IBPS (Bank PO & Clerk)</option>
-                    <option value="India Post (GDS)">India Post (Dak Sevak)</option>
-                  </optgroup>
-                  <optgroup label="Bihar Government">
-                    <option value="BPSC">BPSC</option>
-                    <option value="CSBC Bihar">CSBC (Police Constable)</option>
-                    <option value="BPSSC (Bihar Police SI)">BPSSC (Bihar Daroga)</option>
+                <div>
+                  <label className="block text-xs font-black text-slate-700 mb-1">Slug (URL Keyword) *</label>
+                  <input
+                    type="text"
+                    value={formData.slug}
+                    onChange={(e) => setFormData({ ...formData, slug: e.target.value })}
+                    placeholder="e.g. bpsc-70th-cce-notification-2026"
+                    className="w-full border border-slate-300 rounded-xl p-3 text-xs font-semibold focus:outline-[#0B4F8A]"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-black text-slate-700 mb-1">Board / Commission *</label>
+                  <select
+                    value={formData.department}
+                    onChange={(e) => setFormData({ ...formData, department: e.target.value })}
+                    className="w-full border border-slate-300 rounded-xl p-3 text-xs font-semibold focus:outline-[#0B4F8A]"
+                  >
+                    <option value="BPSC">BPSC Bihar</option>
+                    <option value="CSBC Bihar">CSBC Police</option>
+                    <option value="BPSSC (Bihar Police SI)">BPSSC Daroga</option>
                     <option value="BSSC Bihar">BSSC Staff Selection</option>
-                    <option value="BTSC Bihar">BTSC Technical Service</option>
-                  </optgroup>
-                </select>
+                    <option value="BTSC Bihar">BTSC Technical</option>
+                    <option value="SSC (All India)">SSC Central</option>
+                    <option value="Railway RRB (Central)">Railway RRB</option>
+                    <option value="UPSC (All India)">UPSC All India</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-xs font-black text-slate-700 mb-1">Category *</label>
+                  <select
+                    value={formData.category}
+                    onChange={(e) => setFormData({ ...formData, category: e.target.value })}
+                    className="w-full border border-slate-300 rounded-xl p-3 text-xs font-semibold focus:outline-[#0B4F8A]"
+                  >
+                    <option value="jobs">Government Jobs</option>
+                    <option value="admit_card">Admit Card</option>
+                    <option value="results">Exam Results</option>
+                    <option value="schemes">Government Schemes</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-xs font-black text-slate-700 mb-1">Total Posts</label>
+                  <input
+                    type="text"
+                    value={formData.total_posts}
+                    onChange={(e) => setFormData({ ...formData, total_posts: e.target.value })}
+                    placeholder="e.g. 1,957 पद"
+                    className="w-full border border-slate-300 rounded-xl p-3 text-xs font-semibold focus:outline-[#0B4F8A]"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-black text-slate-700 mb-1">Last Date *</label>
+                  <input
+                    type="text"
+                    value={formData.last_date}
+                    onChange={(e) => setFormData({ ...formData, last_date: e.target.value })}
+                    placeholder="e.g. 30 अक्टूबर 2026"
+                    required
+                    className="w-full border border-slate-300 rounded-xl p-3 text-xs font-semibold focus:outline-[#0B4F8A]"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-black text-slate-700 mb-1">Eligibility Criteria</label>
+                  <input
+                    type="text"
+                    value={formData.eligibility}
+                    onChange={(e) => setFormData({ ...formData, eligibility: e.target.value })}
+                    placeholder="e.g. मान्यता प्राप्त विश्वविद्यालय से स्नातक डिग्री"
+                    className="w-full border border-slate-300 rounded-xl p-3 text-xs font-semibold focus:outline-[#0B4F8A]"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-black text-slate-700 mb-1">Apply URL</label>
+                  <input
+                    type="url"
+                    value={formData.apply_url}
+                    onChange={(e) => setFormData({ ...formData, apply_url: e.target.value })}
+                    placeholder="https://bpsc.bih.nic.in"
+                    className="w-full border border-slate-300 rounded-xl p-3 text-xs font-semibold focus:outline-[#0B4F8A]"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-black text-slate-700 mb-1">PDF Notification Link</label>
+                  <input
+                    type="url"
+                    value={formData.pdf_url}
+                    onChange={(e) => setFormData({ ...formData, pdf_url: e.target.value })}
+                    placeholder="https://bpsc.bih.nic.in/doc.pdf"
+                    className="w-full border border-slate-300 rounded-xl p-3 text-xs font-semibold focus:outline-[#0B4F8A]"
+                  />
+                </div>
               </div>
 
+              {/* SEO Meta Tags Section */}
+              <div className="p-4 bg-slate-50 border border-slate-200 rounded-xl space-y-3">
+                <h3 className="text-xs font-black text-slate-900 uppercase tracking-wider">SEO Metadata (Google Search)</h3>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div>
+                    <label className="block text-[11px] font-bold text-slate-600 mb-1">Meta Title</label>
+                    <input
+                      type="text"
+                      value={formData.meta_title}
+                      onChange={(e) => setFormData({ ...formData, meta_title: e.target.value })}
+                      placeholder="Title for Google Snippet (60 chars)"
+                      className="w-full border border-slate-300 rounded-lg p-2.5 text-xs font-semibold focus:outline-[#0B4F8A]"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-[11px] font-bold text-slate-600 mb-1">Meta Description</label>
+                    <input
+                      type="text"
+                      value={formData.meta_desc}
+                      onChange={(e) => setFormData({ ...formData, meta_desc: e.target.value })}
+                      placeholder="Short summary for Google (160 chars)"
+                      className="w-full border border-slate-300 rounded-lg p-2.5 text-xs font-semibold focus:outline-[#0B4F8A]"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* Full Detailed Content (Core 800+ Words) */}
               <div>
-                <label className="block text-xs font-black text-slate-700 mb-1">Category *</label>
-                <select
-                  value={formData.category}
-                  onChange={(e) => setFormData({ ...formData, category: e.target.value })}
-                  className="w-full border border-slate-300 rounded-xl p-3 text-xs font-semibold focus:outline-[#0B4F8A]"
-                >
-                  <option value="jobs">Government Jobs</option>
-                  <option value="admit_card">Admit Card</option>
-                  <option value="results">Exam Results</option>
-                </select>
-              </div>
-
-              <div>
-                <label className="block text-xs font-black text-slate-700 mb-1">Total Posts</label>
-                <input
-                  type="text"
-                  value={formData.total_posts}
-                  onChange={(e) => setFormData({ ...formData, total_posts: e.target.value })}
-                  placeholder="e.g. 14,500 पद"
-                  className="w-full border border-slate-300 rounded-xl p-3 text-xs font-semibold focus:outline-[#0B4F8A]"
-                />
-              </div>
-
-              <div>
-                <label className="block text-xs font-black text-slate-700 mb-1">Last Date *</label>
-                <input
-                  type="text"
-                  value={formData.last_date}
-                  onChange={(e) => setFormData({ ...formData, last_date: e.target.value })}
-                  placeholder="e.g. 25 नवम्बर 2026"
-                  required
-                  className="w-full border border-slate-300 rounded-xl p-3 text-xs font-semibold focus:outline-[#0B4F8A]"
-                />
-              </div>
-
-              <div className="sm:col-span-2">
-                <label className="block text-xs font-black text-slate-700 mb-1">Eligibility Criteria</label>
-                <input
-                  type="text"
-                  value={formData.eligibility}
-                  onChange={(e) => setFormData({ ...formData, eligibility: e.target.value })}
-                  placeholder="e.g. 10th / 12th / Graduate in Any Stream"
-                  className="w-full border border-slate-300 rounded-xl p-3 text-xs font-semibold focus:outline-[#0B4F8A]"
-                />
-              </div>
-
-              <div>
-                <label className="block text-xs font-black text-slate-700 mb-1">Official Apply Link</label>
-                <input
-                  type="url"
-                  value={formData.apply_url}
-                  onChange={(e) => setFormData({ ...formData, apply_url: e.target.value })}
-                  placeholder="https://ssc.gov.in"
-                  className="w-full border border-slate-300 rounded-xl p-3 text-xs font-semibold focus:outline-[#0B4F8A]"
-                />
-              </div>
-
-              <div>
-                <label className="block text-xs font-black text-slate-700 mb-1">Official PDF Link</label>
-                <input
-                  type="url"
-                  value={formData.pdf_url}
-                  onChange={(e) => setFormData({ ...formData, pdf_url: e.target.value })}
-                  placeholder="https://ssc.gov.in/notice.pdf"
-                  className="w-full border border-slate-300 rounded-xl p-3 text-xs font-semibold focus:outline-[#0B4F8A]"
-                />
-              </div>
-
-              <div className="sm:col-span-2">
-                <label className="block text-xs font-black text-slate-700 mb-1">Short Description</label>
+                <label className="block text-xs font-black text-slate-800 mb-1">
+                  Full Article Content (HTML / Formatted Text) *
+                </label>
+                <p className="text-[11px] text-slate-500 mb-2">
+                  Yahan poora 800–1000 words ka comprehensive guide daalein (Heading tags, Paragraphs, Exam Pattern, Cut-off rules).
+                </p>
                 <textarea
-                  rows="3"
-                  value={formData.short_desc}
-                  onChange={(e) => setFormData({ ...formData, short_desc: e.target.value })}
-                  placeholder="Notification overview..."
-                  className="w-full border border-slate-300 rounded-xl p-3 text-xs font-semibold focus:outline-[#0B4F8A]"
+                  rows="14"
+                  value={formData.content}
+                  onChange={(e) => setFormData({ ...formData, content: e.target.value })}
+                  placeholder="<h2>भर्ती परीक्षा का संपूर्ण विवरण</h2><p>बिहार लोक सेवा आयोग ने...</p>"
+                  required
+                  className="w-full border border-slate-300 rounded-xl p-3 text-xs font-mono focus:outline-[#0B4F8A]"
                 />
               </div>
 
-              <div className="sm:col-span-2 pt-2">
+              {/* Dynamic FAQs Section */}
+              <div className="p-4 bg-slate-50 border border-slate-200 rounded-xl space-y-4">
+                <div className="flex items-center justify-between">
+                  <h3 className="text-xs font-black text-slate-900 uppercase tracking-wider">
+                    Frequently Asked Questions (FAQs)
+                  </h3>
+                  <button
+                    type="button"
+                    onClick={addFaqField}
+                    className="text-xs text-[#0B4F8A] font-bold hover:underline cursor-pointer"
+                  >
+                    + Add Another Question
+                  </button>
+                </div>
+
+                {formData.faqs.map((faq, index) => (
+                  <div key={index} className="flex gap-2 items-start bg-white p-3 rounded-lg border border-slate-200">
+                    <div className="flex-1 space-y-2">
+                      <input
+                        type="text"
+                        placeholder={`Question ${index + 1}`}
+                        value={faq.q}
+                        onChange={(e) => handleFaqChange(index, "q", e.target.value)}
+                        className="w-full border border-slate-200 rounded-md p-2 text-xs font-bold"
+                      />
+                      <input
+                        type="text"
+                        placeholder={`Answer ${index + 1}`}
+                        value={faq.a}
+                        onChange={(e) => handleFaqChange(index, "a", e.target.value)}
+                        className="w-full border border-slate-200 rounded-md p-2 text-xs"
+                      />
+                    </div>
+                    {formData.faqs.length > 1 && (
+                      <button
+                        type="button"
+                        onClick={() => removeFaqField(index)}
+                        className="p-1.5 text-rose-500 hover:bg-rose-50 rounded-lg cursor-pointer"
+                      >
+                        <Trash2 size={16} />
+                      </button>
+                    )}
+                  </div>
+                ))}
+              </div>
+
+              {/* Submit Button */}
+              <div className="pt-2">
                 <button
                   type="submit"
                   disabled={loading}
-                  className="w-full bg-[#0B4F8A] hover:bg-[#083b66] text-white font-black py-3 px-6 rounded-xl transition shadow-md flex items-center justify-center gap-2 cursor-pointer disabled:opacity-60 text-xs"
+                  className="w-full bg-[#0B4F8A] hover:bg-[#083b66] text-white font-black py-3.5 px-6 rounded-xl transition shadow-md flex items-center justify-center gap-2 cursor-pointer disabled:opacity-60 text-xs"
                 >
                   {loading ? <Loader2 className="animate-spin" size={16} /> : <FileText size={16} />}
-                  {loading ? "पब्लिश हो रहा है..." : "सीधे पोर्टल पर लाइव पब्लिश करें"}
+                  {loading ? "पब्लिश हो रहा है..." : "सीधे पोर्टल पर लाइव पब्लish करें (Clean Index)"}
                 </button>
               </div>
             </form>
           </div>
         )}
 
-        {/* ==================== EDIT MODAL ==================== */}
+        {/* EDIT MODAL */}
         {isEditModalOpen && editingPost && (
           <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs">
-            <div className="bg-white rounded-3xl max-w-2xl w-full p-6 sm:p-8 max-h-[90vh] overflow-y-auto shadow-2xl border border-slate-200">
+            <div className="bg-white rounded-3xl max-w-3xl w-full p-6 sm:p-8 max-h-[90vh] overflow-y-auto shadow-2xl border border-slate-200">
               <div className="flex items-center justify-between border-b border-slate-100 pb-4 mb-4">
                 <h3 className="text-lg font-black text-slate-900 flex items-center gap-2">
                   <Edit3 size={18} className="text-[#0B4F8A]" /> Edit Notification Details
@@ -919,69 +739,18 @@ export default function Admin() {
                       <option value="jobs">jobs</option>
                       <option value="admit_card">admit_card</option>
                       <option value="results">results</option>
+                      <option value="schemes">schemes</option>
                     </select>
                   </div>
                 </div>
 
-                <div className="grid grid-cols-2 gap-3">
-                  <div>
-                    <label className="block text-xs font-black text-slate-700 mb-1">Total Posts</label>
-                    <input
-                      type="text"
-                      value={editingPost.total_posts || ""}
-                      onChange={(e) => setEditingPost({ ...editingPost, total_posts: e.target.value })}
-                      className="w-full border border-slate-300 rounded-xl p-2.5 text-xs font-semibold focus:outline-[#0B4F8A]"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-xs font-black text-slate-700 mb-1">Last Date</label>
-                    <input
-                      type="text"
-                      value={editingPost.last_date || ""}
-                      onChange={(e) => setEditingPost({ ...editingPost, last_date: e.target.value })}
-                      className="w-full border border-slate-300 rounded-xl p-2.5 text-xs font-semibold focus:outline-[#0B4F8A]"
-                    />
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-2 gap-3">
-                  <div>
-                    <label className="block text-xs font-black text-slate-700 mb-1">Apply URL</label>
-                    <input
-                      type="text"
-                      value={editingPost.apply_url || ""}
-                      onChange={(e) => setEditingPost({ ...editingPost, apply_url: e.target.value })}
-                      className="w-full border border-slate-300 rounded-xl p-2.5 text-xs font-semibold focus:outline-[#0B4F8A]"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-xs font-black text-slate-700 mb-1">PDF URL</label>
-                    <input
-                      type="text"
-                      value={editingPost.pdf_url || ""}
-                      onChange={(e) => setEditingPost({ ...editingPost, pdf_url: e.target.value })}
-                      className="w-full border border-slate-300 rounded-xl p-2.5 text-xs font-semibold focus:outline-[#0B4F8A]"
-                    />
-                  </div>
-                </div>
-
                 <div>
-                  <label className="block text-xs font-black text-slate-700 mb-1">Eligibility</label>
-                  <input
-                    type="text"
-                    value={editingPost.eligibility || ""}
-                    onChange={(e) => setEditingPost({ ...editingPost, eligibility: e.target.value })}
-                    className="w-full border border-slate-300 rounded-xl p-2.5 text-xs font-semibold focus:outline-[#0B4F8A]"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-xs font-black text-slate-700 mb-1">Short Description</label>
+                  <label className="block text-xs font-black text-slate-700 mb-1">Detailed Content</label>
                   <textarea
-                    rows="3"
-                    value={editingPost.short_desc || ""}
-                    onChange={(e) => setEditingPost({ ...editingPost, short_desc: e.target.value })}
-                    className="w-full border border-slate-300 rounded-xl p-2.5 text-xs font-semibold focus:outline-[#0B4F8A]"
+                    rows="8"
+                    value={editingPost.content || ""}
+                    onChange={(e) => setEditingPost({ ...editingPost, content: e.target.value })}
+                    className="w-full border border-slate-300 rounded-xl p-2.5 text-xs font-mono focus:outline-[#0B4F8A]"
                   />
                 </div>
 

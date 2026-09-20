@@ -6,7 +6,10 @@ import logging
 from datetime import datetime, timezone
 from urllib.parse import urlparse
 from typing import Optional, Any, List, Dict
-from fastapi import Depends, FastAPI, HTTPException, BackgroundTasks, Header, Query, Request, Response, status
+import urllib.request
+import urllib.parse
+
+from fastapi import Depends, FastAPI, HTTPException, BackgroundTasks, Query, Request, Response, status
 from fastapi.responses import JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.middleware.gzip import GZipMiddleware
@@ -14,8 +17,6 @@ from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from pydantic import BaseModel, Field
 from upstash_redis import Redis
 from dotenv import load_dotenv
-from google import genai
-from google.genai import types
 import orjson
 
 import database as db
@@ -28,14 +29,16 @@ load_dotenv(override=False)
 
 UPSTASH_URL = os.getenv("UPSTASH_REDIS_REST_URL")
 UPSTASH_TOKEN = os.getenv("UPSTASH_REDIS_REST_TOKEN")
-INTERNAL_SYNC_SECRET = os.getenv("INTERNAL_SYNC_SECRET", "").strip()
 ADMIN_API_TOKEN = os.getenv("ADMIN_API_TOKEN", "").strip()
-GEMINI_API_KEY = os.getenv("GEMINI_API_KEY", "").strip('"\'')
+
+# Telegram Channel Integration Keys
+TELEGRAM_BOT_TOKEN = os.getenv("TELEGRAM_BOT_TOKEN", "").strip()
+TELEGRAM_CHANNEL_ID = os.getenv("TELEGRAM_CHANNEL_ID", "").strip()  # e.g. "@biharfast_official" ya chat id
+
 bearer_scheme = HTTPBearer(auto_error=False)
 
 MAX_ADMIN_ATTEMPTS = 5
 ADMIN_LOCKOUT_SECONDS = 3600
-
 _MEMORY_ATTEMPTS: Dict[str, Dict[str, Any]] = {}
 
 # ----------------- INFRASTRUCTURE CLIENTS -----------------
@@ -45,20 +48,12 @@ if UPSTASH_URL and UPSTASH_TOKEN:
         redis = Redis(url=UPSTASH_URL, token=UPSTASH_TOKEN)
         logger.info("Connected to Upstash Redis Engine.")
     except Exception as e:
-        logger.error(f"Redis initialization warning (using local fallback): {e}")
-
-ai_client: Optional[genai.Client] = None
-if GEMINI_API_KEY:
-    try:
-        ai_client = genai.Client(api_key=GEMINI_API_KEY)
-        logger.info("Gemini AI Client initialized.")
-    except Exception as e:
-        logger.warning(f"Gemini client initialization failed: {e}")
+        logger.error(f"Redis initialization error (fallback active): {e}")
 
 # ----------------- FASTAPI APP -----------------
 app = FastAPI(
     title="BiharFast Portal Engine",
-    version="6.5.0",
+    version="7.0.0",
     docs_url="/docs",
     redoc_url="/redoc"
 )
@@ -78,7 +73,7 @@ ALLOWED_ORIGINS = [
 app.add_middleware(
     CORSMiddleware,
     allow_origins=ALLOWED_ORIGINS,
-    allow_origin_regex=r"^https?://(localhost|127\.0\.0\.1)(:[0-9]+)?$\vert{}^https?://.*biharfast\.in.*$",
+    allow_origin_regex=r"^https?://(localhost|127\.0\.0\.1)(:[0-9]+)?$|^https?://.*biharfast\.in.*$",
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -101,27 +96,24 @@ async def global_exception_handler(request: Request, exc: Exception):
 
 app.include_router(quiz_router)
 
-# ----------------- OFFICIAL DOMAINS & MODELS -----------------
-OFFICIAL_ALLOWED_DOMAINS = {
-    "bceceboard.bihar.gov.in", "bpsc.bih.nic.in", "bpsc.bihar.gov.in",
-    "onlinebpsc.bihar.gov.in", "csbc.bih.nic.in", "csbc.bihar.gov.in",
-    "bpssc.bih.nic.in", "bssc.bihar.gov.in", "btsc.bihar.gov.in",
-    "biharboardonline.bihar.gov.in", "patnahighcourt.gov.in",
-    "dlrs.bihar.gov.in", "rrbpatna.gov.in",
-    "ssc.gov.in", "upsc.gov.in", "upsconline.nic.in",
-    "ibps.in", "sbi.co.in", "rbi.org.in",
-    "indianrailways.gov.in", "rrbapply.gov.in",
-    "indiapostgdsonline.gov.in", "nta.ac.in",
-    "joinindianarmy.nic.in", "joinindiannavy.gov.in", "agnipathvayu.cdac.in",
-    "crpf.gov.in", "bsf.gov.in", "cisf.gov.in", "itbpolice.nic.in", "ssb.gov.in"
-}
-
-class InboxSyncPayload(BaseModel):
+# ----------------- PYDANTIC SCHEMAS -----------------
+class PostCreateRequest(BaseModel):
     title: str
-    department: str
-    category: Optional[str] = "jobs"
-    pdf_url: Optional[str] = None
+    slug: Optional[str] = None
+    department: str = "BPSC"
+    category: str = "jobs"
+    total_posts: Optional[str] = "अधिसूचना देखें"
+    last_date: Optional[str] = "सक्रिय सूचना"
+    eligibility: Optional[str] = "विज्ञापन देखें"
     apply_url: Optional[str] = None
+    pdf_url: Optional[str] = None
+    short_desc: Optional[str] = None
+    content: str  # 800+ words detailed article
+    meta_title: Optional[str] = None
+    meta_desc: Optional[str] = None
+    faqs: Optional[List[Dict[str, Any]]] = []
+    how_to_apply: Optional[List[str]] = []
+    selection_process: Optional[List[str]] = []
 
 class PostUpdateRequest(BaseModel):
     title: Optional[str] = None
@@ -130,23 +122,21 @@ class PostUpdateRequest(BaseModel):
     total_posts: Optional[str] = None
     last_date: Optional[str] = None
     eligibility: Optional[str] = None
-    fees: Optional[str] = None
     apply_url: Optional[str] = None
     pdf_url: Optional[str] = None
     short_desc: Optional[str] = None
-    important_dates: Optional[Dict[str, Any]] = None
-    application_fees: Optional[Dict[str, Any]] = None
-    age_limit: Optional[Dict[str, Any]] = None
+    content: Optional[str] = None
+    meta_title: Optional[str] = None
+    meta_desc: Optional[str] = None
+    faqs: Optional[List[Dict[str, Any]]] = None
     selection_process: Optional[List[str]] = None
     how_to_apply: Optional[List[str]] = None
-    extra_links: Optional[List[Dict[str, Any]]] = None
     status: Optional[str] = None
-    admin_notes: Optional[str] = None
 
 class StatusUpdateRequest(BaseModel):
     status: str
 
-# ----------------- SECURITY & HELPERS -----------------
+# ----------------- SECURITY & AUTH -----------------
 def extract_client_ip(request: Request) -> str:
     cf_connecting_ip = request.headers.get("cf-connecting-ip")
     if cf_connecting_ip:
@@ -175,10 +165,9 @@ def check_admin_lockout(client_ip: str):
                 _MEMORY_ATTEMPTS.pop(client_ip, None)
 
     if attempts >= MAX_ADMIN_ATTEMPTS:
-        logger.warning(f"Admin access blocked for IP {client_ip}.")
         raise HTTPException(
             status_code=status.HTTP_429_TOO_MANY_REQUESTS,
-            detail="Suraksha Lock: Adhik galat prayas kiye gaye hain. IP temporary block hai."
+            detail="Suraksha Lock: Adhik galat prayas. IP temporary blocked."
         )
 
 def record_failed_attempt(client_ip: str):
@@ -190,8 +179,8 @@ def record_failed_attempt(client_ip: str):
             current_attempts = int(current)
             if current_attempts == 1:
                 redis.expire(cache_key, ADMIN_LOCKOUT_SECONDS)
-        except Exception as e:
-            logger.error(f"Redis lockout record error: {e}")
+        except Exception:
+            pass
     else:
         now = datetime.now(timezone.utc).timestamp()
         record = _MEMORY_ATTEMPTS.get(client_ip, {"count": 0, "locked_until": now + ADMIN_LOCKOUT_SECONDS})
@@ -207,38 +196,18 @@ def record_failed_attempt(client_ip: str):
     )
 
 def reset_failed_attempts(client_ip: str):
-    cache_key = f"admin_lock:{client_ip}"
     if redis:
         try:
-            redis.delete(cache_key)
+            redis.delete(f"admin_lock:{client_ip}")
         except Exception:
             pass
     _MEMORY_ATTEMPTS.pop(client_ip, None)
-
-def slugify(title: str, dept: str) -> str:
-    combined = f"{dept}-{title}"
-    slug = re.sub(r"[^\w\s-]", "", combined.lower()).strip()
-    return re.sub(r"[\s_-]+", "-", slug)[:90]
-
-def is_url_whitelisted(url: Optional[str]) -> bool:
-    if not url:
-        return True
-    try:
-        clean_url = url.strip()
-        parsed = urlparse(clean_url)
-        if not parsed.netloc:
-            return False
-        hostname = (parsed.hostname or "").lower()
-        return any(hostname == d or hostname.endswith("." + d) or hostname.endswith(".gov.in") or hostname.endswith(".nic.in") for d in OFFICIAL_ALLOWED_DOMAINS)
-    except Exception:
-        return False
 
 def require_admin(
     request: Request,
     credentials: Optional[HTTPAuthorizationCredentials] = Depends(bearer_scheme),
 ):
     if not ADMIN_API_TOKEN:
-        logger.critical("ADMIN_API_TOKEN is not configured.")
         raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail="Admin token missing")
 
     client_ip = extract_client_ip(request)
@@ -254,23 +223,10 @@ def require_admin(
     reset_failed_attempts(client_ip)
     return True
 
-def require_sync_or_admin(
-    credentials: Optional[HTTPAuthorizationCredentials] = Depends(bearer_scheme),
-    x_sync_secret: Optional[str] = Header(None),
-):
-    admin_valid = bool(
-        credentials
-        and credentials.scheme.lower() == "bearer"
-        and ADMIN_API_TOKEN
-        and hmac.compare_digest(credentials.credentials.strip(), ADMIN_API_TOKEN)
-    )
-    sync_valid = bool(
-        INTERNAL_SYNC_SECRET
-        and x_sync_secret
-        and hmac.compare_digest(x_sync_secret, INTERNAL_SYNC_SECRET)
-    )
-    if not (admin_valid or sync_valid):
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Unauthorized sync request")
+def slugify(title: str, dept: str) -> str:
+    combined = f"{dept}-{title}"
+    slug = re.sub(r"[^\w\s-]", "", combined.lower()).strip()
+    return re.sub(r"[\s_-]+", "-", slug)[:90]
 
 def flush_cache(slug: Optional[str] = None):
     if redis:
@@ -289,42 +245,46 @@ def flush_cache(slug: Optional[str] = None):
         except Exception as e:
             logger.error(f"Redis flush error: {e}")
 
-# 5-Year Fail-Safe Heuristic Generator (Zero AI Dependence)
-def build_zero_token_notice(title: str, dept: str, cat: str, pdf_url: Optional[str], apply_url: Optional[str]) -> Dict[str, Any]:
-    return {
-        "title": title.strip(),
-        "short_desc": f"{dept} dwaara {title} ke liye aadhikarik vigyapti jaari ki gayi hai. Sabhi abhyarthi nirdharit samay par official notification dekhkar aavedan karein.",
-        "total_posts": "अधिसूचना देखें",
-        "last_date": "आधिकारिक सूचना अनुसार",
-        "eligibility": "पद के अनुसार संबंधित योग्यता विवरण आधिकारिक विज्ञापन (PDF) में देखें।",
-        "fees": "वर्गानुसार निर्धारित (विज्ञापन देखें)",
-        "important_dates": {
-            "Notification Released": "हाल ही में जारी",
-            "Application Status": "सक्रिय / जारी"
-        },
-        "application_fees": {
-            "General / OBC / EWS": "विज्ञापन देखें",
-            "SC / ST / PwD": "नियमानुसार"
-        },
-        "age_limit": {
-            "Niyam": "विभागीय नियमानुसार छूट लागू"
-        },
-        "selection_process": [
-            "लिखित परीक्षा / ऑनलाइन CBT या मेरिट",
-            "दस्तावेज सत्यापन (DV)"
-        ],
-        "how_to_apply": [
-            "आधिकारिक पोर्टल पर जाकर दिशा-निर्देश पढ़ें।",
-            "मांगे गए सभी प्रमाण पत्र और विवरण सही भरें।",
-            "अंतिम सबमिशन के बाद फॉर्म की प्रति सुरक्षित रखें।"
-        ]
-    }
+# ----------------- TELEGRAM BROADCASTER -----------------
+def send_telegram_alert(title: str, dept: str, total_posts: str, last_date: str, slug: str):
+    """Broadcasts newly published post to official Telegram channel."""
+    if not TELEGRAM_BOT_TOKEN or not TELEGRAM_CHANNEL_ID:
+        logger.info("Telegram notification skipped (Keys not configured in .env).")
+        return
+
+    post_url = f"https://biharfast.in/post/{slug}"
+    message_text = (
+        f"📢 *नयी सरकारी भर्ती अपडेट - BiharFast*\n\n"
+        f"📌 *पद / शीर्षक:* {title}\n"
+        f"🏢 *विभाग:* {dept}\n"
+        f"🔢 *कुल पद:* {total_posts}\n"
+        f"🗓 *अंतिम तिथि:* {last_date}\n\n"
+        f"🔗 *पूरी जानकारी एवं ऑनलाइन आवेदन लिंक:*\n"
+        f"{post_url}\n\n"
+        f"⚡ _सबसे तेज व आधिकारिक अपडेट के लिए BiharFast से जुड़े रहें।_"
+    )
+
+    try:
+        url = f"https://api.telegram.org/bot{TELEGRAM_BOT_TOKEN}/sendMessage"
+        payload = {
+            "chat_id": TELEGRAM_CHANNEL_ID,
+            "text": message_text,
+            "parse_mode": "Markdown",
+            "disable_web_page_preview": False
+        }
+        data = json.dumps(payload).encode("utf-8")
+        req = urllib.request.Request(url, data=data, headers={"Content-Type": "application/json"})
+        with urllib.request.urlopen(req, timeout=10) as response:
+            if response.status == 200:
+                logger.info(f"Telegram alert sent successfully for slug: {slug}")
+    except Exception as err:
+        logger.error(f"Telegram broadcast error: {err}")
 
 # ----------------- PUBLIC ROUTES -----------------
 @app.get("/")
 def health_check():
     return Response(
-        content=b'{"status":"active","engine":"BiharFast Engine","version":"6.5.0"}',
+        content=b'{"status":"active","engine":"BiharFast Engine","version":"7.0.0"}',
         media_type="application/json"
     )
 
@@ -334,10 +294,10 @@ def get_all_posts():
     cache_key = "home:latest_posts"
     if redis:
         try:
-            cached_bytes = redis.get(cache_key)
-            if cached_bytes:
+            cached = redis.get(cache_key)
+            if cached:
                 return Response(
-                    content=cached_bytes if isinstance(cached_bytes, (str, bytes)) else orjson.dumps(cached_bytes),
+                    content=cached if isinstance(cached, (str, bytes)) else orjson.dumps(cached),
                     media_type="application/json",
                     headers={"Cache-Control": "public, max-age=60, s-maxage=300"}
                 )
@@ -359,56 +319,15 @@ def get_all_posts():
         headers={"Cache-Control": "public, max-age=60, s-maxage=300"}
     )
 
-@app.get("/api/jobs")
-def get_jobs():
-    return get_category_feed("jobs")
-
-@app.get("/api/admit-cards")
-def get_admit_cards():
-    return get_category_feed("admit_card")
-
-@app.get("/api/results")
-def get_results():
-    return get_category_feed("results")
-
-def get_category_feed(category: str):
-    cache_key = f"feed:{category}"
-    if redis:
-        try:
-            cached_bytes = redis.get(cache_key)
-            if cached_bytes:
-                return Response(
-                    content=cached_bytes if isinstance(cached_bytes, (str, bytes)) else orjson.dumps(cached_bytes),
-                    media_type="application/json",
-                    headers={"Cache-Control": "public, max-age=60, s-maxage=300"}
-                )
-        except Exception:
-            pass
-
-    data = db.fetch_feed_notices(category=category, limit=30)
-    json_bytes = orjson.dumps({"success": True, "source": "database", "data": data})
-
-    if redis and data:
-        try:
-            redis.set(cache_key, json_bytes.decode("utf-8"), ex=300)
-        except Exception:
-            pass
-
-    return Response(
-        content=json_bytes,
-        media_type="application/json",
-        headers={"Cache-Control": "public, max-age=60, s-maxage=300"}
-    )
-
 @app.get("/api/posts/{slug}")
 def get_post_detail(slug: str):
     cache_key = f"post:{slug}"
     if redis:
         try:
-            cached_bytes = redis.get(cache_key)
-            if cached_bytes:
+            cached = redis.get(cache_key)
+            if cached:
                 return Response(
-                    content=cached_bytes if isinstance(cached_bytes, (str, bytes)) else orjson.dumps(cached_bytes),
+                    content=cached if isinstance(cached, (str, bytes)) else orjson.dumps(cached),
                     media_type="application/json",
                     headers={"Cache-Control": "public, max-age=300, s-maxage=1800"}
                 )
@@ -433,184 +352,61 @@ def get_post_detail(slug: str):
         headers={"Cache-Control": "public, max-age=300, s-maxage=1800"}
     )
 
-# ----------------- ADMIN & INBOX WORKFLOWS -----------------
-@app.post("/api/inbox/sync")
-def sync_raw_to_inbox(
-    payload: InboxSyncPayload,
-    _: None = Depends(require_sync_or_admin),
-):
-    res = db.insert_inbox_notice(payload.model_dump())
-    if not res:
-        return Response(content=b'{"success":true,"status":"duplicate_skipped"}', media_type="application/json")
-
+# ----------------- ADMIN ROUTES (100% MANUAL PUBLISHING) -----------------
+@app.get("/api/admin/posts")
+def get_admin_posts(status: Optional[str] = Query(None), _: None = Depends(require_admin)):
+    posts = db.fetch_admin_notices(status=status, limit=100)
     return Response(
-        content=orjson.dumps({"success": True, "data": res}),
+        content=orjson.dumps({"success": True, "count": len(posts), "data": posts}),
         media_type="application/json"
     )
 
-@app.get("/api/admin/quota-stats")
-def get_quota_stats(_: None = Depends(require_admin)):
-    try:
-        return db.get_today_llm_usage()
-    except Exception:
-        return {"used": 0, "limit": 100}
-
-@app.get("/api/admin/inbox")
-def get_scraped_inbox(status: str = Query("unprocessed"), _: None = Depends(require_admin)):
-    items = db.fetch_inbox_notices(status=status, limit=100)
-    return Response(
-        content=orjson.dumps({"success": True, "count": len(items), "data": items}),
-        media_type="application/json"
-    )
-
-@app.post("/api/admin/inbox/{inbox_id}/reject")
-def reject_inbox_item(inbox_id: str, _: None = Depends(require_admin)):
-    updated = db.update_inbox_status(inbox_id, "rejected")
-    if not updated:
-        raise HTTPException(status_code=404, detail="Inbox item not found")
-    return {"success": True, "message": "Notice rejected and archived."}
-
-# CRITICAL FIX: 5-Year Safe Publish Endpoint (Never returns 500 or blocks on AI quota)
-@app.post("/api/admin/inbox/{inbox_id}/enrich-and-publish")
-def enrich_and_publish_with_llm(inbox_id: str, bg: BackgroundTasks, _: None = Depends(require_admin)):
-    inbox_item = db.fetch_inbox_item_by_id(inbox_id)
-    if not inbox_item:
-        raise HTTPException(status_code=404, detail="Inbox item not found")
-
-    if inbox_item.get("status") == "enriched":
-        raise HTTPException(status_code=400, detail="Notice has already been processed and published.")
-
-    title = inbox_item.get("title", "").strip()
-    dept = inbox_item.get("department", "Govt of Bihar / India").strip()
-    cat = inbox_item.get("category", "jobs")
-    pdf_url = inbox_item.get("pdf_url")
-    apply_url = inbox_item.get("apply_url")
-
-    ai_data: Dict[str, Any] = {}
-    quota_available = False
-
-    # Check if database allows AI call
-    try:
-        quota_available = db.check_and_increment_daily_llm_quota(max_limit=50)
-    except Exception as e:
-        logger.warning(f"Quota check bypass: {e}")
-        quota_available = True
-
-    # Try Gemini if client & quota available
-    if ai_client and quota_available:
-        prompt = f"""
-Analyze this government notification update and generate a strictly structured JSON response for BiharFast job portal.
-Return ONLY clean, valid JSON without any markdown ticks or explanations.
-
-Input Details:
-- Title: {title}
-- Department: {dept}
-- Category: {cat}
-- PDF Link: {pdf_url}
-- Apply Link: {apply_url}
-
-Generate a JSON object matching this schema:
-{{
-  "title": "Clean concise professional title in Hindi/English mix",
-  "short_desc": "2-3 line summary explaining what this notification is about for aspirants.",
-  "total_posts": "e.g. 1,250 पद or अधिसूचना देखें",
-  "last_date": "e.g. 30 अक्टूबर 2026 or अधिसूचना अनुसार",
-  "eligibility": "Clear educational qualification criteria",
-  "fees": "e.g. Gen/OBC: ₹100 | SC/ST: ₹0",
-  "important_dates": {{
-    "Notification Released": "Recent Date",
-    "Application Start": "Date or यथाशीघ्र",
-    "Last Date to Apply": "Date",
-    "Exam Date": "Notify Soon or Exact Date"
-  }},
-  "application_fees": {{
-    "General / OBC / EWS": "₹--- or ₹0",
-    "SC / ST / PwD": "₹0 or Specific Fee"
-  }},
-  "age_limit": {{
-    "Minimum Age": "18 or 21 Years",
-    "Maximum Age": "27 to 40 Years as per norms",
-    "Age Relaxation": "As per Govt rules"
-  }},
-  "selection_process": [
-    "Written Examination / Online CBT",
-    "Document Verification & Medical"
-  ],
-  "how_to_apply": [
-    "Visit the official recruitment portal.",
-    "Complete online registration and submit documents.",
-    "Pay the applicable fee and print final form."
-  ]
-}}
-"""
-        try:
-            response = ai_client.models.generate_content(
-                model="gemini-2.5-flash",
-                contents=prompt,
-                config=types.GenerateContentConfig(
-                    response_mime_type="application/json",
-                    temperature=0.2
-                )
-            )
-            if response and response.text:
-                cleaned_json = response.text.strip().removeprefix("```json").removeprefix("```").removesuffix("```").strip()
-                ai_data = json.loads(cleaned_json)
-        except Exception as ai_err:
-            logger.warning(f"AI Enrichment skipped/failed (Safe Fallback applied): {ai_err}")
-
-    # Fallback to zero-token template if AI fails or quota finished
-    if not ai_data or not isinstance(ai_data, dict):
-        ai_data = build_zero_token_notice(title, dept, cat, pdf_url, apply_url)
-
-    final_title = ai_data.get("title") or title
-    slug = slugify(final_title, dept)
-    normalized_cat = "results" if "result" in cat.lower() else ("admit_card" if "admit" in cat.lower() else "jobs")
+@app.post("/api/admin/posts")
+def create_manual_post(payload: PostCreateRequest, bg: BackgroundTasks, _: None = Depends(require_admin)):
+    """Creates an in-depth, human-verified post and broadcasts it to Telegram."""
+    slug = payload.slug.strip() if payload.slug else slugify(payload.title, payload.department)
+    cat = payload.category.lower().strip()
+    normalized_cat = "results" if "result" in cat else ("admit_card" if "admit" in cat else ("schemes" if "scheme" in cat else "jobs"))
 
     record = {
         "slug": slug,
-        "title": final_title,
-        "department": dept,
+        "title": payload.title.strip(),
+        "department": payload.department.strip(),
         "category": normalized_cat,
-        "total_posts": ai_data.get("total_posts") or "अधिसूचना देखें",
-        "last_date": ai_data.get("last_date") or "सक्रिय सूचना",
-        "eligibility": ai_data.get("eligibility") or "विज्ञापन देखें",
-        "fees": ai_data.get("fees") or "निःशुल्क (₹0)",
-        "apply_url": apply_url,
-        "pdf_url": pdf_url,
-        "short_desc": ai_data.get("short_desc") or f"{dept} द्वारा जारी आधिकारिक सूचना।",
-        "important_dates": ai_data.get("important_dates") or {},
-        "application_fees": ai_data.get("application_fees") or {},
-        "age_limit": ai_data.get("age_limit") or {},
-        "selection_process": ai_data.get("selection_process") or [],
-        "how_to_apply": ai_data.get("how_to_apply") or [],
-        "extra_links": [],
+        "total_posts": payload.total_posts or "अधिसूचना देखें",
+        "last_date": payload.last_date or "सक्रिय सूचना",
+        "eligibility": payload.eligibility or "विज्ञापन देखें",
+        "apply_url": payload.apply_url,
+        "pdf_url": payload.pdf_url,
+        "short_desc": payload.short_desc,
+        "content": payload.content,
+        "meta_title": payload.meta_title or payload.title,
+        "meta_desc": payload.meta_desc or payload.short_desc,
+        "faqs": payload.faqs or [],
+        "how_to_apply": payload.how_to_apply or [],
+        "selection_process": payload.selection_process or [],
         "is_active": True,
         "status": "published"
     }
 
     try:
         db.upsert_notice(record)
-        db.update_inbox_status(inbox_id, "enriched")
         bg.add_task(flush_cache, slug=slug)
-    except Exception as db_err:
-        logger.error(f"Database write error on publish: {db_err}")
-        raise HTTPException(status_code=500, detail="Database write operation failed")
+        # Trigger Telegram post in background
+        bg.add_task(
+            send_telegram_alert,
+            title=record["title"],
+            dept=record["department"],
+            total_posts=record["total_posts"],
+            last_date=record["last_date"],
+            slug=slug
+        )
+    except Exception as e:
+        logger.error(f"Error saving manual post: {e}")
+        raise HTTPException(status_code=500, detail=f"Database write failed: {str(e)}")
 
     return Response(
-        content=orjson.dumps({
-            "success": True, 
-            "message": "Notice published live successfully!", 
-            "slug": slug,
-            "mode": "ai" if quota_available and ai_client else "zero_token_template"
-        }),
-        media_type="application/json"
-    )
-
-@app.get("/api/admin/posts")
-def get_admin_posts(status: Optional[str] = Query(None), _: None = Depends(require_admin)):
-    posts = db.fetch_admin_notices(status=status, limit=100)
-    return Response(
-        content=orjson.dumps({"success": True, "count": len(posts), "data": posts}),
+        content=orjson.dumps({"success": True, "message": "Article published live & Telegram alert queued!", "slug": slug}),
         media_type="application/json"
     )
 
@@ -648,6 +444,7 @@ def change_post_status(post_id: str, payload: StatusUpdateRequest, bg: Backgroun
         media_type="application/json"
     )
 
+# ----------------- CLEAN DYNAMIC SITEMAP -----------------
 @app.get("/api/sitemap-posts.xml")
 def dynamic_posts_sitemap():
     cache_key = "seo:dynamic_sitemap"
@@ -660,10 +457,10 @@ def dynamic_posts_sitemap():
                     media_type="application/xml",
                     headers={"Cache-Control": "public, max-age=3600, s-maxage=7200"}
                 )
-        except Exception as e:
-            logger.warning(f"Redis read bypass for sitemap: {e}")
+        except Exception:
+            pass
 
-    site_base = "[https://www.biharfast.in](https://www.biharfast.in)"
+    site_base = "https://biharfast.in"
     today = datetime.now().strftime("%Y-%m-%d")
 
     try:
@@ -674,7 +471,7 @@ def dynamic_posts_sitemap():
 
     xml_lines = [
         '<?xml version="1.0" encoding="UTF-8"?>',
-        '<urlset xmlns="[http://www.sitemaps.org/schemas/sitemap/0.9](http://www.sitemaps.org/schemas/sitemap/0.9)">'
+        '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">'
     ]
 
     for item in posts:
