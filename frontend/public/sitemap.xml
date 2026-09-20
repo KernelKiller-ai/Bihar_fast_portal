@@ -2,11 +2,11 @@
 <sitemapindex xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   <!-- Static Core & Dedicated Scheme Pages -->
   <sitemap>
-    <loc>https://www.biharfast.in/sitemap-static.xml</loc>
+    <loc>https://biharfast.in/sitemap-static.xml</loc>
   </sitemap>
 
   <!-- Dynamic Live Job/Admit/Result Notices from Supabase -->
   <sitemap>
-    <loc>https://www.biharfast.in/api/sitemap-posts.xml</loc>
+    <loc>https://biharfast.in/api/sitemap-posts.xml</loc>
   </sitemap>
 </sitemapindex>
