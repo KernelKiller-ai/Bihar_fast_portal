@@ -33,20 +33,19 @@ const DEDICATED_HUBS = [
 export default function PostDetail({ notices = [] }) {
   const { slug } = useParams();
 
-  const localCandidate = notices.find((item) => item.slug === slug || String(item.id) === String(slug)) || null;
-  
-  const hasEnrichedData = Boolean(localCandidate && (localCandidate.short_desc || localCandidate.how_to_apply));
-  const localPost = hasEnrichedData ? localCandidate : null;
-
-  const [fetchedPost, setFetchedPost] = useState(null);
-  const [loading, setLoading] = useState(!localPost && Boolean(slug && slug !== "undefined"));
+  const [post, setPost] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [hasError, setHasError] = useState(false);
 
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: "smooth" });
   }, [slug]);
 
+  // Always fetch fresh full detail (with content, faqs, meta tags)
   useEffect(() => {
-    if (localPost || !slug || slug === "undefined") {
+    if (!slug || slug === "undefined") {
+      setLoading(false);
+      setHasError(true);
       return;
     }
 
@@ -55,36 +54,49 @@ export default function PostDetail({ notices = [] }) {
     async function fetchSinglePost() {
       try {
         setLoading(true);
+        setHasError(false);
+
         const res = await fetch(`${API_BASE_URL}/api/posts/${slug}`, {
           signal: controller.signal
         });
+
+        if (!res.ok) {
+          throw new Error(`HTTP ${res.status}`);
+        }
+
         const json = await res.json();
         
         if (json.success && json.data) {
           const item = json.data;
-          setFetchedPost({
+          setPost({
             ...item,
             id: item.id || item.slug,
             slug: item.slug,
             title: item.title,
             department: item.department,
             category: item.category,
-            totalPosts: item.total_posts || item.totalPosts || "अधिसूचना देखें",
-            lastDate: item.last_date || item.lastDate || "सक्रिय सूचना",
+            total_posts: item.total_posts || item.totalPosts || "अधिसूचना देखें",
+            last_date: item.last_date || item.lastDate || "सक्रिय सूचना",
             eligibility: item.eligibility || "विज्ञापन देखें",
-            qualification_details: item.qualification_details,
-            pdfUrl: item.pdf_url || item.pdfUrl,
-            applyUrl: item.apply_url || item.applyUrl || item.pdf_url || item.pdfUrl,
-            download_url: item.download_url || item.apply_url || item.pdf_url,
+            apply_url: item.apply_url || item.applyUrl,
+            pdf_url: item.pdf_url || item.pdfUrl,
             short_desc: item.short_desc || "",
+            content: item.content || null,
+            meta_title: item.meta_title || null,
+            meta_desc: item.meta_desc || null,
             how_to_apply: Array.isArray(item.how_to_apply) ? item.how_to_apply : [],
             selection_process: Array.isArray(item.selection_process) ? item.selection_process : [],
-            extra_links: Array.isArray(item.extra_links) ? item.extra_links : []
+            faqs: Array.isArray(item.faqs) && item.faqs.length > 0 
+              ? item.faqs 
+              : (Array.isArray(item.extra_links) ? item.extra_links : [])
           });
+        } else {
+          setHasError(true);
         }
       } catch (err) {
         if (err.name !== "AbortError") {
           console.error("Failed to fetch post detail:", err);
+          setHasError(true);
         }
       } finally {
         setLoading(false);
@@ -96,16 +108,15 @@ export default function PostDetail({ notices = [] }) {
     return () => {
       controller.abort();
     };
-  }, [slug, localPost]);
+  }, [slug]);
 
-  const post = localPost || fetchedPost;
-
-  // Strict SEO & Canonical Injection (Targets www.biharfast.in)
+  // Strict SEO & Canonical Injection (Consistent non-www URL: https://biharfast.in)
   useEffect(() => {
     if (!post) return;
 
     const currentSlug = post.slug || slug;
-    document.title = `${post.title} | BiharFast Official`;
+    const pageTitle = post.meta_title || `${post.title} | BiharFast`;
+    document.title = pageTitle;
 
     const setMeta = (attr, val, content) => {
       let tag = document.querySelector(`meta[${attr}="${val}"]`);
@@ -117,29 +128,26 @@ export default function PostDetail({ notices = [] }) {
       tag.setAttribute("content", content);
     };
 
-    const desc = post.short_desc 
-      ? post.short_desc.slice(0, 155) + "..." 
-      : `${post.department || "Bihar Govt"}: ${post.title}. Eligibility: ${post.eligibility || "See Details"}. Last Date: ${post.lastDate || "Active"}. Direct Apply Online & Official Notification PDF.`;
+    const desc = post.meta_desc 
+      || (post.short_desc ? post.short_desc.slice(0, 155) : `${post.department}: ${post.title}. Apply online, eligibility, and full official notification PDF.`);
 
     setMeta("name", "description", desc);
-    setMeta("property", "og:title", `${post.title} - BiharFast`);
+    setMeta("property", "og:title", pageTitle);
     setMeta("property", "og:description", desc);
     setMeta("property", "og:type", "article");
-    setMeta("property", "og:url", `https://www.biharfast.in/post/${currentSlug}`);
+    setMeta("property", "og:url", `https://biharfast.in/post/${currentSlug}`);
 
-    // Fix: Strict canonical URL matching your verified Search Console property
     let canonical = document.querySelector('link[rel="canonical"]');
     if (!canonical) {
       canonical = document.createElement("link");
       canonical.setAttribute("rel", "canonical");
       document.head.appendChild(canonical);
     }
-    canonical.setAttribute("href", `https://www.biharfast.in/post/${currentSlug}`);
+    canonical.setAttribute("href", `https://biharfast.in/post/${currentSlug}`);
 
     return () => {
-      // Revert base canonical on unmount
       if (canonical) {
-        canonical.setAttribute("href", "https://www.biharfast.in/");
+        canonical.setAttribute("href", "https://biharfast.in/");
       }
     };
   }, [post, slug]);
@@ -153,10 +161,10 @@ export default function PostDetail({ notices = [] }) {
     );
   }
 
-  if (!post || !slug || slug === "undefined") {
+  if (hasError || !post || !slug || slug === "undefined") {
     return (
       <div className="min-h-[50vh] flex flex-col items-center justify-center p-6 text-center">
-        <h2 className="text-xl font-bold text-slate-900">अधिसूचना नहीं मिली</h2>
+        <h2 className="text-xl font-bold text-slate-900">अधिसूचना नहीं मिली (404)</h2>
         <p className="text-xs text-slate-600 mt-1">यह सूचना हटा दी गई है या लिंक अमान्य है।</p>
         <Link to="/" className="mt-4 text-xs font-bold text-blue-700 hover:underline flex items-center gap-1">
           <ArrowLeft size={14} /> वापस होम पेज पर जाएं
