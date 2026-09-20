@@ -13,7 +13,7 @@ import {
   AlertCircle
 } from "lucide-react";
 import { Link } from "react-router-dom";
-import ShareAlertBar from "../ShareAlertBar";
+import ShareAlertBar from "./ShareAlertBar";
 
 export default function ResultLayout({ post }) {
   if (!post) return null;
