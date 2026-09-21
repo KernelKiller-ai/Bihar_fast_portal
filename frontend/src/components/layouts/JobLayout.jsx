@@ -10,7 +10,6 @@ import {
   CheckCircle2,
   FileText,
   HelpCircle,
-  Clock,
   Briefcase,
   BookOpen
 } from "lucide-react";
@@ -73,9 +72,7 @@ export default function JobLayout({ post }) {
       </header>
 
       <div className="p-5 sm:p-8 space-y-7">
-        <ShareAlertBar title={title} dept={dept || ""} />
-
-        {/* Dynamic Highlights Grid (Only rendered when data exists) */}
+        {/* Dynamic Highlights Grid */}
         {(totalPosts || lastDate || eligibility) && (
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
             {totalPosts && (
@@ -154,7 +151,7 @@ export default function JobLayout({ post }) {
           </section>
         )}
 
-        {/* Full Rich Article Body (With Child Tag Styling) */}
+        {/* Full Rich Article Body */}
         {fullContent && (
           <section className="border-t border-slate-200 pt-7">
             <div 
@@ -173,7 +170,7 @@ export default function JobLayout({ post }) {
           </section>
         )}
 
-        {/* Dynamic Step-by-Step Guide (From Database Array) */}
+        {/* Dynamic Step-by-Step Guide */}
         {howToApply && (
           <section className="border-t border-slate-200 pt-7 space-y-3">
             <h2 className="text-base sm:text-lg font-black text-slate-900 flex items-center gap-2">
@@ -190,7 +187,7 @@ export default function JobLayout({ post }) {
           </section>
         )}
 
-        {/* Dynamic Selection Process (From Database Array) */}
+        {/* Dynamic Selection Process */}
         {selectionProcess && (
           <section className="border-t border-slate-200 pt-7 space-y-3">
             <h2 className="text-base sm:text-lg font-black text-slate-900 flex items-center gap-2">
@@ -234,6 +231,11 @@ export default function JobLayout({ post }) {
             </div>
           </section>
         )}
+
+        {/* ✅ Share & Community Bar moved to the bottom of all details */}
+        <div className="border-t border-slate-200 pt-6">
+          <ShareAlertBar title={title} dept={dept || ""} />
+        </div>
 
       </div>
     </article>

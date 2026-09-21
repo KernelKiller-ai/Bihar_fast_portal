@@ -2,15 +2,12 @@ import PropTypes from "prop-types";
 import { 
   Award, 
   Download, 
-  ExternalLink,
+  ExternalLink, 
   ArrowLeft, 
   ShieldCheck, 
-  CheckCircle2, 
-  FileSpreadsheet, 
   HelpCircle, 
   Clock, 
-  FileText,
-  AlertCircle
+  FileText 
 } from "lucide-react";
 import { Link } from "react-router-dom";
 import ShareAlertBar from "./ShareAlertBar";
@@ -62,8 +59,6 @@ export default function ResultLayout({ post }) {
       </header>
 
       <div className="p-5 sm:p-8 space-y-7">
-        <ShareAlertBar title={title} dept={dept} />
-
         {/* Action Callout Box */}
         <div className="bg-linear-to-br from-blue-50/90 to-indigo-50/70 border-2 border-blue-200/90 rounded-2xl p-6 text-center space-y-4 shadow-xs">
           <div>
@@ -117,7 +112,7 @@ export default function ResultLayout({ post }) {
           </section>
         )}
 
-        {/* Full Rich Article Body (With Clean Child Tag Styling) */}
+        {/* Full Rich Article Body */}
         {fullContent && (
           <section className="border-t border-slate-200 pt-7">
             <div 
@@ -136,7 +131,7 @@ export default function ResultLayout({ post }) {
           </section>
         )}
 
-        {/* FAQs Modern Accordion-Style Cards */}
+        {/* FAQs Section */}
         {faqs && (
           <section className="border-t border-slate-200 pt-7 space-y-4">
             <h2 className="text-base sm:text-lg font-black text-slate-900 flex items-center gap-2">
@@ -145,7 +140,6 @@ export default function ResultLayout({ post }) {
             </h2>
             <div className="grid grid-cols-1 gap-3">
               {faqs.map((faq, idx) => {
-                // Remove redundant prefix if user typed "Question 1:" or "प्र. 1:"
                 const rawQ = (faq.q || faq.question || "").replace(/^(question\s*\d+:?|प्र\.\s*\d+:?)/i, "").trim();
                 const rawA = faq.a || faq.answer || "";
 
@@ -167,6 +161,10 @@ export default function ResultLayout({ post }) {
           </section>
         )}
 
+        {/* ✅ Share & Community Bar moved to the bottom */}
+        <div className="border-t border-slate-200 pt-6">
+          <ShareAlertBar title={title} dept={dept} />
+        </div>
       </div>
     </article>
   );
@@ -180,6 +178,7 @@ ResultLayout.propTypes = {
     lastDate: PropTypes.string,
     apply_url: PropTypes.string,
     applyUrl: PropTypes.string,
+    download_url: PropTypes.string,
     pdf_url: PropTypes.string,
     pdfUrl: PropTypes.string,
     short_desc: PropTypes.string,

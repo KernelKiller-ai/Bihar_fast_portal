@@ -14,7 +14,11 @@ import {
   Calculator, 
   ShieldCheck, 
   FileText,
-  ExternalLink
+  ExternalLink,
+  Share2,
+  Check,
+  Copy,
+  Send
 } from "lucide-react";
 import { generateSlug } from "../utils/slug";
 
@@ -36,6 +40,7 @@ export default function PostDetail({ notices = [] }) {
   const [post, setPost] = useState(null);
   const [loading, setLoading] = useState(true);
   const [hasError, setHasError] = useState(false);
+  const [copied, setCopied] = useState(false);
 
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: "smooth" });
@@ -152,6 +157,18 @@ export default function PostDetail({ notices = [] }) {
     };
   }, [post, slug]);
 
+  const handleCopyLink = () => {
+    const postUrl = `https://biharfast.in/post/${post?.slug || slug}`;
+    if (navigator.clipboard) {
+      navigator.clipboard.writeText(postUrl);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2500);
+    }
+  };
+
+  const shareText = post ? encodeURIComponent(`📢 *${post.title}*\nविभाग: ${post.department || "Bihar"}\nअंतिम तिथि: ${post.last_date}\n\nपूरी जानकारी व लिंक देखें:\nhttps://biharfast.in/post/${post.slug || slug}`) : "";
+  const postUrl = `https://biharfast.in/post/${post?.slug || slug}`;
+
   if (loading) {
     return (
       <div className="min-h-[60vh] flex flex-col items-center justify-center gap-3">
@@ -196,21 +213,22 @@ export default function PostDetail({ notices = [] }) {
     : notices.filter((n) => (n.slug || generateSlug(n)) !== slug).slice(0, 4);
 
   const renderActiveLayout = () => {
+    const layoutProps = { post, hideTopShare: true };
     switch (category) {
       case "admit_card":
       case "admitcard":
       case "admit-card":
-        return <AdmitCardLayout post={post} />;
+        return <AdmitCardLayout {...layoutProps} />;
       case "result":
       case "results":
-        return <ResultLayout post={post} />;
+        return <ResultLayout {...layoutProps} />;
       case "jobs":
       case "job":
       case "latest-jobs":
       case "services":
       case "schemes":
       default:
-        return <JobLayout post={post} />;
+        return <JobLayout {...layoutProps} />;
     }
   };
 
@@ -254,10 +272,73 @@ export default function PostDetail({ notices = [] }) {
         </div>
       )}
 
-      {/* 2. Main Post Content Layout */}
+      {/* 2. Main Post Content Layout (Details, Articles, Tables, FAQs) */}
       {renderActiveLayout()}
 
-      {/* 3. Free Aspirant Utilities Hub */}
+      {/* 3. Shifted Social Share & Community Widget (Positioned after all details) */}
+      <section className="mt-8 bg-[#10243E] text-white p-5 rounded-2xl shadow-md space-y-4">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-700/60 pb-3">
+          <div className="flex items-center gap-2">
+            <Share2 size={18} className="text-amber-400 shrink-0" />
+            <p className="text-xs sm:text-sm font-bold text-slate-100">
+              दोस्तों के साथ यह महत्वपूर्ण सूचना शेयर करें
+            </p>
+          </div>
+          <div className="flex flex-wrap items-center gap-2 text-xs">
+            <a
+              href={`https://api.whatsapp.com/send?text=${shareText}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="bg-emerald-600 hover:bg-emerald-500 text-white font-bold px-3 py-1.5 rounded-lg transition flex items-center gap-1.5 shadow-xs"
+            >
+              <span>WhatsApp</span>
+            </a>
+            <a
+              href={`https://t.me/share/url?url=${encodeURIComponent(postUrl)}&text=${shareText}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="bg-sky-500 hover:bg-sky-400 text-white font-bold px-3 py-1.5 rounded-lg transition flex items-center gap-1.5 shadow-xs"
+            >
+              <Send size={13} />
+              <span>Telegram</span>
+            </a>
+            <button
+              type="button"
+              onClick={handleCopyLink}
+              className="bg-slate-700 hover:bg-slate-600 text-white font-bold px-3 py-1.5 rounded-lg transition flex items-center gap-1.5"
+            >
+              {copied ? <Check size={13} className="text-emerald-400" /> : <Copy size={13} />}
+              <span>{copied ? "कॉपी हो गया!" : "लिंक कॉपी"}</span>
+            </button>
+          </div>
+        </div>
+
+        <div className="flex flex-col sm:flex-row items-center justify-between gap-3 pt-1">
+          <p className="text-xs text-slate-300 text-center sm:text-left">
+            ⚡ बिहार के सभी जॉब कार्ड व परीक्षा अपडेट सबसे पहले पाने के लिए हमारे ग्रुप्स से जुड़ें:
+          </p>
+          <div className="flex items-center gap-2 shrink-0">
+            <a
+              href="https://whatsapp.com/channel/0029Vb7wN5n3bbV2H6f" // Aapka WhatsApp Channel link
+              target="_blank"
+              rel="noopener noreferrer"
+              className="bg-emerald-700/80 hover:bg-emerald-600 text-[11px] font-bold px-3 py-1.5 rounded-lg transition border border-emerald-500/50"
+            >
+              Join WhatsApp Channel
+            </a>
+            <a
+              href="https://t.me/biharfast_official" // Aapka Telegram link
+              target="_blank"
+              rel="noopener noreferrer"
+              className="bg-sky-600/80 hover:bg-sky-500 text-[11px] font-bold px-3 py-1.5 rounded-lg transition border border-sky-400/50"
+            >
+              Join Telegram Group
+            </a>
+          </div>
+        </div>
+      </section>
+
+      {/* 4. Free Aspirant Utilities Hub */}
       <section className="mt-8 bg-linear-to-r from-blue-50 via-slate-50 to-emerald-50 border border-blue-200/80 rounded-2xl p-5 shadow-xs">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-blue-100 pb-3 mb-4">
           <div>
@@ -313,7 +394,7 @@ export default function PostDetail({ notices = [] }) {
         </div>
       </section>
 
-      {/* 4. Semantic Related Circulars Section */}
+      {/* 5. Semantic Related Circulars Section */}
       {displayRelated.length > 0 && (
         <section className="mt-8 border-t border-slate-200 pt-6 pb-12">
           <div className="flex items-center justify-between mb-4">
