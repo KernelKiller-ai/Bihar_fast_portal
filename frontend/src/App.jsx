@@ -197,18 +197,15 @@ export default function App() {
                       <div className="px-4 sm:px-8 grid grid-cols-1 lg:grid-cols-12 gap-6 items-end">
                         <div className="lg:col-span-7 space-y-4 text-center lg:text-left z-10 pb-4">
                           <div className="flex flex-col items-center lg:items-start">
-                            <picture>
-                              <source srcSet="/logo.webp" type="image/webp" />
-                              <img 
-                                src="/logo.png" 
-                                alt="BiharFast Logo" 
-                                width="64"
-                                height="64"
-                                loading="eager"
-                                decoding="async"
-                                className="h-14 sm:h-16 w-14 sm:w-16 object-contain aspect-square"
-                              />
-                            </picture>
+                            <img 
+                              src="/logo.png" 
+                              alt="BiharFast Logo" 
+                              width="64"
+                              height="64"
+                              loading="eager"
+                              decoding="async"
+                              className="h-14 sm:h-16 w-14 sm:w-16 object-contain aspect-square"
+                            />
                             <p className="text-xs sm:text-sm font-black text-slate-800 mt-1.5 tracking-wide">
                               Jobs | Welfare | Information
                             </p>
@@ -323,7 +320,7 @@ export default function App() {
                           </div>
                         </div>
 
-                        {/* Hero Right Banner Image (Zero-CLS & WebP Optimized) */}
+                        {/* Hero Right Banner Image (Safe Direct PNG & Aspect Ratio) */}
                         <div className="lg:col-span-5 flex flex-col items-center lg:items-end justify-end relative h-full">
                           <div className="text-center lg:text-right mb-2 w-full pr-2">
                             <span className="text-xl sm:text-2xl font-serif italic font-extrabold text-[#0B4F8A] block">
@@ -332,19 +329,16 @@ export default function App() {
                           </div>
 
                           <div className="w-full max-w-125 relative rounded-t-3xl overflow-hidden bg-linear-to-b from-sky-200/40 via-blue-50/30 to-transparent flex items-end justify-center">
-                            <picture className="w-full flex justify-center">
-                              <source srcSet="/hero-students.webp" type="image/webp" />
-                              <img 
-                                src="/hero-students.png" 
-                                alt="Bihar Aspirants" 
-                                width="665"
-                                height="443"
-                                fetchPriority="high"
-                                loading="eager"
-                                decoding="async"
-                                className="w-full h-auto max-h-87.5 sm:max-h-97.5 object-contain relative z-10 block drop-shadow-md select-none pointer-events-none aspect-665/443"
-                              />
-                            </picture>
+                            <img 
+                              src="/hero-students.png" 
+                              alt="Bihar Aspirants" 
+                              width="665"
+                              height="443"
+                              fetchPriority="high"
+                              loading="eager"
+                              decoding="async"
+                              className="w-full h-auto max-h-87.5 sm:max-h-97.5 object-contain relative z-10 block drop-shadow-md select-none pointer-events-none aspect-665/443"
+                            />
                           </div>
                         </div>
                       </div>
