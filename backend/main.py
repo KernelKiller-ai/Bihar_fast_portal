@@ -455,7 +455,8 @@ def dynamic_posts_sitemap():
                 return Response(
                     content=cached_xml if isinstance(cached_xml, (str, bytes)) else str(cached_xml),
                     media_type="application/xml",
-                    headers={"Cache-Control": "public, max-age=3600, s-maxage=7200"}
+                    # YAHAN CHANGE KAREIN: max-age aur s-maxage ko 60 second karein
+                    headers={"Cache-Control": "public, max-age=60, s-maxage=60"}
                 )
         except Exception:
             pass
@@ -491,12 +492,14 @@ def dynamic_posts_sitemap():
 
     if redis and posts:
         try:
-            redis.set(cache_key, sitemap_xml, ex=3600)
+            # YAHAN CHANGE KAREIN: Redis cache expiry ko 300 second (5 min) karein taaki fresh rahe
+            redis.set(cache_key, sitemap_xml, ex=300)
         except Exception:
             pass
 
     return Response(
         content=sitemap_xml,
         media_type="application/xml",
-        headers={"Cache-Control": "public, max-age=3600, s-maxage=7200"}
+        # YAHAN BHI CHANGE KAREIN: 60 seconds
+        headers={"Cache-Control": "public, max-age=60, s-maxage=60"}
     )
