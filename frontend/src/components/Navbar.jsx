@@ -17,12 +17,19 @@ export default function Navbar() {
           
           {/* Logo Brand Plate */}
           <Link to="/" className="flex items-center gap-3 group shrink-0">
-            <div className="bg-white p-1 rounded-xl shadow-md border border-sky-200/50 flex items-center justify-center transition group-hover:scale-105">
-              <img 
-                src="/logo.png" 
-                alt="BiharFast Logo" 
-                className="h-9 sm:h-10 w-auto object-contain"
-              />
+            <div className="bg-white p-1 rounded-xl shadow-md border border-sky-200/50 flex items-center justify-center transition group-hover:scale-105 w-11 h-11 sm:w-12 sm:h-12 shrink-0">
+              <picture>
+                <source srcSet="/logo.webp" type="image/webp" />
+                <img 
+                  src="/logo.png" 
+                  alt="BiharFast Logo" 
+                  width="40"
+                  height="40"
+                  loading="eager"
+                  decoding="async"
+                  className="h-9 sm:h-10 w-9 sm:w-10 object-contain aspect-square"
+                />
+              </picture>
             </div>
             
             <div className="flex flex-col">

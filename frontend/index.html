@@ -53,8 +53,11 @@
     }
     </script>
 
-    <!-- Performance: Preconnect to critical domains -->
-    <link rel="preconnect" href="https://bihar-fast-portal.onrender.com" crossorigin />
+    <!-- Performance: LCP Image Preload (Hero Image Instant Fetch) -->
+    <link rel="preload" as="image" href="/hero-students.webp" type="image/webp" fetchpriority="high" />
+
+    <!-- Performance: Fixed Preconnect (Removed unused crossorigin on API domain) -->
+    <link rel="preconnect" href="https://bihar-fast-portal.onrender.com" />
     <link rel="preconnect" href="https://www.googletagmanager.com" crossorigin />
     <link rel="preconnect" href="https://pagead2.googlesyndication.com" crossorigin />
     <link rel="dns-prefetch" href="https://www.google-analytics.com" />

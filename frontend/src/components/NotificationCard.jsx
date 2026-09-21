@@ -69,6 +69,7 @@ export default function NotificationCard({ item }) {
 
   const category = (item.category || "").toLowerCase();
   const slug = (item.slug || "").toLowerCase();
+  const itemTitle = item.title || "अधिसूचना विवरण";
 
   // Identify citizen public services
   const isCitizenService = 
@@ -83,7 +84,7 @@ export default function NotificationCard({ item }) {
   const renderStatusBadge = () => {
     if (isCitizenService) {
       return (
-        <span className="inline-flex items-center gap-1 bg-emerald-100 text-emerald-900 text-[11px] font-bold px-2.5 py-1 rounded-md border border-emerald-300">
+        <span className="inline-flex items-center gap-1 bg-emerald-100 text-emerald-950 text-[11px] font-bold px-2.5 py-1 rounded-md border border-emerald-400">
           <ShieldCheck size={13} className="text-emerald-800" />
           Active Service
         </span>
@@ -92,7 +93,7 @@ export default function NotificationCard({ item }) {
 
     if (item.isResult || category === "results" || category === "result") {
       return (
-        <span className="inline-flex items-center gap-1 bg-purple-100 text-purple-900 text-[11px] font-bold px-2.5 py-1 rounded-md border border-purple-300">
+        <span className="inline-flex items-center gap-1 bg-purple-100 text-purple-950 text-[11px] font-bold px-2.5 py-1 rounded-md border border-purple-400">
           <Award size={13} className="text-purple-800" />
           Result Declared
         </span>
@@ -111,7 +112,7 @@ export default function NotificationCard({ item }) {
     if (item.hasRealDate && item.daysLeft !== null && item.daysLeft !== undefined) {
       if (item.daysLeft < 0) {
         return (
-          <span className="inline-flex items-center gap-1 bg-slate-100 text-slate-700 text-[11px] font-bold px-2.5 py-1 rounded-md border border-slate-300">
+          <span className="inline-flex items-center gap-1 bg-slate-100 text-slate-800 text-[11px] font-bold px-2.5 py-1 rounded-md border border-slate-300">
             Closed
           </span>
         );
@@ -119,7 +120,7 @@ export default function NotificationCard({ item }) {
 
       if (item.daysLeft <= 3) {
         return (
-          <span className="inline-flex items-center gap-1 bg-red-100 text-red-800 text-[11px] font-black px-2.5 py-1 rounded-md border border-red-300 animate-pulse">
+          <span className="inline-flex items-center gap-1 bg-red-100 text-red-900 text-[11px] font-black px-2.5 py-1 rounded-md border border-red-400 animate-pulse">
             <AlertCircle size={13} className="text-red-700" />
             Last {item.daysLeft} Days!
           </span>
@@ -127,7 +128,7 @@ export default function NotificationCard({ item }) {
       }
 
       return (
-        <span className="inline-flex items-center gap-1 bg-emerald-50 text-emerald-800 text-[11px] font-bold px-2.5 py-1 rounded-md border border-emerald-300">
+        <span className="inline-flex items-center gap-1 bg-emerald-50 text-emerald-900 text-[11px] font-bold px-2.5 py-1 rounded-md border border-emerald-300">
           <Clock3 size={13} />
           {item.daysLeft} Days Left
         </span>
@@ -135,7 +136,7 @@ export default function NotificationCard({ item }) {
     }
 
     return (
-      <span className="inline-flex items-center gap-1 bg-sky-100 text-sky-900 text-[11px] font-bold px-2.5 py-1 rounded-md border border-sky-300">
+      <span className="inline-flex items-center gap-1 bg-sky-100 text-sky-950 text-[11px] font-bold px-2.5 py-1 rounded-md border border-sky-300">
         <Sparkles size={12} className="text-sky-800" />
         Live Circular
       </span>
@@ -148,7 +149,7 @@ export default function NotificationCard({ item }) {
 
       <div className="p-5">
         <div className="flex items-center justify-between gap-2 mb-3">
-          <span className={`${dept.badge} text-[11px] font-black tracking-wider px-2.5 py-0.5 rounded-sm uppercase flex items-center gap-1 shadow-2xs`}>
+          <span className={`${dept.badge} text-[11px] font-black tracking-wider px-2.5 py-0.5 rounded-sm uppercase flex items-center gap-1 shadow-xs`}>
             <Building2 size={12} />
             {item.department || "BIHAR"}
           </span>
@@ -160,9 +161,10 @@ export default function NotificationCard({ item }) {
           <Link 
             to={postUrl}
             className="hover:text-blue-700 transition-colors"
-            title={item.title}
+            title={itemTitle}
+            aria-label={itemTitle}
           >
-            {item.title}
+            {itemTitle}
           </Link>
         </h2>
 
@@ -196,7 +198,7 @@ export default function NotificationCard({ item }) {
                 <Calendar size={11} className="text-slate-600" />
                 {item.hasRealDate ? "Last Date" : "Status"}
               </div>
-              <div className={`font-bold truncate ${item.hasRealDate ? "text-rose-700" : "text-slate-800"}`}>
+              <div className={`font-bold truncate ${item.hasRealDate ? "text-rose-800" : "text-slate-800"}`}>
                 {item.hasRealDate ? (item.lastDate || item.last_date) : "Active Circular"}
               </div>
             </div>
@@ -218,16 +220,18 @@ export default function NotificationCard({ item }) {
         <a 
           href={item.pdfUrl || item.applyUrl || item.link || "#"} 
           target="_blank" 
-          rel="noreferrer"
-          className="text-xs font-bold text-slate-700 hover:text-slate-900 bg-white border border-slate-300 px-3 py-1.5 rounded-lg flex items-center gap-1.5 transition hover:bg-slate-100 shadow-2xs"
+          rel="noopener noreferrer"
+          aria-label={`${isCitizenService ? "Portal लिंक खोलें" : "Official PDF डाउनलोड करें"}: ${itemTitle}`}
+          className="text-xs font-bold text-slate-800 hover:text-slate-950 bg-white border border-slate-300 px-3 py-1.5 rounded-lg flex items-center gap-1.5 transition hover:bg-slate-100 shadow-xs"
         >
-          <FileText size={13} className="text-slate-600" />
+          <FileText size={13} className="text-slate-700" />
           {isCitizenService ? "Direct Portal" : "Official PDF"}
         </a>
 
         <Link 
           to={postUrl}
-          className={`${dept.btn} text-xs font-bold px-3.5 py-1.5 rounded-lg flex items-center gap-1 shadow-2xs transition active:scale-95 cursor-pointer`}
+          aria-label={`पूरी जानकारी देखें: ${itemTitle}`}
+          className={`${dept.btn} text-xs font-bold px-3.5 py-1.5 rounded-lg flex items-center gap-1 shadow-xs transition active:scale-95 cursor-pointer`}
         >
           View Details
           <ArrowUpRight size={13} />
