@@ -1,5 +1,6 @@
 import { Download, X } from "lucide-react";
 import { useState } from "react";
+import { Link } from "react-router-dom";
 
 export default function DownloadAppBanner() {
   const [isVisible, setIsVisible] = useState(true);
@@ -26,6 +27,12 @@ export default function DownloadAppBanner() {
           <Download size={14} aria-hidden="true" />
           Download
         </a>
+        <Link
+          to="/download"
+          className="hidden text-[10px] font-bold text-slate-500 underline underline-offset-2 sm:inline"
+        >
+          Kaise install karein? / Install Guide
+        </Link>
         <button
           type="button"
           onClick={() => setIsVisible(false)}

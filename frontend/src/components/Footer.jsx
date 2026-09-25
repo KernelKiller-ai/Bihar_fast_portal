@@ -478,6 +478,15 @@ export default function Footer({ onOpenTool }) {
             <p className="text-[10px] text-slate-400">
               Not affiliated with any government department. Information sourced from official portals.
             </p>
+            <p className="mt-1 text-[10px] text-slate-400">
+              BiharFast is an independent educational and job information portal registered under Ministry of MSME, Govt. of India.
+            </p>
+            <nav className="mt-2 flex flex-wrap justify-center gap-x-3 gap-y-1 font-bold text-blue-200" aria-label="Legal and app links">
+              <Link to="/download" className="hover:text-white hover:underline">Download App</Link>
+              <Link to="/disclaimer" className="hover:text-white hover:underline">Disclaimer</Link>
+              <Link to="/privacy" className="hover:text-white hover:underline">Privacy</Link>
+              <Link to="/contact" className="hover:text-white hover:underline">Contact</Link>
+            </nav>
           </div>
 
           <div className="flex items-center gap-3">

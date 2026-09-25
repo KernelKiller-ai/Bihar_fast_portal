@@ -29,6 +29,7 @@ const KushalYuvaProgram = lazy(() => import("./pages/KushalYuvaProgram"));
 const StudentCreditCard = lazy(() => import("./pages/StudentCreditCard"));
 const MockTestPage = lazy(() => import("./pages/MockTestPage"));
 const Upcoming2026 = lazy(() => import("./pages/upcoming"));
+const DownloadApp = lazy(() => import("./pages/DownloadApp"));
 
 // Policy Pages (Lazy Loaded)
 const About = lazy(() => import("./pages/about"));
@@ -770,6 +771,7 @@ export default function App() {
             <Route path="/contact-us" element={<Contact />} />
             <Route path="/disclaimer" element={<Disclaimer />} />
             <Route path="/privacy-policy" element={<PrivacyPolicy />} />
+            <Route path="/privacy" element={<PrivacyPolicy />} />
             <Route path="/terms" element={<Terms />} />
             <Route path="/terms-and-conditions" element={<Terms />} />
             
@@ -791,6 +793,7 @@ export default function App() {
             <Route path="/mock-test/class-10" element={<MockTestPage />} />
             
             <Route path="/upcoming-2026" element={<Upcoming2026 />} />
+            <Route path="/download" element={<DownloadApp />} />
           </Routes>
         </Suspense>
       </div>
