@@ -20,7 +20,7 @@
     <meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1" />
     <link rel="canonical" href="https://biharfast.in/" />
 
-    <!-- Open Graph / Social Sharing (WhatsApp, Telegram, Facebook) -->
+    <!-- Open Graph / Social Sharing -->
     <meta property="og:type" content="website" />
     <meta property="og:site_name" content="BiharFast Portal" />
     <meta property="og:url" content="https://biharfast.in/" />
@@ -53,10 +53,8 @@
     }
     </script>
 
-    <!-- Performance: LCP Image Preload (Hero Image Instant Fetch) -->
+    <!-- Performance Optimizations -->
     <link rel="preload" as="image" href="/hero-students.webp" type="image/webp" fetchpriority="high" />
-
-    <!-- Performance: Fixed Preconnect (Removed unused crossorigin on API domain) -->
     <link rel="preconnect" href="https://bihar-fast-portal.onrender.com" />
     <link rel="preconnect" href="https://www.googletagmanager.com" crossorigin />
     <link rel="preconnect" href="https://pagead2.googlesyndication.com" crossorigin />
@@ -91,7 +89,12 @@
     ></script>
   </head>
   <body class="bg-slate-50 text-slate-900 antialiased selection:bg-[#0B4F8A] selection:text-white">
-    <div id="root"></div>
+    <div id="root">
+      <header style="padding: 1rem; text-align: center;">
+        <h1 style="font-size: 1.5rem; font-weight: bold; color: #0B4F8A;">BiharFast - बिहार सरकारी नौकरी, एडमिट कार्ड व रिजल्ट</h1>
+        <p>नवीनतम सरकारी भर्तियां, प्रवेश पत्र और परीक्षा परिणाम सीधे आधिकारिक स्रोत से।</p>
+      </header>
+    </div>
     <script type="module" src="/src/main.jsx"></script>
   </body>
 </html>
