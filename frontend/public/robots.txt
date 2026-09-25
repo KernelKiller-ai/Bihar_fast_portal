@@ -1,4 +1,5 @@
 User-agent: *
 Allow: /
 
-Sitemap: https://biharfast.in/sitemap.xml
+Sitemap: https://www.biharfast.in/sitemap.xml
+Sitemap: https://www.biharfast.in/api/sitemap-posts.xml
