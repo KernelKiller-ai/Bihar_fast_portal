@@ -115,14 +115,20 @@ export default function PostDetail({ notices = [] }) {
     };
   }, [slug]);
 
-  // Strict SEO & Canonical Injection (Consistent non-www URL: https://biharfast.in)
+  // Strict SEO, Canonical & JSON-LD Rich Snippet Injection
   useEffect(() => {
-    if (!post) return;
+    if (!post || !post.title) return;
 
     const currentSlug = post.slug || slug;
-    const pageTitle = post.meta_title || `${post.title} | BiharFast`;
-    document.title = pageTitle;
+    
+    // 1. Dynamic Unique Page Title
+    const cleanTitle = (post.meta_title && post.meta_title.trim()) 
+      ? post.meta_title.trim() 
+      : `${post.title.trim()} - BiharFast`;
+      
+    document.title = cleanTitle;
 
+    // Helper to safely set or create meta tags
     const setMeta = (attr, val, content) => {
       let tag = document.querySelector(`meta[${attr}="${val}"]`);
       if (!tag) {
@@ -133,15 +139,19 @@ export default function PostDetail({ notices = [] }) {
       tag.setAttribute("content", content);
     };
 
+    // 2. Dynamic Unique Description
     const desc = post.meta_desc 
-      || (post.short_desc ? post.short_desc.slice(0, 155) : `${post.department}: ${post.title}. Apply online, eligibility, and full official notification PDF.`);
+      || (post.short_desc ? post.short_desc.slice(0, 155) : `${post.department || "बिहार"}: ${post.title}. योग्यता, अंतिम तिथि व सीधा ऑनलाइन आवेदन लिंक यहाँ देखें।`);
 
     setMeta("name", "description", desc);
-    setMeta("property", "og:title", pageTitle);
+    setMeta("property", "og:title", cleanTitle);
     setMeta("property", "og:description", desc);
     setMeta("property", "og:type", "article");
     setMeta("property", "og:url", `https://biharfast.in/post/${currentSlug}`);
+    setMeta("twitter:title", cleanTitle);
+    setMeta("twitter:description", desc);
 
+    // 3. Strict Canonical URL
     let canonical = document.querySelector('link[rel="canonical"]');
     if (!canonical) {
       canonical = document.createElement("link");
@@ -150,9 +160,35 @@ export default function PostDetail({ notices = [] }) {
     }
     canonical.setAttribute("href", `https://biharfast.in/post/${currentSlug}`);
 
+    // 4. Dynamic Article Schema (JSON-LD) for Google Rich Snippets
+    let scriptTag = document.getElementById("article-schema");
+    if (!scriptTag) {
+      scriptTag = document.createElement("script");
+      scriptTag.id = "article-schema";
+      scriptTag.type = "application/ld+json";
+      document.head.appendChild(scriptTag);
+    }
+    scriptTag.text = JSON.stringify({
+      "@context": "https://schema.org",
+      "@type": "NewsArticle",
+      "headline": cleanTitle,
+      "description": desc,
+      "url": `https://biharfast.in/post/${currentSlug}`,
+      "publisher": {
+        "@type": "Organization",
+        "name": "BiharFast Technologies",
+        "url": "https://biharfast.in"
+      }
+    });
+
+    // 5. Cleanup when unmounting or navigating away
     return () => {
+      document.title = "BiharFast™: बिहार सरकारी नौकरी, एडमिट कार्ड व परीक्षा परिणाम";
       if (canonical) {
         canonical.setAttribute("href", "https://biharfast.in/");
+      }
+      if (scriptTag) {
+        scriptTag.remove();
       }
     };
   }, [post, slug]);
@@ -275,7 +311,7 @@ export default function PostDetail({ notices = [] }) {
       {/* 2. Main Post Content Layout (Details, Articles, Tables, FAQs) */}
       {renderActiveLayout()}
 
-      {/* 3. Shifted Social Share & Community Widget (Positioned after all details) */}
+      {/* 3. Shifted Social Share & Community Widget */}
       <section className="mt-8 bg-[#10243E] text-white p-5 rounded-2xl shadow-md space-y-4">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-700/60 pb-3">
           <div className="flex items-center gap-2">
@@ -319,7 +355,7 @@ export default function PostDetail({ notices = [] }) {
           </p>
           <div className="flex items-center gap-2 shrink-0">
             <a
-              href="https://whatsapp.com/channel/0029Vb7wN5n3bbV2H6f" // Aapka WhatsApp Channel link
+              href="https://whatsapp.com/channel/0029Vb7wN5n3bbV2H6f"
               target="_blank"
               rel="noopener noreferrer"
               className="bg-emerald-700/80 hover:bg-emerald-600 text-[11px] font-bold px-3 py-1.5 rounded-lg transition border border-emerald-500/50"
@@ -327,7 +363,7 @@ export default function PostDetail({ notices = [] }) {
               Join WhatsApp Channel
             </a>
             <a
-              href="https://t.me/biharfast_official" // Aapka Telegram link
+              href="https://t.me/biharfast_official"
               target="_blank"
               rel="noopener noreferrer"
               className="bg-sky-600/80 hover:bg-sky-500 text-[11px] font-bold px-3 py-1.5 rounded-lg transition border border-sky-400/50"
