@@ -1,81 +1,87 @@
+import { Cookie, ExternalLink, LockKeyhole, Mail, ShieldCheck, Trash2 } from "lucide-react";
 import { Link } from "react-router-dom";
+
+const externalLinkClass = "text-blue-700 underline underline-offset-2 hover:text-blue-900";
 
 export default function PrivacyPolicy() {
   return (
-    <div className="max-w-4xl mx-auto px-4 py-10">
-      <div className="bg-white rounded-3xl p-6 sm:p-10 border border-slate-200 shadow-xs space-y-6">
-        <div>
+    <main className="max-w-4xl mx-auto px-4 py-10">
+      <div className="bg-white rounded-3xl p-6 sm:p-10 border border-slate-200 shadow-xs space-y-8">
+        <header>
           <span className="text-xs font-bold uppercase tracking-wider text-purple-700 bg-purple-50 px-2.5 py-1 rounded-md border border-purple-200">
-            डेटा सुरक्षा एवं कुकी नीति
+            Privacy, Cookies &amp; Data Protection
           </span>
-          <h1 className="text-2xl sm:text-3xl font-black text-slate-900 mt-2">
-            गोपनीयता नीति (Privacy Policy)
-          </h1>
-          <p className="text-slate-500 text-xs mt-1">अंतिम अद्यतन: 2026</p>
-        </div>
+          <h1 className="text-2xl sm:text-3xl font-black text-slate-900 mt-3">Privacy Policy</h1>
+          <p className="text-slate-500 text-xs mt-1">Last updated: September 2026</p>
+          <p className="text-sm text-slate-600 leading-relaxed mt-4">
+            This policy explains how BiharFast collects, uses, protects, and shares information when you visit <strong>biharfast.in</strong>. It is intended to support applicable Indian data-protection requirements, the Information Technology Act, 2000 and related rules, and applicable GDPR obligations where they apply to a visitor.
+          </p>
+        </header>
 
-        <div className="space-y-5 text-xs sm:text-sm text-slate-700 leading-relaxed">
-          <section className="space-y-2">
-            <h2 className="text-base font-bold text-slate-900">1. व्यक्तिगत डेटा संग्रह न करने की नीति (Zero Sensitive Data Collection)</h2>
-            <p>
-              BiharFast.in पर सामान्य पठन अथवा नोटिफिकेशन एक्सेस करने के लिए किसी प्रकार के व्यक्तिगत पंजीकरण, आधार संख्या, पैन कार्ड, बैंक खाता या पासवर्ड की आवश्यकता नहीं होती। हम उपयोगकर्ताओं का कोई भी संवेदनशील व्यक्तिगत डेटा (Personally Identifiable Information - PII) अपने सर्वर पर न तो मांगते हैं और न ही स्थायी रूप से संग्रहित करते हैं।
-            </p>
-          </section>
-
-          <section className="space-y-2">
-            <h2 className="text-base font-bold text-slate-900">2. गूगल एडसेंस एवं तृतीय-पक्ष विज्ञापनदाता (Google AdSense & DoubleClick DART Cookies)</h2>
-            <p>
-              यह वेबसाइट विज्ञापन सेवा हेतु <strong>Google AdSense</strong> सहित तृतीय-पक्ष विज्ञापन नेटवर्क का उपयोग कर सकती है।
-            </p>
-            <ul className="list-disc list-inside space-y-1.5 pl-1">
-              <li>
-                गूगल, एक तृतीय-पक्ष विक्रेता के रूप में, इस वेबसाइट पर विज्ञापनों को प्रदर्शित करने के लिए कुकीज़ (जैसे DART कुकी) का उपयोग करता है।
-              </li>
-              <li>
-                DART कुकी का उपयोग गूगल एवं उसके भागीदारों को हमारे उपयोगकर्ताओं द्वारा इस साइट तथा इंटरनेट पर अन्य साइटों पर उनकी विजिट के आधार पर प्रासंगिक विज्ञापन दिखाने में सक्षम बनाता है।
-              </li>
-              <li>
-                उपयोगकर्ता गूगल विज्ञापन सेटिंग्स अथवा 
-                <a 
-                  href="https://policies.google.com/technologies/ads" 
-                  target="_blank" 
-                  rel="noreferrer"
-                  className="text-blue-600 underline font-semibold ml-1"
-                >
-                  Google Privacy & Terms
-                </a> पर जाकर रुचि-आधारित विज्ञापनों हेतु DART कुकी के उपयोग से ऑप्ट-आउट (सहमति वापस) कर सकते हैं।
-              </li>
+        <div className="space-y-7 text-xs sm:text-sm text-slate-700 leading-relaxed">
+          <section className="space-y-2" aria-labelledby="collection-heading">
+            <div className="flex items-center gap-2"><ShieldCheck size={18} className="text-blue-700" /><h2 id="collection-heading" className="text-base font-bold text-slate-900">1. Information We Collect</h2></div>
+            <p>We collect only information reasonably needed to operate, secure, improve, and support the website:</p>
+            <ul className="list-disc list-inside space-y-2 pl-1">
+              <li><strong>Public visitor and technical data:</strong> IP address, browser type, device information, operating system, referring page, approximate usage data, and timestamps may be processed through standard server logs and Google Analytics 4 (GA4).</li>
+              <li><strong>Contact and support data:</strong> name, email address, optional subject, and message submitted through our Contact form. Contact submissions are transmitted to Web3Forms for delivery to our support team.</li>
+              <li><strong>Newsletter and push alerts:</strong> email addresses submitted for newsletter updates and OneSignal browser push notification tokens created only after a user voluntarily grants browser permission.</li>
             </ul>
+            <p className="font-bold text-slate-900">We NEVER collect or store sensitive personal information such as government passwords, bank details, payment card data, OTPs, or online-banking credentials.</p>
           </section>
 
-          <section className="space-y-2">
-            <h2 className="text-base font-bold text-slate-900">3. क्लाइंट-साइड स्मार्ट टूल्स प्राइवेसी गारंटी (Photo & Signature Resizer)</h2>
-            <p>
-              पोर्टल पर उपलब्ध ऑनलाइन टूल्स (जैसे Photo & Signature Resizer अथवा Age Calculator) शत-प्रतिशत <strong>क्लाइंट-साइड (Client-Side HTML5 Canvas / WebAssembly)</strong> तकनीक पर आधारित हैं। इसका अर्थ यह है कि आपकी कोई भी तस्वीर, हस्ताक्षर या व्यक्तिगत इनपुट किसी रिमोट सर्वर पर अपलोड नहीं होता। सारी प्रोसेसिंग आपके स्वयं के ब्राउज़र मेमोरी में संपन्न होती है तथा टैब बंद होते ही डेटा स्वतः समाप्त हो जाता है।
-            </p>
+          <section className="space-y-2" aria-labelledby="use-heading">
+            <div className="flex items-center gap-2"><LockKeyhole size={18} className="text-emerald-700" /><h2 id="use-heading" className="text-base font-bold text-slate-900">2. How We Use Information</h2></div>
+            <p>Information may be used to respond to support and correction requests, deliver voluntarily requested newsletter or push alerts, prevent abuse, secure the website, understand aggregated traffic, improve performance and usability, and comply with legal obligations. We do not sell personal information or use contact submissions for unrelated marketing.</p>
           </section>
 
-          <section className="space-y-2">
-            <h2 className="text-base font-bold text-slate-900">4. लॉग फाइल्स एवं वेब एनालिटिक्स (Log Files & Analytics)</h2>
-            <p>
-              अधिकांश मानक सर्वरों की भांति, हमारी होस्टिंग अवसंरचना (Vercel / Cloudflare) गैर-व्यक्तिगत तकनीकी डेटा जैसे इंटरनेट प्रोटोकॉल (IP) एड्रेस, ब्राउज़र प्रकार, इंटरनेट सेवा प्रदाता (ISP), रेफ़रिंग/एग्जिट पेजेस, एवं विज़िट टाइमस्टैम्प को केवल सुरक्षा ऑडिट, डीडीओएस रोकथाम तथा साइट परफॉरमेंस अनुकूलन हेतु स्वतः लॉग कर सकती है।
-            </p>
+          <section className="space-y-2" aria-labelledby="ads-heading">
+            <div className="flex items-center gap-2"><Cookie size={18} className="text-amber-600" /><h2 id="ads-heading" className="text-base font-bold text-slate-900">3. Cookies, Google AdSense and DoubleClick DART</h2></div>
+            <p>This website may use Google AdSense and other third-party advertising vendors. Third-party vendors, including Google, use cookies to serve ads based on a user&apos;s prior visits to this website or other websites.</p>
+            <p>Google may use advertising cookies, including the DoubleClick DART cookie, to enable Google and its partners to serve ads based on visits to this website and other websites. Advertising partners may process cookie identifiers, device information, and contextual or interest-based signals under their own policies.</p>
+            <p>Users can opt out of personalized advertising through <a href="https://www.google.com/settings/ads" target="_blank" rel="noreferrer" className={externalLinkClass}>Google Ads Settings</a> or by visiting <a href="https://www.aboutads.info/" target="_blank" rel="noreferrer" className={externalLinkClass}>www.aboutads.info</a>. Where legally required, non-essential cookies and personalized advertising should be controlled through the site&apos;s consent choices.</p>
           </section>
 
-          <section className="space-y-2">
-            <h2 className="text-base font-bold text-slate-900">5. बच्चों की ऑनलाइन सुरक्षा (Children&apos;s Privacy Protection)</h2>
-            <p>
-              हम 13 वर्ष से कम आयु के बच्चों से जानबूझकर कोई भी व्यक्तिगत पहचान योग्य जानकारी एकत्रित नहीं करते हैं। यदि किसी अभिभावक को यह ज्ञात होता है कि उनके बच्चे ने अनजाने में हमें कोई विवरण प्रदान किया है, तो वे तुरंत हमसे संपर्क कर सकते हैं ताकि उस डेटा को तुरंत हटाया जा सके।
-            </p>
+          <section className="space-y-2" aria-labelledby="analytics-heading">
+            <h2 id="analytics-heading" className="text-base font-bold text-slate-900">4. Analytics and Push Notifications</h2>
+            <p><strong>Google Analytics 4:</strong> GA4 helps us understand aggregated traffic patterns, page performance, and user experience improvements. Google may process identifiers and usage information according to its own privacy terms.</p>
+            <p><strong>OneSignal:</strong> OneSignal is used for real-time exam, job, and public-service alerts. It operates only after browser permission is granted. Users can revoke notification permission at any time through their browser or device settings; they may also contact us to request removal of related alert data.</p>
+          </section>
+
+          <section className="space-y-2" aria-labelledby="links-heading">
+            <div className="flex items-center gap-2"><ExternalLink size={18} className="text-slate-500" /><h2 id="links-heading" className="text-base font-bold text-slate-900">5. External Government and Third-Party Portals</h2></div>
+            <p>BiharFast links to external official government portals such as <strong>bpsc.bihar.gov.in</strong> and <strong>bssc.bihar.gov.in</strong> for convenience. Once a user leaves BiharFast, the destination website&apos;s privacy policy, cookies, security practices, and terms govern that session. We do not control or accept responsibility for external websites.</p>
+          </section>
+
+          <section className="space-y-2" aria-labelledby="security-heading">
+            <div className="flex items-center gap-2"><LockKeyhole size={18} className="text-blue-700" /><h2 id="security-heading" className="text-base font-bold text-slate-900">6. Security and Retention</h2></div>
+            <p>We use reasonable technical and organizational safeguards, including HTTPS transport where available, access controls, limited administrative access, and service-provider security controls, to protect contact messages and newsletter email data. No internet transmission or storage system can be guaranteed completely secure.</p>
+            <p>Contact data is retained only as long as reasonably necessary to respond, resolve a grievance, maintain required records, or defend legal claims. Newsletter data is retained until unsubscribe or deletion. Analytics and server-log retention may follow the configured retention periods of the relevant hosting and analytics providers.</p>
+          </section>
+
+          <section className="space-y-2" aria-labelledby="rights-heading">
+            <div className="flex items-center gap-2"><Trash2 size={18} className="text-rose-700" /><h2 id="rights-heading" className="text-base font-bold text-slate-900">7. User Rights and Choices</h2></div>
+            <p>Subject to applicable law, users may request access, correction, deletion, restriction, or withdrawal of consent for information we control. Users may unsubscribe from newsletter emails and revoke push alerts in browser settings. To request data deletion or unsubscribe from alerts, email <a href="mailto:support@biharfast.in" className={externalLinkClass}>support@biharfast.in</a> with enough information for us to identify the request. We may retain information required by law or necessary to prevent fraud and resolve disputes.</p>
+          </section>
+
+          <section className="bg-slate-50 border border-slate-200 rounded-2xl p-5 space-y-2" aria-labelledby="grievance-heading">
+            <h2 id="grievance-heading" className="text-base font-bold text-slate-900">8. Grievance Officer and Privacy Contact</h2>
+            <p>For privacy questions, data deletion requests, advertising concerns, or grievances under applicable Indian law, contact:</p>
+            <a href="mailto:support@biharfast.in" className="inline-flex items-center gap-2 text-sm font-black text-blue-700 hover:underline"><Mail size={16} /> support@biharfast.in</a>
+            <p className="text-xs text-slate-500">We aim to acknowledge valid requests and respond within a reasonable period, subject to verification and applicable legal requirements.</p>
+          </section>
+
+          <section className="space-y-2" aria-labelledby="children-heading">
+            <h2 id="children-heading" className="text-base font-bold text-slate-900">9. Children&apos;s Privacy and Policy Updates</h2>
+            <p>The website is intended for general public information and exam preparation. We do not knowingly request sensitive information from children. If you believe a child has submitted personal information, contact us for review and deletion. We may update this policy when services, law, or data practices change; the updated date at the top will indicate the latest version.</p>
           </section>
         </div>
 
-        <div className="pt-2">
-          <Link to="/" className="text-xs font-bold text-blue-600 hover:underline">
-            ← मुख्य पृष्ठ पर लौटें
-          </Link>
+        <div className="pt-2 border-t border-slate-100 flex flex-wrap items-center justify-between gap-3">
+          <Link to="/" className="text-xs font-bold text-blue-600 hover:underline">← Main page</Link>
+          <Link to="/contact" className="text-xs font-bold text-blue-600 hover:underline">Privacy questions? Contact us</Link>
         </div>
       </div>
-    </div>
+    </main>
   );
 }
