@@ -163,6 +163,8 @@ export default function PostDetail({ notices = [] }) {
 
     // 3. Strict Canonical URL
     let canonical = document.querySelector('link[rel="canonical"]');
+    const originalCanonicalHref = canonical?.getAttribute("href") || null;
+    const createdCanonical = !canonical;
     if (!canonical) {
       canonical = document.createElement("link");
       canonical.setAttribute("rel", "canonical");
@@ -194,8 +196,10 @@ export default function PostDetail({ notices = [] }) {
     // 5. Cleanup when unmounting
     return () => {
       document.title = "BiharFast™: बिहार सरकारी नौकरी, एडमिट कार्ड व परीक्षा परिणाम";
-      if (canonical) {
-        canonical.setAttribute("href", "https://biharfast.in/");
+      if (createdCanonical) {
+        canonical?.remove();
+      } else if (canonical && originalCanonicalHref) {
+        canonical.setAttribute("href", originalCanonicalHref);
       }
       if (scriptTag) {
         scriptTag.remove();

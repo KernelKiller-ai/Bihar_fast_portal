@@ -1,6 +1,10 @@
 {
   "rewrites": [
     {
+      "source": "/post/:slug",
+      "destination": "/api/post-seo?slug=:slug"
+    },
+    {
       "source": "/api/:path*",
       "destination": "https://bihar-fast-portal.onrender.com/api/:path*"
     },
