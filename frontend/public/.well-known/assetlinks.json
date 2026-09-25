@@ -1,0 +1,12 @@
+[
+  {
+    "relation": ["delegate_permission/common.handle_all_urls"],
+    "target": {
+      "namespace": "android_app",
+      "package_name": "in.biharfast.twa",
+      "sha256_cert_fingerprints": [
+        "6D:B7:99:C7:5A:A1:F3:E2:72:CB:EC:76:0D:55:44:EF:31:A6:A8:EE:2A:2B:C7:53:B2:D5:2C:26:9F:6A:38:FF"
+      ]
+    }
+  }
+]
