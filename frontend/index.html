@@ -70,6 +70,7 @@
     <link rel="shortcut icon" type="image/png" href="/logo-192.png" />
     <link rel="apple-touch-icon" href="/logo-192.png" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="manifest" href="/site.webmanifest" />
 
     <!-- Google Analytics (GA4) -->
     <script async src="https://www.googletagmanager.com/gtag/js?id=G-2N03Q64SX9"></script>
@@ -95,5 +96,12 @@
       </header>
     </div>
     <script type="module" src="/src/main.jsx"></script>
+    <script>
+      if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+          navigator.serviceWorker.register('/sw.js', { scope: '/' });
+        });
+      }
+    </script>
   </body>
 </html>
