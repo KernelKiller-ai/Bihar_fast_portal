@@ -101,7 +101,7 @@ export default function DownloadApp() {
         <section className="rounded-2xl border border-slate-200 bg-slate-100 p-5 text-sm leading-relaxed text-slate-600 sm:p-6">
           <h2 className="text-base font-black text-slate-900">Trust note and FAQ</h2>
           <p className="mt-2">
-            BiharFast is an independent educational portal. The app is provided free of charge for access to public information and is distributed from the official BiharFast website. Always download the APK from this page and review Android&apos;s permission prompt before installing.
+            BiharFast is an independent educational portal. The app is provided free of charge for access to public information and is distributed from the official BiharFast website. The official APK is free from known malware at the time of publishing; always download it from this page and review Android&apos;s permission prompt before installing.
           </p>
           <p className="mt-3 font-semibold text-slate-700">
             Need more details? Read our <Link to="/disclaimer" className="text-blue-700 underline underline-offset-2">disclaimer</Link> or <Link to="/contact" className="text-blue-700 underline underline-offset-2">contact us</Link>.
