@@ -115,7 +115,7 @@ export default function PostDetail({ notices = [] }) {
     };
   }, [slug]);
 
-  // Strict SEO, Canonical & JSON-LD Rich Snippet Injection
+  // Strict SEO, Canonical & JSON-LD Rich Snippet Injection (Bug-Free & Safe)
   useEffect(() => {
     if (!post || !post.title) return;
 
@@ -128,28 +128,38 @@ export default function PostDetail({ notices = [] }) {
       
     document.title = cleanTitle;
 
-    // Helper to safely set or create meta tags
+    // Fail-safe helper to set/create meta tags safely
     const setMeta = (attr, val, content) => {
-      let tag = document.querySelector(`meta[${attr}="${val}"]`);
-      if (!tag) {
-        tag = document.createElement("meta");
-        tag.setAttribute(attr, val);
-        document.head.appendChild(tag);
+      try {
+        let tag = document.querySelector(`meta[${attr}="${val}"]`);
+        if (!tag) {
+          tag = document.createElement("meta");
+          tag.setAttribute(attr, val);
+          document.head.appendChild(tag);
+        }
+        tag.setAttribute("content", content || "");
+      } catch (err) {
+        console.warn("Meta tag setting error:", err);
       }
-      tag.setAttribute("content", content);
     };
 
     // 2. Dynamic Unique Description
     const desc = post.meta_desc 
       || (post.short_desc ? post.short_desc.slice(0, 155) : `${post.department || "बिहार"}: ${post.title}. योग्यता, अंतिम तिथि व सीधा ऑनलाइन आवेदन लिंक यहाँ देखें।`);
 
+    // Standard Meta Tags
     setMeta("name", "description", desc);
+
+    // Open Graph Tags
     setMeta("property", "og:title", cleanTitle);
     setMeta("property", "og:description", desc);
     setMeta("property", "og:type", "article");
     setMeta("property", "og:url", `https://biharfast.in/post/${currentSlug}`);
-    setMeta("twitter:title", cleanTitle);
-    setMeta("twitter:description", desc);
+
+    // Twitter Tags (Fixed: 3 parameters)
+    setMeta("name", "twitter:card", "summary_large_image");
+    setMeta("name", "twitter:title", cleanTitle);
+    setMeta("name", "twitter:description", desc);
 
     // 3. Strict Canonical URL
     let canonical = document.querySelector('link[rel="canonical"]');
@@ -181,7 +191,7 @@ export default function PostDetail({ notices = [] }) {
       }
     });
 
-    // 5. Cleanup when unmounting or navigating away
+    // 5. Cleanup when unmounting
     return () => {
       document.title = "BiharFast™: बिहार सरकारी नौकरी, एडमिट कार्ड व परीक्षा परिणाम";
       if (canonical) {
