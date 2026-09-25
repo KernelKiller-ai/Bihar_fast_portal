@@ -124,7 +124,7 @@ export default function Footer({ onOpenTool }) {
 
       {/* 2. Main 5-Column Content Grid */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 pb-8 relative z-10">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-12 gap-8 items-start">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-[repeat(14,minmax(0,1fr))] gap-8 items-start">
           
           {/* Column 1: Brand Info & Clean Slogan (Span 3) */}
           <div className="lg:col-span-3 flex flex-col items-start">
@@ -367,7 +367,22 @@ export default function Footer({ onOpenTool }) {
             </ul>
           </div>
 
-          {/* Column 5: Stay Connected (Span 3) */}
+          {/* Column 5: Legal & Support (Span 2) */}
+          <div className="lg:col-span-2">
+            <h4 className="text-slate-900 font-extrabold text-[13px] tracking-tight mb-3 border-b-2 border-slate-900 pb-1 inline-block">
+              Legal &amp; Support
+            </h4>
+            <ul className="space-y-2.5 text-xs text-slate-600 font-medium">
+              <li><Link to="/about" className="hover:text-blue-700 transition">About Us</Link></li>
+              <li><Link to="/contact" className="hover:text-blue-700 transition">Contact Us</Link></li>
+              <li><Link to="/privacy" className="hover:text-blue-700 transition">Privacy Policy</Link></li>
+              <li><Link to="/terms" className="hover:text-blue-700 transition">Terms &amp; Conditions</Link></li>
+              <li><Link to="/disclaimer" className="hover:text-blue-700 transition">Disclaimer</Link></li>
+              <li><Link to="/download" className="hover:text-blue-700 transition">Download App</Link></li>
+            </ul>
+          </div>
+
+          {/* Column 6: Stay Connected (Span 3) */}
           <div className="lg:col-span-3 space-y-3 relative">
             
             <div className="absolute -top-4 -right-2 w-28 h-28 opacity-10 pointer-events-none text-[#0B4F8A] hidden sm:block">
@@ -482,10 +497,12 @@ export default function Footer({ onOpenTool }) {
               BiharFast is an independent educational and job information portal registered under Ministry of MSME, Govt. of India.
             </p>
             <nav className="mt-2 flex flex-wrap justify-center gap-x-3 gap-y-1 font-bold text-blue-200" aria-label="Legal and app links">
-              <Link to="/download" className="hover:text-white hover:underline">Download App</Link>
-              <Link to="/disclaimer" className="hover:text-white hover:underline">Disclaimer</Link>
-              <Link to="/privacy" className="hover:text-white hover:underline">Privacy</Link>
+              <Link to="/about" className="hover:text-white hover:underline">About</Link>
               <Link to="/contact" className="hover:text-white hover:underline">Contact</Link>
+              <Link to="/privacy" className="hover:text-white hover:underline">Privacy</Link>
+              <Link to="/terms" className="hover:text-white hover:underline">Terms</Link>
+              <Link to="/disclaimer" className="hover:text-white hover:underline">Disclaimer</Link>
+              <Link to="/download" className="hover:text-white hover:underline">Download App</Link>
             </nav>
           </div>
 
