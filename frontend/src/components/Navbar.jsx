@@ -69,6 +69,16 @@ export default function Navbar() {
               <span>सभी पोर्टल्स (2026)</span>
             </Link>
 
+            {/* Direct Android APK download */}
+            <a
+              href="/biharfast.apk"
+              download="BiharFast.apk"
+              className="hidden md:inline-flex items-center gap-1.5 bg-emerald-500 hover:bg-emerald-400 border border-emerald-300/60 text-slate-950 px-3 py-2 rounded-xl text-xs font-black transition shadow-md hover:shadow-emerald-400/30 active:scale-95"
+            >
+              <span aria-hidden="true">📲</span>
+              <span>Download App (3 MB)</span>
+            </a>
+
             {/* Official WhatsApp Channel Join Button */}
             <a
               href="https://whatsapp.com/channel/0029VbDwc7KLNSa91goX3m1B"

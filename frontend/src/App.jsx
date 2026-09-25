@@ -1,6 +1,7 @@
 import { useState, useEffect, Suspense, lazy } from "react";
 import { Routes, Route, Link } from "react-router-dom";
 import Navbar from "./components/Navbar";
+import DownloadAppBanner from "./components/DownloadAppBanner";
 import NotificationCard from "./components/NotificationCard";
 import ImageResizer from "./components/ImageResizer";
 import AgeCalculator from "./components/AgeCalculator";
@@ -179,6 +180,7 @@ export default function App() {
     <div className="min-h-screen bg-slate-100/90 text-slate-800 font-sans antialiased flex flex-col justify-between">
       <div>
         <Navbar />
+        <DownloadAppBanner />
 
         <Suspense 
           fallback={
