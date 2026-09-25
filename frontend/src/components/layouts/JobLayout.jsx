@@ -1,4 +1,5 @@
 import PropTypes from "prop-types";
+import DOMPurify from "dompurify";
 import { 
   Calendar, 
   GraduationCap, 
@@ -15,6 +16,7 @@ import {
 } from "lucide-react";
 import { Link } from "react-router-dom";
 import ShareAlertBar from "./ShareAlertBar";
+import { addExternalLinkSafety } from "../../utils/sanitizeHtml";
 
 export default function JobLayout({ post }) {
   if (!post) return null;
@@ -29,6 +31,9 @@ export default function JobLayout({ post }) {
 
   // Dynamic Content Fields from Supabase
   const fullContent = post.content || null;
+  const sanitizedContent = fullContent
+    ? addExternalLinkSafety(DOMPurify.sanitize(fullContent, { USE_PROFILES: { html: true }, ADD_ATTR: ["target", "rel"] }))
+    : null;
   const shortDesc = post.short_desc || null;
   const howToApply = Array.isArray(post.how_to_apply) && post.how_to_apply.length > 0 ? post.how_to_apply : null;
   const selectionProcess = Array.isArray(post.selection_process) && post.selection_process.length > 0 ? post.selection_process : null;
@@ -152,7 +157,7 @@ export default function JobLayout({ post }) {
         )}
 
         {/* Full Rich Article Body */}
-        {fullContent && (
+        {sanitizedContent && (
           <section className="border-t border-slate-200 pt-7">
             <div 
               className="
@@ -165,7 +170,7 @@ export default function JobLayout({ post }) {
                 [&_li]:text-slate-800 [&_li]:leading-relaxed
                 [&_strong]:text-slate-950 [&_strong]:font-bold
               "
-              dangerouslySetInnerHTML={{ __html: fullContent }} 
+              dangerouslySetInnerHTML={{ __html: sanitizedContent }}
             />
           </section>
         )}

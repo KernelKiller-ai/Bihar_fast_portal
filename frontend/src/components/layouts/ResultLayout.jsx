@@ -1,4 +1,5 @@
 import PropTypes from "prop-types";
+import DOMPurify from "dompurify";
 import { 
   Award, 
   Download, 
@@ -11,6 +12,7 @@ import {
 } from "lucide-react";
 import { Link } from "react-router-dom";
 import ShareAlertBar from "./ShareAlertBar";
+import { addExternalLinkSafety } from "../../utils/sanitizeHtml";
 
 export default function ResultLayout({ post }) {
   if (!post) return null;
@@ -22,6 +24,9 @@ export default function ResultLayout({ post }) {
   const pdfUrl = post.pdf_url || post.pdfUrl || "#";
 
   const fullContent = post.content || null;
+  const sanitizedContent = fullContent
+    ? addExternalLinkSafety(DOMPurify.sanitize(fullContent, { USE_PROFILES: { html: true }, ADD_ATTR: ["target", "rel"] }))
+    : null;
   const shortDesc = post.short_desc || null;
 
   const faqs = (Array.isArray(post.faqs) && post.faqs.length > 0) 
@@ -113,7 +118,7 @@ export default function ResultLayout({ post }) {
         )}
 
         {/* Full Rich Article Body */}
-        {fullContent && (
+        {sanitizedContent && (
           <section className="border-t border-slate-200 pt-7">
             <div 
               className="
@@ -126,7 +131,7 @@ export default function ResultLayout({ post }) {
                 [&_li]:text-slate-800 [&_li]:leading-relaxed
                 [&_strong]:text-slate-950 [&_strong]:font-bold
               "
-              dangerouslySetInnerHTML={{ __html: fullContent }} 
+              dangerouslySetInnerHTML={{ __html: sanitizedContent }}
             />
           </section>
         )}

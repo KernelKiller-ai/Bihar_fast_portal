@@ -21,6 +21,7 @@ import orjson
 
 import database as db
 from quiz_router import quiz_router
+from rate_limiter import enforce_rate_limit
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
 logger = logging.getLogger("biharfast")
@@ -207,6 +208,7 @@ def require_admin(
     request: Request,
     credentials: Optional[HTTPAuthorizationCredentials] = Depends(bearer_scheme),
 ):
+    enforce_rate_limit(request, limit=30, window_seconds=60, scope="admin")
     if not ADMIN_API_TOKEN:
         raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail="Admin token missing")
 
@@ -290,7 +292,8 @@ def health_check():
 
 @app.get("/api/notices")
 @app.get("/api/posts")
-def get_all_posts():
+def get_all_posts(request: Request):
+    enforce_rate_limit(request, limit=60, window_seconds=60, scope="public-feed")
     cache_key = "home:latest_posts"
     if redis:
         try:
@@ -320,7 +323,8 @@ def get_all_posts():
     )
 
 @app.get("/api/posts/{slug}")
-def get_post_detail(slug: str):
+def get_post_detail(slug: str, request: Request):
+    enforce_rate_limit(request, limit=60, window_seconds=60, scope="public-post")
     cache_key = f"post:{slug}"
     if redis:
         try:
@@ -446,7 +450,8 @@ def change_post_status(post_id: str, payload: StatusUpdateRequest, bg: Backgroun
 
 # ----------------- CLEAN DYNAMIC SITEMAP -----------------
 @app.get("/api/sitemap-posts.xml")
-def dynamic_posts_sitemap():
+def dynamic_posts_sitemap(request: Request):
+    enforce_rate_limit(request, limit=30, window_seconds=60, scope="sitemap")
     cache_key = "seo:dynamic_sitemap"
     if redis:
         try:

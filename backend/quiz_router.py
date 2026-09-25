@@ -9,6 +9,7 @@ from fastapi import APIRouter, HTTPException, Query, Request, Depends, status
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from pydantic import BaseModel, Field, field_validator
 from database import get_db
+from rate_limiter import enforce_rate_limit
 
 logger = logging.getLogger("class10_quiz")
 quiz_router = APIRouter(prefix="/api/quiz", tags=["Universal Exam & Quiz Engine"])
@@ -23,8 +24,10 @@ ADMIN_API_TOKEN = os.getenv("ADMIN_API_TOKEN", "").strip()
 # ==================== SECURITY & AUTHENTICATION ====================
 
 def verify_quiz_admin(
+    request: Request,
     credentials: Optional[HTTPAuthorizationCredentials] = Depends(bearer_scheme)
 ):
+    enforce_rate_limit(request, limit=30, window_seconds=60, scope="quiz-admin")
     """Admin Token verification for managing quizzes from frontend."""
     if not ADMIN_API_TOKEN:
         logger.critical("ADMIN_API_TOKEN is not configured on server!")
@@ -232,7 +235,8 @@ def evaluate_exam_window(current_dt: Optional[datetime] = None) -> TimingStatus:
     "/available",
     summary="Get all available live tests for student selection cards"
 )
-def get_available_quizzes():
+def get_available_quizzes(request: Request):
+    enforce_rate_limit(request, limit=60, window_seconds=60, scope="quiz-read")
     supabase = get_db()
     if not supabase:
         raise HTTPException(status_code=503, detail="Database unavailable")
@@ -258,9 +262,11 @@ def get_available_quizzes():
     summary="Fetch chosen test or latest active fallback with zero random jumping"
 )
 def get_today_quiz(
+    request: Request,
     quiz_id: Optional[str] = Query(None, description="Direct Quiz UUID selected by student"),
     subject: Optional[str] = Query(None, description="Exam ID (e.g. bseb_10_110, bihar_police_constable)")
 ):
+    enforce_rate_limit(request, limit=60, window_seconds=60, scope="quiz-read")
     timing = evaluate_exam_window()
     supabase = get_db()
     if not supabase:
@@ -392,6 +398,7 @@ def get_today_quiz(
     summary="Evaluate candidate submissions with 6 attempts/day limit"
 )
 def submit_quiz_answers(sub: SubmitAnswersRequest, request: Request):
+    enforce_rate_limit(request, limit=10, window_seconds=60, scope="quiz-submit")
     supabase = get_db()
     if not supabase:
         raise HTTPException(status_code=503, detail="Database service temporarily unavailable")
