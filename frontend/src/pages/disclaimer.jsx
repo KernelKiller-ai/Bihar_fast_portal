@@ -1,75 +1,63 @@
-import { AlertOctagon, ShieldAlert } from "lucide-react";
+import { AlertOctagon, CheckCircle2, FileWarning, Mail, ShieldAlert } from "lucide-react";
 import { Link } from "react-router-dom";
 
 export default function Disclaimer() {
   return (
-    <div className="max-w-4xl mx-auto px-4 py-10">
-      <div className="bg-white rounded-3xl p-6 sm:p-10 border border-slate-200 shadow-xs space-y-6">
-        <div>
+    <main className="max-w-4xl mx-auto px-4 py-10">
+      <div className="bg-white rounded-3xl p-6 sm:p-10 border border-slate-200 shadow-xs space-y-8">
+        <header>
           <span className="text-xs font-bold uppercase tracking-wider text-rose-700 bg-rose-50 px-2.5 py-1 rounded-md border border-rose-200">
-            कानूनी सुरक्षा घोषणा (Legal Safeguard)
+            Legal Disclaimer &amp; Public Notice
           </span>
-          <h1 className="text-2xl sm:text-3xl font-black text-slate-900 mt-2">
-            पूर्ण अस्वीकरण (Comprehensive Legal Disclaimer)
-          </h1>
-          <p className="text-slate-500 text-xs mt-1">अंतिम अद्यतन: 2026</p>
-        </div>
+          <h1 className="text-2xl sm:text-3xl font-black text-slate-900 mt-3">BiharFast Disclaimer</h1>
+          <p className="text-slate-500 text-xs mt-1">Last updated: September 2026</p>
+        </header>
 
-        <div className="bg-rose-50 border-2 border-rose-200 rounded-2xl p-5 flex items-start gap-3">
-          <AlertOctagon className="text-rose-600 shrink-0 mt-0.5" size={22} />
-          <div className="text-xs text-rose-950 space-y-1.5 leading-relaxed">
-            <strong className="block text-sm font-black text-rose-800">
-              गैर-सरकारी मंच की स्पष्ट घोषणा (Strict Non-Affiliation Declaration):
-            </strong>
-            <p>
-              <strong>BiharFast.in</strong> एक पूर्णतः स्वतंत्र, निजी एवं गैर-सरकारी (Non-Governmental) सूचना पोर्टल है। इस पोर्टल का बिहार सरकार, केंद्र सरकार, किसी भी मंत्रालय, भर्ती आयोग (यथा BPSC, CSBC, BPSSC, BSSC, BTSC आदि), अथवा किसी सरकारी उपक्रम से कोई सीधा या परोक्ष संबंध, आधिकारिक अनुबंध अथवा संबद्धता नहीं है।
-            </p>
+        <section className="bg-rose-50 border-2 border-rose-300 rounded-2xl p-5 sm:p-6 flex items-start gap-3" aria-labelledby="non-government-heading">
+          <AlertOctagon className="text-rose-700 shrink-0 mt-0.5" size={24} />
+          <div className="text-sm text-rose-950 space-y-3 leading-relaxed">
+            <h2 id="non-government-heading" className="text-base sm:text-lg font-black text-rose-900">Strict Non-Government Declaration</h2>
+            <p className="font-black">BiharFast is an independent private informational portal. It is NOT affiliated with, authorized by, or associated with any central or state government body (such as BPSC, BSSC, CSBC, SSC, UPSC, RRB).</p>
+            <p>We do not claim to be a government entity and do not represent any government official, department, commission, board, ministry, or recruitment authority. Government names, logos, notices, and links are referenced only to help users locate public information.</p>
           </div>
-        </div>
+        </section>
 
-        <div className="space-y-5 text-xs sm:text-sm text-slate-700 leading-relaxed">
-          <section className="space-y-2">
-            <h2 className="text-base font-bold text-slate-900">1. केवल शैक्षणिक एवं सूचनात्मक उद्देश्य (Purely Informational Purpose)</h2>
-            <p>
-              इस पोर्टल पर प्रकाशित सभी रोजगार समाचार, परीक्षा कार्यक्रम, परिणाम, पाठ्यक्रम तथा सरकारी योजनाओं के विवरण केवल जन-जागरूकता एवं शैक्षणिक सुविधा हेतु संकलित किए जाते हैं। यद्यपि हम अधिकृत सरकारी परिपत्रों के आधार पर सटीक जानकारी प्रस्तुत करने का हरसंभव प्रयास करते हैं, तथापि मानवीय भूल, मुद्रण दोष अथवा संबंधित विभाग द्वारा अंतिम समय में किए गए परिवर्तनों के लिए BiharFast.in अथवा इसके संचालक किसी भी रूप में विधिक रूप से उत्तरदायी नहीं होंगे।
-            </p>
+        <div className="space-y-7 text-xs sm:text-sm text-slate-700 leading-relaxed">
+          <section className="space-y-2" aria-labelledby="source-heading">
+            <div className="flex items-center gap-2"><CheckCircle2 size={18} className="text-emerald-600" /><h2 id="source-heading" className="text-base font-bold text-slate-900">Source Attribution and Information Purpose</h2></div>
+            <p>All notifications, results, admit cards, and recruitment notices published on BiharFast are sourced strictly from publicly accessible official government websites, official portals, and public press releases. We reproduce or summarize this information for convenience, awareness, and educational purposes only.</p>
+            <p className="font-bold text-slate-900">Users MUST always verify every date, eligibility condition, fee, vacancy, result, and instruction directly from the relevant official gazette or government portal before applying, paying a fee, travelling, or taking any other action.</p>
           </section>
 
-          <section className="space-y-2">
-            <h2 className="text-base font-bold text-slate-900">2. अभ्यर्थियों के लिए अनिवार्य सत्यापन दायित्व (Mandatory Verification Obligation)</h2>
-            <p>
-              किसी भी भर्ती परीक्षा अथवा योजना में ऑनलाइन/ऑफलाइन आवेदन पत्र प्रस्तुत करने अथवा परीक्षा शुल्क जमा करने से पूर्व उम्मीदवार संबंधित आयोग या विभाग की मूल आधिकारिक वेबसाइट पर जाकर जारी मूल विज्ञापन (PDF) का स्वयं मिलान एवं सत्यापन करने हेतु 100% बाध्य हैं। आधिकारिक अधिसूचना में वर्णित नियम, शर्तें, तिथियां और पात्रता ही अंतिम एवं विधिक रूप से मान्य होंगी।
-            </p>
+          <section className="space-y-2" aria-labelledby="fraud-heading">
+            <div className="flex items-center gap-2"><ShieldAlert size={18} className="text-amber-600" /><h2 id="fraud-heading" className="text-base font-bold text-slate-900">No Employment Fee and Anti-Fraud Warning</h2></div>
+            <p>BiharFast never charges money, fees, commissions, donations, or processing charges for providing job information, application forms, admit cards, hall tickets, results, or links to public services. BiharFast does not guarantee selection, appointment, examination results, or employment.</p>
+            <p className="font-bold text-amber-900 bg-amber-50 border border-amber-200 rounded-xl p-3">Beware of fraudsters who use the BiharFast name, logo, or links to request money, OTPs, passwords, bank details, or personal documents. Do not pay anyone claiming to represent BiharFast. Report suspicious activity to the relevant authorities and contact us at support@biharfast.in.</p>
           </section>
 
-          <section className="space-y-2">
-            <h2 className="text-base font-bold text-slate-900">3. शून्य वित्तीय दायित्व एवं बिचौलिया रहित नीति (Zero Financial Liability)</h2>
-            <p>
-              BiharFast.in किसी भी अभ्यर्थी से किसी भी भर्ती, प्रवेश पत्र, रिजल्ट अथवा सेवा के एवज में कोई शुल्क, डोनेशन अथवा गुप्त राशि नहीं मांगता। समस्त ऑनलाइन आवेदन शुल्क का भुगतान सीधे संबंधित आयोग/विभाग के आधिकारिक बैंक पेमेंट गेटवे पर ही किया जाना चाहिए। किसी भी अनधिकृत लिंक, साइबर धोखाधड़ी, वित्तीय हानि, फॉर्म रिजेक्शन या बैंक ट्रांजैक्शन विफलता के लिए हमारा पोर्टल उत्तरदायी नहीं होगा।
-            </p>
+          <section className="space-y-2" aria-labelledby="liability-heading">
+            <div className="flex items-center gap-2"><FileWarning size={18} className="text-slate-500" /><h2 id="liability-heading" className="text-base font-bold text-slate-900">Limitation of Liability and Updates</h2></div>
+            <p>BiharFast is not legally or financially liable for unintentional typographical errors, omissions, incomplete information, delayed updates, broken external links, server interruptions, application errors, payment issues, or sudden changes to examination dates, eligibility, vacancies, or procedures made by recruitment boards or government authorities.</p>
+            <p>Official departments and recruitment boards may revise, postpone, cancel, or replace notices without prior warning. The latest official notification and gazette always take precedence over any information displayed on BiharFast.</p>
           </section>
 
-          <section className="space-y-2">
-            <h2 className="text-base font-bold text-slate-900">4. बाह्य हाइपरलिंक्स पर अस्वीकरण (Third-Party External Links)</h2>
-            <p>
-              हमारे पोर्टल पर दिए गए अधिकांश लिंक्स उपयोगकर्ताओं की सुविधा हेतु अधिकृत सरकारी सर्वर (जैसे .gov.in, .nic.in) से सीधे जोड़े गए हैं। एक बार जब उपयोगकर्ता हमारे पोर्टल से रीडायरेक्ट होकर बाहरी वेबसाइट पर प्रवेश करता है, तो उस सर्वर की उपलब्धता, सुरक्षा, कुकी नीतियों अथवा सामग्री के लिए हमारी कोई जिम्मेदारी नहीं होती।
-            </p>
+          <section className="space-y-2" aria-labelledby="external-heading">
+            <h2 id="external-heading" className="text-base font-bold text-slate-900">External Links and User Responsibility</h2>
+            <p>BiharFast links to external government and third-party websites for user convenience. We do not control or endorse the availability, security, privacy practices, content, or terms of those websites. Users are responsible for checking the address bar and submitting information only on the official portal they intend to use.</p>
           </section>
 
-          <section className="p-4 rounded-xl bg-slate-50 border border-slate-200 flex items-start gap-2.5 text-xs text-slate-600">
-            <ShieldAlert size={18} className="shrink-0 text-slate-500 mt-0.5" />
-            <p>
-              <strong>विधिक अधिकार क्षेत्र:</strong> BiharFast.in के उपयोग से उत्पन्न होने वाले किसी भी विवाद, दावे अथवा विधिक संदर्भ का निपटारा केवल भारत गणराज्य के विधायी नियमों तथा बिहार राज्य के क्षेत्राधिकार वाले न्यायालयों के अधीन ही विचारणीय होगा।
-            </p>
+          <section className="bg-slate-50 border border-slate-200 rounded-2xl p-5 space-y-2" aria-labelledby="grievance-heading">
+            <div className="flex items-center gap-2"><Mail size={18} className="text-[#0B4F8A]" /><h2 id="grievance-heading" className="text-base font-bold text-slate-900">Content Takedown and Grievance Redressal</h2></div>
+            <p>If any government authority, organization, copyright owner, or user identifies a factual discrepancy, outdated notice, unauthorized use of copyrighted material, or other concern, please contact us for immediate review and grievance redressal.</p>
+            <a href="mailto:support@biharfast.in" className="inline-flex items-center gap-2 text-sm font-black text-blue-700 hover:underline"><Mail size={15} /> support@biharfast.in</a>
           </section>
         </div>
 
-        <div className="pt-2">
-          <Link to="/" className="text-xs font-bold text-blue-600 hover:underline">
-            ← मुख्य पृष्ठ पर लौटें
-          </Link>
+        <div className="pt-2 border-t border-slate-100 flex flex-wrap items-center justify-between gap-3">
+          <Link to="/" className="text-xs font-bold text-blue-600 hover:underline">← Main page</Link>
+          <div className="flex items-center gap-3 text-xs font-bold"><Link to="/privacy" className="text-blue-600 hover:underline">Privacy Policy</Link><Link to="/contact" className="text-blue-600 hover:underline">Contact Us</Link></div>
         </div>
       </div>
-    </div>
+    </main>
   );
 }
