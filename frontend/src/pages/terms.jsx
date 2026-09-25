@@ -2,69 +2,73 @@ import { Link } from "react-router-dom";
 
 export default function Terms() {
   return (
-    <div className="max-w-4xl mx-auto px-4 py-10">
+    <main className="max-w-4xl mx-auto px-4 py-10">
       <div className="bg-white rounded-3xl p-6 sm:p-10 border border-slate-200 shadow-xs space-y-6">
-        <div>
+        <header>
           <span className="text-xs font-bold uppercase tracking-wider text-slate-700 bg-slate-100 px-2.5 py-1 rounded-md">
-            विधिक अनुबंध
+            Legal Agreement
           </span>
-          <h1 className="text-2xl sm:text-3xl font-black text-slate-900 mt-2">
-            नियम एवं शर्तें (Terms & Conditions of Use)
-          </h1>
-          <p className="text-slate-500 text-xs mt-1">अंतिम अद्यतन: 2026</p>
-        </div>
+          <h1 className="text-2xl sm:text-3xl font-black text-slate-900 mt-3">Terms &amp; Conditions of Use</h1>
+          <p className="text-slate-500 text-xs mt-1">Last updated: September 2026</p>
+          <p className="text-sm text-slate-600 leading-relaxed mt-4">These Terms govern your use of BiharFast, an independent informational and career guidance platform. By visiting or using this portal, you confirm that you have read, understood, and completely agreed to these Terms. If you do not agree, stop using the portal.</p>
+        </header>
 
-        <div className="space-y-5 text-xs sm:text-sm text-slate-700 leading-relaxed">
+        <div className="space-y-7 text-xs sm:text-sm text-slate-700 leading-relaxed">
           <section className="space-y-2">
-            <h2 className="text-base font-bold text-slate-900">1. सेवा की स्वीकृति (Binding Acceptance)</h2>
-            <p>
-              BiharFast.in वेबसाइट अथवा इसके किसी भी टूल, डेटा या सूचना का उपयोग करके आप बिना किसी शर्त इन नियमों एवं शर्तों से पूर्णतः आबद्ध होने की स्वीकृति प्रदान करते हैं। यदि आप इन शर्तों के किसी भी भाग से असहमत हैं, तो आपको इस पोर्टल का उपयोग तत्काल बंद कर देना चाहिए।
-            </p>
+            <h2 className="text-base font-bold text-slate-900">1. Nature of Service and Educational Purpose</h2>
+            <p>BiharFast provides public-information summaries, career guidance, job and examination updates, links to public services, and educational tools. It is an independent private platform, not a government entity, recruitment agency, placement service, examination board, or authorized representative of any department.</p>
+            <p>Information is provided for general education and convenience. Using this portal, its content, tools, links, or Android app constitutes complete agreement to these Terms and the applicable <Link to="/privacy" className="text-blue-700 underline">Privacy Policy</Link> and <Link to="/disclaimer" className="text-blue-700 underline">Disclaimer</Link>.</p>
           </section>
 
           <section className="space-y-2">
-            <h2 className="text-base font-bold text-slate-900">2. मध्यस्थ संरक्षण (Protection Under Information Technology Act)</h2>
-            <p>
-              BiharFast.in भारतीय सूचना प्रौद्योगिकी अधिनियम, 2000 (Information Technology Act, 2000) एवं इसके अंतर्गत संशोधित मध्यस्थ दिशा-निर्देशों (Intermediary Guidelines) के तहत एक तटस्थ सूचना मंच (Neutral Information Facilitator) के रूप में कार्य करता है। सार्वजनिक स्रोतों द्वारा प्रसारित विज्ञप्तियों, परिपत्रों या परिणाम तालिकाओं की अंतर्वस्तु के लिए पोर्टल धारा 79 के प्रावधानों के अंतर्गत सुरक्षित है।
-            </p>
+            <h2 className="text-base font-bold text-slate-900">2. Intellectual Property and Fair Use of Government Information</h2>
+            <p>BiharFast owns or has permission to use its platform UI, visual design, codebase, logo, original articles, editorial structure, and original tools. These materials may not be copied, republished, sold, mirrored, or commercially reused without prior written permission.</p>
+            <p>Government logos, department names including BSSC, BPSC, CSBC, SSC, UPSC, and RRB, public examination circulars, notices, results, and other official information remain the property or responsibility of their respective departments and authorities. BiharFast references them strictly for fair-use citizen education, identification, commentary, and informational accessibility. Such references do not imply endorsement, authorization, affiliation, or ownership by BiharFast.</p>
           </section>
 
           <section className="space-y-2">
-            <h2 className="text-base font-bold text-slate-900">3. बौद्धिक संपदा एवं सामग्री का उपयोग (Intellectual Property & Fair Use)</h2>
+            <h2 className="text-base font-bold text-slate-900">3. Prohibited User Activities</h2>
+            <p>Unless BiharFast gives prior written permission, you must not:</p>
             <ul className="list-disc list-inside space-y-1.5 pl-1">
-              <li>
-                BiharFast का मूल लोगो, वेबसाइट का सोर्स कोड, UI आर्किटेक्चर, आर्टिकल संरचना तथा इन-हाउस क्लाइंट-साइड टूल्स (Age Calculator, Photo Resizer) हमारी निजी बौद्धिक संपदा हैं।
-              </li>
-              <li>
-                किसी भी तृतीय पक्ष द्वारा बिना पूर्व लिखित अनुमति के इस मंच से थोक डेटा स्क्रैपिंग (Bulk Web Scraping), ऑटोमेटेड डेटा माइनिंग, अथवा व्यावसायिक पुनर्प्रकाशन करना पूर्णतः निषिद्ध एवं कॉपीराइट उल्लंघन माना जाएगा।
-              </li>
-              <li>
-                सभी सरकारी ट्रेडमार्क, लोगो, और आधिकारिक परिपत्र उनके संबंधित विभागों एवं स्वायत्त निकायों की संपत्ति हैं, जिन्हें यहाँ केवल पहचान एवं विधिक संदर्भ हेतु प्रदर्शित किया गया है।
-              </li>
+              <li>perform web scraping, automated crawling, data mining, bulk extraction, or commercial republication;</li>
+              <li>launch, assist, or distribute a DDoS attack, malicious traffic, malware, or any activity that disrupts the service;</li>
+              <li>reverse engineer, decompile, modify, or attempt to derive the source code of the website or app;</li>
+              <li>bypass authentication, rate limits, access controls, security mechanisms, or technical restrictions; or</li>
+              <li>misrepresent BiharFast, impersonate its team, misuse its branding, or use the portal for fraud or unlawful activity.</li>
             </ul>
           </section>
 
           <section className="space-y-2">
-            <h2 className="text-base font-bold text-slate-900">4. पोर्टल की उपलब्धता एवं तकनीकी त्रुटियां (Availability & Downtime)</h2>
-            <p>
-              हम सर्वर की 24/7 निर्बाध उपलब्धता सुनिश्चित करने का प्रयास करते हैं, किंतु इंटरनेट कनेक्टिविटी में व्यवधान, थर्ड-पार्टी होस्टिंग प्रदाता की खराबी, अथवा नियमित सर्वर रखरखाव के कारण पोर्टल अस्थायी रूप से अनुपलब्ध हो सकता है। ऐसी स्थिति में हुई किसी भी असुविधा या समय-सीमा चूक के लिए पोर्टल पर कोई विधिक क्षतिपूर्ति दावा मान्य नहीं होगा।
-            </p>
+            <h2 className="text-base font-bold text-slate-900">4. Disclaimer of Warranties and No Employment Guarantee</h2>
+            <p>All notices, dates, eligibility information, vacancy figures, admit-card details, results, and syllabus information are provided “as-is” and may contain errors, omissions, delays, or outdated information. BiharFast does not guarantee accuracy, completeness, availability, uninterrupted access, examination selection, job placement, appointment, or employment.</p>
+            <p>BiharFast is NOT a recruitment agency. Users are legally responsible for verifying every original notification, gazette, deadline, fee, and eligibility requirement directly from the relevant official department portal before applying or paying any fee. The official notification always prevails.</p>
           </section>
 
           <section className="space-y-2">
-            <h2 className="text-base font-bold text-slate-900">5. शर्तों में संशोधन का अधिकार (Right to Modify)</h2>
-            <p>
-              BiharFast.in के पास बिना किसी पूर्व सूचना के इन नियमों एवं शर्तों को अद्यतन अथवा संशोधित करने का अनन्य अधिकार सुरक्षित है। उपयोगकर्ताओं को सलाह दी जाती है कि वे समय-समय पर इस पृष्ठ का पुनरावलोकन करते रहें।
-            </p>
+            <h2 className="text-base font-bold text-slate-900">5. External Links and Third-Party Actions</h2>
+            <p>Links to third-party government application portals and services are provided for user convenience. Once you leave BiharFast, the external website controls its own content, privacy policy, security, application processing, payments, availability, and terms.</p>
+            <p>BiharFast bears no liability for technical failures, rejected applications, missed deadlines, payment losses, fraudulent transactions, data submitted to external portals, or any other action or loss arising from a third-party website.</p>
+          </section>
+
+          <section className="space-y-2">
+            <h2 className="text-base font-bold text-slate-900">6. Availability, Changes, and Termination</h2>
+            <p>We may suspend, modify, remove, or update any feature, page, notice, link, or service without notice. We may restrict access where we reasonably suspect abuse, security violations, unlawful conduct, or a breach of these Terms. We may also update these Terms; continued use after an update means you accept the revised Terms.</p>
+          </section>
+
+          <section className="space-y-2 bg-slate-50 border border-slate-200 rounded-2xl p-5">
+            <h2 className="text-base font-bold text-slate-900">7. Governing Law and Dispute Resolution</h2>
+            <p>These Terms are governed strictly by the laws of India. Any dispute, claim, or proceeding connected with BiharFast or these Terms will be subject to the exclusive jurisdiction of the competent courts in Bihar, India.</p>
           </section>
         </div>
 
-        <div className="pt-2">
-          <Link to="/" className="text-xs font-bold text-blue-600 hover:underline">
-            ← मुख्य पृष्ठ पर लौटें
-          </Link>
+        <div className="pt-2 border-t border-slate-100 flex flex-wrap items-center justify-between gap-3">
+          <Link to="/" className="text-xs font-bold text-blue-600 hover:underline">← Main page</Link>
+          <div className="flex items-center gap-3 text-xs font-bold">
+            <Link to="/privacy" className="text-blue-600 hover:underline">Privacy Policy</Link>
+            <Link to="/contact" className="text-blue-600 hover:underline">Contact Us</Link>
+          </div>
         </div>
       </div>
-    </div>
+    </main>
   );
 }
