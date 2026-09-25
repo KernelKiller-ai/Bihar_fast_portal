@@ -6,6 +6,7 @@ import ImageResizer from "./components/ImageResizer";
 import AgeCalculator from "./components/AgeCalculator";
 import Footer from "./components/Footer";
 import { generateSlug } from "./utils/slug";
+import SiteMapPage from "./pages/SiteMapPage";
 
 // Icons
 import { 
@@ -754,6 +755,11 @@ export default function App() {
             />
 
             <Route path="/post/:slug" element={<PostDetail notices={portalItems} />} />
+            <Route path="/sitemap" element={<SiteMapPage notices={portalItems} />} />
+            <Route path="/all-updates" element={<SiteMapPage notices={portalItems} />} />
+            <Route path="/jobs" element={<SiteMapPage notices={portalItems} category="jobs" />} />
+            <Route path="/admit-card" element={<SiteMapPage notices={portalItems} category="admit_card" />} />
+            <Route path="/results" element={<SiteMapPage notices={portalItems} category="results" />} />
             
             {/* Policy & Compliance Dual Routing */}
             <Route path="/about" element={<About />} />

@@ -12,11 +12,8 @@ import {
   GraduationCap, 
   Wrench, 
   Bell, 
-  Info, 
   FileText, 
-  HelpCircle, 
   Mail, 
-  MessageSquareQuote, 
   Folder, 
   FolderOpen,
   ArrowRight,
@@ -257,45 +254,65 @@ export default function Footer({ onOpenTool }) {
             </ul>
           </div>
 
-          {/* Column 3: Helpful Links (Span 2) */}
+          {/* Column 3: Quick Links & Archives (Span 2) */}
           <div className="lg:col-span-2">
             <h4 className="text-slate-900 font-extrabold text-[13px] tracking-tight mb-3 border-b-2 border-slate-900 pb-1 inline-block">
-              Helpful Links
+              Quick Links &amp; Archives
             </h4>
             <ul className="space-y-2.5 text-xs text-slate-600 font-medium">
               <li>
-                <Link to="/about" className="hover:text-blue-700 flex items-center gap-2 transition">
-                  <Info size={13} className="text-slate-400" /> About Us
+                <Link to="/sitemap" className="hover:text-blue-700 flex items-center gap-2 transition">
+                  <FolderOpen size={13} className="text-blue-600" /> All Updates &amp; Archive
                 </Link>
               </li>
               <li>
-                <Link to="/privacy-policy" className="hover:text-blue-700 flex items-center gap-2 transition">
-                  <FileText size={13} className="text-slate-400" /> Privacy Policy
+                <Link to="/jobs" className="hover:text-blue-700 flex items-center gap-2 transition">
+                  <Briefcase size={13} className="text-slate-400" /> Government Jobs
                 </Link>
               </li>
               <li>
-                <Link to="/terms" className="hover:text-blue-700 flex items-center gap-2 transition">
-                  <ShieldCheck size={13} className="text-slate-400" /> Terms & Conditions
+                <Link to="/admit-card" className="hover:text-blue-700 flex items-center gap-2 transition">
+                  <FileText size={13} className="text-slate-400" /> Admit Cards
                 </Link>
               </li>
               <li>
-                <Link to="/disclaimer" className="hover:text-blue-700 flex items-center gap-2 transition">
-                  <HelpCircle size={13} className="text-slate-400" /> FAQs
+                <Link to="/results" className="hover:text-blue-700 flex items-center gap-2 transition">
+                  <FileText size={13} className="text-slate-400" /> Results
                 </Link>
               </li>
               <li>
-                <Link to="/contact" className="hover:text-blue-700 flex items-center gap-2 transition">
-                  <Mail size={13} className="text-slate-400" /> Contact Us
+                <Link to="/bseb-matric-10th" className="hover:text-blue-700 flex items-center gap-2 transition">
+                  <Folder size={13} className="text-slate-400" /> BSEB Matric Hub
                 </Link>
               </li>
               <li>
-                <Link to="/contact" className="hover:text-blue-700 flex items-center gap-2 transition">
-                  <MessageSquareQuote size={13} className="text-slate-400" /> Give Feedback
+                <Link to="/bseb-inter-12th" className="hover:text-blue-700 flex items-center gap-2 transition">
+                  <Folder size={13} className="text-slate-400" /> BSEB Inter Hub
                 </Link>
               </li>
               <li>
-                <Link to="/" className="hover:text-blue-700 flex items-center gap-2 transition">
-                  <Globe size={13} className="text-slate-400" /> Sitemap
+                <Link to="/rtps-bihar" className="hover:text-blue-700 flex items-center gap-2 transition">
+                  <Folder size={13} className="text-slate-400" /> RTPS Bihar Hub
+                </Link>
+              </li>
+              <li>
+                <Link to="/udyami-yojana" className="hover:text-blue-700 flex items-center gap-2 transition">
+                  <Folder size={13} className="text-slate-400" /> Udyami Yojana Hub
+                </Link>
+              </li>
+              <li>
+                <Link to="/kyp-bihar" className="hover:text-blue-700 flex items-center gap-2 transition">
+                  <Folder size={13} className="text-slate-400" /> KYP Bihar Hub
+                </Link>
+              </li>
+              <li>
+                <Link to="/student-credit-card" className="hover:text-blue-700 flex items-center gap-2 transition">
+                  <Folder size={13} className="text-slate-400" /> Student Credit Card Hub
+                </Link>
+              </li>
+              <li>
+                <Link to="/cuet-ug-admission" className="hover:text-blue-700 flex items-center gap-2 transition">
+                  <Folder size={13} className="text-slate-400" /> CUET UG Hub
                 </Link>
               </li>
             </ul>

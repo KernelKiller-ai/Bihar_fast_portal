@@ -248,19 +248,25 @@ export default function PostDetail({ notices = [] }) {
     h.match.some((keyword) => slugLower.includes(keyword) || titleLower.includes(keyword))
   );
 
+  const getNoticeSlug = (notice) => notice.slug || generateSlug(notice);
+  const currentNoticeSlug = post.slug || slug;
   const relatedNotices = notices
     .filter((n) => {
-      const nSlug = n.slug || generateSlug(n);
-      const isDifferent = nSlug !== slug && String(n.id) !== String(post.id);
+      const nSlug = getNoticeSlug(n);
+      const isDifferent = nSlug !== currentNoticeSlug && String(n.id) !== String(post.id);
       const isSimilar = (n.category && n.category.toLowerCase() === category) || 
                         (n.department && n.department.toUpperCase() === post.department?.toUpperCase());
       return isDifferent && isSimilar;
-    })
-    .slice(0, 4);
+    });
 
-  const displayRelated = relatedNotices.length > 0 
-    ? relatedNotices 
-    : notices.filter((n) => (n.slug || generateSlug(n)) !== slug).slice(0, 4);
+  const latestNotices = notices.filter((notice) => {
+    const noticeSlug = getNoticeSlug(notice);
+    return noticeSlug !== currentNoticeSlug && String(notice.id) !== String(post.id);
+  });
+
+  const displayRelated = [...relatedNotices, ...latestNotices]
+    .filter((notice, index, collection) => getNoticeSlug(notice) && collection.findIndex((item) => getNoticeSlug(item) === getNoticeSlug(notice)) === index)
+    .slice(0, 4);
 
   const renderActiveLayout = () => {
     const layoutProps = { post, hideTopShare: true };
@@ -445,7 +451,7 @@ export default function PostDetail({ notices = [] }) {
       </section>
 
       {/* 5. Semantic Related Circulars Section */}
-      {displayRelated.length > 0 && (
+      {(
         <section className="mt-8 border-t border-slate-200 pt-6 pb-12">
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-base sm:text-lg font-black text-slate-900 flex items-center gap-2">
