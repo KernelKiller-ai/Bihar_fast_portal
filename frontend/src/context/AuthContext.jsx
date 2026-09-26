@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { isSupabaseConfigured, supabase } from "../api/supabase";
-import { AuthContext } from "./authContext";
+export { useAuth } from './authContext';
 import { attachPendingStudentAttempt } from "../utils/studentHistory";
 
 export function AuthProvider({ children }) {
