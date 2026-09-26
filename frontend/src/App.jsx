@@ -3,6 +3,7 @@ import { Routes, Route, Link } from "react-router-dom";
 import Navbar from "./components/Navbar";
 import DownloadAppBanner from "./components/DownloadAppBanner";
 import NotificationCard from "./components/NotificationCard";
+import LoginModal from "./components/LoginModal";
 import ScrollToTop from "./components/ScrollToTop";
 import ImageResizer from "./components/ImageResizer";
 import AgeCalculator from "./components/AgeCalculator";
@@ -31,6 +32,7 @@ const StudentCreditCard = lazy(() => import("./pages/StudentCreditCard"));
 const MockTestPage = lazy(() => import("./pages/MockTestPage"));
 const Upcoming2026 = lazy(() => import("./pages/upcoming"));
 const DownloadApp = lazy(() => import("./pages/DownloadApp"));
+const StudentDashboard = lazy(() => import("./pages/StudentDashboard"));
 
 // Policy Pages (Lazy Loaded)
 const About = lazy(() => import("./pages/about"));
@@ -182,6 +184,7 @@ export default function App() {
   return (
     <div className="min-h-screen bg-slate-100/90 text-slate-800 font-sans antialiased flex flex-col justify-between">
       <ScrollToTop />
+      <LoginModal />
       <div>
         <Navbar />
         <DownloadAppBanner />
@@ -797,6 +800,7 @@ export default function App() {
             
             <Route path="/upcoming-2026" element={<Upcoming2026 />} />
             <Route path="/download" element={<DownloadApp />} />
+            <Route path="/dashboard" element={<StudentDashboard />} />
           </Routes>
         </Suspense>
       </div>

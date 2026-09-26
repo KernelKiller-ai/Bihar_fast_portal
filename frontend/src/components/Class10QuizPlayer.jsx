@@ -14,6 +14,8 @@ import {
   Send
 } from "lucide-react";
 import Leaderboard from "./Leaderboard";
+import { useAuth } from "../context/authContext";
+import { savePendingStudentAttempt, saveStudentAttempt } from "../utils/studentHistory";
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "https://bihar-fast-portal.onrender.com";
 
@@ -30,6 +32,7 @@ const BIHAR_DISTRICTS = [
 ];
 
 export default function Class10QuizPlayer({ examId = "class_10", quizId = null }) {
+  const { user, openLoginModal } = useAuth();
   const studentNameId = useId();
   const districtId = useId();
   const phoneId = useId();
@@ -52,9 +55,13 @@ export default function Class10QuizPlayer({ examId = "class_10", quizId = null }
   const [timeExpired, setTimeExpired] = useState(false);
   const [submitError, setSubmitError] = useState("");
   const [attemptDate, setAttemptDate] = useState(null);
+  const [demoMode, setDemoMode] = useState(false);
   const submissionLockRef = useRef(false);
   const submitRef = useRef(null);
   const remainingTimeRef = useRef(0);
+  const startedAtRef = useRef(null);
+  const activeQuestions = demoMode ? questions.slice(0, 5) : questions;
+  const profileName = user?.user_metadata?.full_name || user?.user_metadata?.name || user?.email?.split("@")[0] || "";
 
   useEffect(() => {
     document.title = "Bihar Board Class 10 Free Mock Test & Quiz | BiharFast";
@@ -121,10 +128,28 @@ export default function Class10QuizPlayer({ examId = "class_10", quizId = null }
     };
   }, [examId, quizId]);
 
+  const startTest = (isDemo) => {
+    if (!isDemo && !user) {
+      openLoginModal();
+      return;
+    }
+    setDemoMode(isDemo);
+    setAnswers({});
+    setResult(null);
+    setTimeExpired(false);
+    setSubmitError("");
+    const configuredDuration = (quizMeta.duration_minutes || 15) * 60;
+    const duration = isDemo ? Math.min(configuredDuration, 5 * 60) : configuredDuration;
+    remainingTimeRef.current = duration;
+    setTimeLeft(duration);
+    startedAtRef.current = Date.now();
+    setStep("playing");
+  };
+
   // Submit Handler
   const handleSubmit = useCallback(async (automatic = false) => {
     if (submissionLockRef.current || !quizMeta) return;
-    const unansweredCount = questions.length - Object.keys(answers).length;
+    const unansweredCount = activeQuestions.length - Object.keys(answers).length;
     if (!automatic && unansweredCount > 0 && !window.confirm(`आपने ${unansweredCount} प्रश्नों के उत्तर नहीं दिए हैं। क्या आप अभी टेस्ट सबमिट करना चाहते हैं?`)) {
       return;
     }
@@ -137,9 +162,10 @@ export default function Class10QuizPlayer({ examId = "class_10", quizId = null }
       const payload = {
         quiz_id: quizMeta.id,
         answers: answers,
-        student_name: student.name.trim() || "छात्र",
+        student_name: student.name.trim() || profileName || "छात्र",
         district: student.district || "बिहार",
-        phone: student.phone.trim() || null
+        phone: student.phone.trim() || null,
+        demo_mode: demoMode
       };
 
       const res = await fetch(`${API_BASE_URL}/api/quiz/submit`, {
@@ -155,7 +181,22 @@ export default function Class10QuizPlayer({ examId = "class_10", quizId = null }
       }
       const resultJson = await res.json();
       setResult(resultJson);
-      setAttemptDate(new Date());
+      const completedAt = new Date();
+      setAttemptDate(completedAt);
+      if (!demoMode && user) {
+        saveStudentAttempt(user.id, {
+          id: `${quizMeta.id}-${completedAt.getTime()}`,
+          quiz_id: quizMeta.id,
+          title: quizMeta.title,
+          subject: quizMeta.subject,
+          attempted_at: completedAt.toISOString(),
+          score: resultJson.score,
+          total_questions: resultJson.total_questions,
+          accuracy_percentage: resultJson.accuracy_percentage,
+          practice_seconds: startedAtRef.current ? Math.max(0, Math.round((completedAt.getTime() - startedAtRef.current) / 1000)) : 0,
+          results: resultJson.results,
+        });
+      }
       setStep("result");
     } catch (err) {
       setSubmitError(err.status === 429
@@ -166,7 +207,7 @@ export default function Class10QuizPlayer({ examId = "class_10", quizId = null }
       submissionLockRef.current = false;
       setSubmitting(false);
     }
-  }, [quizMeta, questions.length, answers, student]);
+  }, [quizMeta, activeQuestions.length, answers, student, profileName, demoMode, user]);
 
   useEffect(() => {
     submitRef.current = handleSubmit;
@@ -235,6 +276,28 @@ export default function Class10QuizPlayer({ examId = "class_10", quizId = null }
     return { label: "अभ्यास जारी रखें / Keep Practicing", className: "bg-orange-100 text-orange-900 border-orange-300" };
   };
 
+  const saveDemoResult = () => {
+    if (!result || !demoMode) return;
+    const completedAt = attemptDate || new Date();
+    const attempt = {
+      id: `${quizMeta.id}-${completedAt.getTime()}`,
+      quiz_id: quizMeta.id,
+      title: quizMeta.title,
+      subject: quizMeta.subject,
+      attempted_at: completedAt.toISOString(),
+      score: result.score,
+      total_questions: result.total_questions,
+      accuracy_percentage: result.accuracy_percentage,
+      practice_seconds: startedAtRef.current ? Math.max(0, Math.round((completedAt.getTime() - startedAtRef.current) / 1000)) : 0,
+      results: result.results,
+    };
+    if (user) saveStudentAttempt(user.id, attempt);
+    else {
+      savePendingStudentAttempt(attempt);
+      openLoginModal();
+    }
+  };
+
   const formatTimer = (secs) => {
     const m = Math.floor(secs / 60);
     const s = secs % 60;
@@ -268,14 +331,18 @@ export default function Class10QuizPlayer({ examId = "class_10", quizId = null }
           </span>
           <h1 className="text-2xl font-black text-slate-900 mt-3">{quizMeta.title}</h1>
           <p className="text-xs text-slate-500 mt-1">
-            लीडरबोर्ड पर रैंक पाने के लिए अपना नाम और जिला दर्ज करें
+            पूरा टेस्ट और स्कोर इतिहास आपके छात्र लॉगिन के साथ उपलब्ध है
           </p>
         </div>
 
         <form
           onSubmit={(e) => {
             e.preventDefault();
-            if (student.name.trim()) setStep("playing");
+            if (!user) {
+              openLoginModal();
+              return;
+            }
+            if (student.name.trim() || profileName) startTest(false);
           }}
           className="space-y-4 text-xs font-bold"
         >
@@ -286,9 +353,9 @@ export default function Class10QuizPlayer({ examId = "class_10", quizId = null }
             <input
               id={studentNameId}
               type="text"
-              required
+              required={Boolean(user)}
               placeholder="उदा. राहुल कुमार"
-              value={student.name}
+              value={student.name || profileName}
               onChange={(e) => setStudent({ ...student, name: e.target.value })}
               className="w-full px-4 py-3 rounded-xl border border-slate-300 focus:ring-2 focus:ring-blue-600 focus:outline-none text-sm font-semibold"
             />
@@ -328,10 +395,21 @@ export default function Class10QuizPlayer({ examId = "class_10", quizId = null }
             type="submit"
             className="w-full mt-2 py-3.5 bg-linear-to-r from-blue-700 to-indigo-700 hover:from-blue-800 hover:to-indigo-800 text-white font-extrabold rounded-xl shadow-lg transition flex items-center justify-center gap-2 cursor-pointer"
           >
-            <span>टेस्ट शुरू करें ({questions.length} प्रश्न)</span>
+            <span>{user ? `पूरा टेस्ट शुरू करें (${questions.length} प्रश्न)` : "लॉगिन करके पूरा टेस्ट शुरू करें"}</span>
             <ArrowRight size={16} />
           </button>
         </form>
+
+        <div className="mt-4 border-t border-slate-100 pt-4">
+          <button
+            type="button"
+            onClick={() => startTest(true)}
+            className="w-full rounded-xl border border-emerald-300 bg-emerald-50 px-4 py-3 text-sm font-black text-emerald-900 transition hover:bg-emerald-100"
+          >
+            बिना लॉगिन 5 प्रश्नों का फ्री डेमो दें
+          </button>
+          <p className="mt-2 text-center text-[11px] text-slate-500">डेमो स्कोर निजी रहेगा और लीडरबोर्ड में नहीं जोड़ा जाएगा।</p>
+        </div>
 
         <div className="mt-8 border-t border-slate-100 pt-4">
           <Leaderboard quizId={quizMeta.id} />
@@ -353,19 +431,19 @@ export default function Class10QuizPlayer({ examId = "class_10", quizId = null }
             <div className="mt-2 w-48 max-w-full">
               <div className="flex justify-between text-[10px] font-bold text-slate-600 mb-1">
                 <span>उत्तर दिए</span>
-                <span>{Object.keys(answers).length} / {questions.length}</span>
+                <span>{Object.keys(answers).length} / {activeQuestions.length}</span>
               </div>
               <div
                 className="h-2 rounded-full bg-slate-200 overflow-hidden"
                 role="progressbar"
                 aria-label="उत्तर दिए गए प्रश्न"
                 aria-valuemin={0}
-                aria-valuemax={questions.length}
+                aria-valuemax={activeQuestions.length}
                 aria-valuenow={Object.keys(answers).length}
               >
                 <div
                   className="h-full rounded-full bg-emerald-500 transition-[width] duration-300"
-                  style={{ width: `${questions.length ? (Object.keys(answers).length / questions.length) * 100 : 0}%` }}
+                  style={{ width: `${activeQuestions.length ? (Object.keys(answers).length / activeQuestions.length) * 100 : 0}%` }}
                 />
               </div>
             </div>
@@ -389,7 +467,7 @@ export default function Class10QuizPlayer({ examId = "class_10", quizId = null }
 
         {/* Questions List */}
         <div className="space-y-6">
-          {questions.map((q, idx) => (
+          {activeQuestions.map((q, idx) => (
             <div key={q.id} className="bg-white border border-slate-200/90 rounded-2xl p-5 shadow-xs">
               <div className="flex items-start gap-3 mb-4">
                 <span className="w-7 h-7 rounded-lg bg-blue-100 text-blue-800 font-black text-xs flex items-center justify-center shrink-0">
@@ -440,7 +518,7 @@ export default function Class10QuizPlayer({ examId = "class_10", quizId = null }
             onClick={handleSubmit}
             className="w-full py-4 bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold text-base rounded-2xl shadow-lg transition flex items-center justify-center gap-2 cursor-pointer"
           >
-            {submitting ? "परिणाम तैयार हो रहा है..." : submitError ? "पुनः प्रयास करें" : "टेस्ट सबमिट करें"}
+            {submitting ? "परिणाम तैयार हो रहा है..." : submitError ? "पुनः प्रयास करें" : demoMode ? "डेमो सबमिट करें" : "टेस्ट सबमिट करें"}
           </button>
         </div>
       </div>
@@ -493,6 +571,15 @@ export default function Class10QuizPlayer({ examId = "class_10", quizId = null }
           </div>
 
           <div className="space-y-3">
+            {demoMode && (
+              <button
+                type="button"
+                onClick={saveDemoResult}
+                className="w-full rounded-xl border border-sky-300 bg-sky-50 py-3 text-sm font-black text-sky-900 transition hover:bg-sky-100"
+              >
+                {user ? "डेमो परिणाम इतिहास में सहेजें" : "डेमो परिणाम सहेजने के लिए Student Login करें"}
+              </button>
+            )}
             <button
               type="button"
               onClick={shareToWhatsApp}
@@ -516,6 +603,7 @@ export default function Class10QuizPlayer({ examId = "class_10", quizId = null }
               onClick={() => {
                 setAnswers({});
                 setResult(null);
+                setDemoMode(false);
                 setAttemptDate(null);
                 setTimeExpired(false);
                 setSubmitError("");

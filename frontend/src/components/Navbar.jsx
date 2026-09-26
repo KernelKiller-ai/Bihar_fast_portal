@@ -1,7 +1,14 @@
+import { useState } from "react";
 import { Link } from "react-router-dom";
-import { ShieldCheck, Sparkles } from "lucide-react";
+import { ChevronDown, LogOut, ShieldCheck, Sparkles, UserRound } from "lucide-react";
+import { useAuth } from "../context/authContext";
 
 export default function Navbar() {
+  const { user, loading, openLoginModal, signOut } = useAuth();
+  const [profileMenuOpen, setProfileMenuOpen] = useState(false);
+  const displayName = user?.user_metadata?.full_name || user?.user_metadata?.name || user?.email?.split("@")[0] || "छात्र";
+  const initials = displayName.split(/\s+/).slice(0, 2).map((part) => part[0]).join("").toUpperCase();
+
   return (
     <nav className="w-full sticky top-0 z-50 select-none shadow-md">
       {/* 1. Indian Tricolor Micro Top Border */}
@@ -60,6 +67,71 @@ export default function Navbar() {
 
           {/* Right Action Buttons */}
           <div className="flex items-center gap-2.5 shrink-0">
+            {!loading && !user && (
+              <button
+                type="button"
+                onClick={openLoginModal}
+                className="inline-flex items-center gap-1.5 rounded-xl border border-amber-300/70 bg-amber-400 px-2.5 py-2 text-xs font-black text-slate-950 shadow transition hover:bg-amber-300 sm:px-3.5"
+              >
+                <UserRound size={15} />
+                <span className="hidden sm:inline">Student Login</span>
+                <span className="sm:hidden">Login</span>
+              </button>
+            )}
+
+            {!loading && user && (
+              <div className="relative">
+                <button
+                  type="button"
+                  onClick={() => setProfileMenuOpen((open) => !open)}
+                  aria-expanded={profileMenuOpen}
+                  aria-haspopup="menu"
+                  className="inline-flex max-w-44 items-center gap-2 rounded-xl border border-white/25 bg-white/10 p-1.5 pr-2.5 text-left text-white transition hover:bg-white/20 sm:px-2.5"
+                >
+                  {user.user_metadata?.avatar_url || user.user_metadata?.picture ? (
+                    <img
+                      src={user.user_metadata.avatar_url || user.user_metadata.picture}
+                      alt=""
+                      className="h-8 w-8 rounded-full border border-white/40 object-cover"
+                    />
+                  ) : (
+                    <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-amber-400 text-xs font-black text-slate-950">
+                      {initials || <UserRound size={15} />}
+                    </span>
+                  )}
+                  <span className="hidden min-w-0 sm:block">
+                    <span className="block max-w-24 truncate text-xs font-extrabold">{displayName}</span>
+                    <span className="block text-[10px] text-sky-200">Student</span>
+                  </span>
+                  <ChevronDown size={14} className="hidden sm:block" />
+                </button>
+
+                {profileMenuOpen && (
+                  <div role="menu" className="absolute right-0 top-full z-60 mt-2 w-52 overflow-hidden rounded-xl border border-slate-200 bg-white py-1 shadow-xl">
+                    <Link
+                      to="/dashboard"
+                      role="menuitem"
+                      onClick={() => setProfileMenuOpen(false)}
+                      className="block px-4 py-3 text-sm font-bold text-slate-800 transition hover:bg-sky-50 hover:text-sky-800"
+                    >
+                      My Dashboard
+                    </Link>
+                    <button
+                      type="button"
+                      role="menuitem"
+                      onClick={async () => {
+                        setProfileMenuOpen(false);
+                        await signOut();
+                      }}
+                      className="flex w-full items-center gap-2 border-t border-slate-100 px-4 py-3 text-left text-sm font-bold text-rose-700 transition hover:bg-rose-50"
+                    >
+                      <LogOut size={15} /> Logout
+                    </button>
+                  </div>
+                )}
+              </div>
+            )}
+
             {/* Quick Hubs Badge */}
             <Link
               to="/upcoming-2026"
@@ -84,7 +156,7 @@ export default function Navbar() {
               href="https://whatsapp.com/channel/0029VbDwc7KLNSa91goX3m1B"
               target="_blank"
               rel="noopener noreferrer"
-              className="flex items-center gap-1.5 bg-[#25D366] hover:bg-[#20ba59] text-slate-950 font-black text-xs sm:text-sm px-3.5 sm:px-4 py-2 rounded-xl transition shadow-md hover:shadow-emerald-500/30 cursor-pointer group active:scale-95"
+              className="flex items-center gap-1.5 bg-[#25D366] hover:bg-[#20ba59] text-slate-950 font-black text-xs sm:text-sm px-2.5 sm:px-4 py-2 rounded-xl transition shadow-md hover:shadow-emerald-500/30 cursor-pointer group active:scale-95"
             >
               <svg 
                 className="w-4 h-4 fill-slate-950 group-hover:scale-110 transition-transform shrink-0" 
@@ -92,7 +164,7 @@ export default function Navbar() {
               >
                 <path d="M12.031 6.172c-3.181 0-5.767 2.586-5.768 5.766-.001 1.298.38 2.27 1.019 3.287l-.582 2.128 2.182-.573c.978.58 1.911.928 3.145.929 3.178 0 5.767-2.587 5.768-5.766.001-3.187-2.575-5.77-5.764-5.771zm3.392 8.244c-.144.405-.837.774-1.17.824-.312.045-.694.067-1.11-.067-.291-.093-.667-.234-1.144-.442-1.999-.871-3.308-2.909-3.41-3.045-.098-.135-.809-1.077-.809-2.054 0-.977.511-1.456.693-1.656.182-.2.398-.25.531-.25.132 0 .265.002.38.008.123.006.287-.047.45.344.167.398.571 1.393.622 1.497.051.103.085.224.017.359-.068.135-.102.22-.204.34-.102.119-.215.266-.307.358-.103.103-.21.215-.091.42.119.205.53.874 1.137 1.414.781.696 1.44.912 1.645 1.015.205.103.324.086.444-.051.12-.137.513-.598.65-.804.137-.206.273-.172.461-.103.188.069 1.196.564 1.401.667.205.103.342.155.393.24.051.086.051.499-.093.904z" />
               </svg>
-              <span>व्हाट्सएप चैनल</span>
+              <span className="hidden sm:inline">व्हाट्सएप चैनल</span>
             </a>
           </div>
 

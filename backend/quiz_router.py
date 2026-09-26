@@ -144,6 +144,7 @@ class SubmitAnswersRequest(BaseModel):
     district: str = Field("बिहार", min_length=2, max_length=50)
     phone: Optional[str] = Field(None, max_length=15)
     answers: Dict[str, str] = Field(default_factory=dict, max_length=150)
+    demo_mode: bool = False
 
     @field_validator("student_name", "district")
     @classmethod
@@ -408,7 +409,7 @@ def submit_quiz_answers(sub: SubmitAnswersRequest, request: Request):
 
     client_ip = extract_client_ip(request)
     ip_hash = get_secure_ip_hash(client_ip, today_str)
-    attempts_used = enforce_ip_rate_limit(supabase, ip_hash, today_str)
+    attempts_used = 0 if sub.demo_mode else enforce_ip_rate_limit(supabase, ip_hash, today_str)
     remaining_attempts = max(0, DAILY_ATTEMPT_LIMIT - attempts_used)
 
     clean_quiz_id = sub.quiz_id.strip()
@@ -429,18 +430,19 @@ def submit_quiz_answers(sub: SubmitAnswersRequest, request: Request):
     if not db_questions:
         raise HTTPException(status_code=404, detail="No questions found for the supplied quiz ID")
 
-    question_ids = {str(question["id"]) for question in db_questions}
+    evaluation_questions = db_questions[:5] if sub.demo_mode else db_questions
+    question_ids = {str(question["id"]) for question in evaluation_questions}
     unknown_question_ids = set(sub.answers) - question_ids
     if unknown_question_ids:
         raise HTTPException(status_code=422, detail="Answers contain invalid question IDs")
 
-    total = len(db_questions)
+    total = len(evaluation_questions)
     correct = 0
     wrong = 0
     attempted = 0
     detailed_breakdown = []
 
-    for q in db_questions:
+    for q in evaluation_questions:
         q_id = str(q["id"])
         user_ans = sub.answers.get(q_id)
         actual_ans = str(q.get("correct_option", "")).strip().upper()
@@ -468,18 +470,19 @@ def submit_quiz_answers(sub: SubmitAnswersRequest, request: Request):
 
     accuracy = round((correct / (correct + wrong)) * 100, 1) if (correct + wrong) > 0 else 0.0
 
-    try:
-        supabase.table("class10_leaderboard").insert({
-            "quiz_id": clean_quiz_id,
-            "student_name": sub.student_name,
-            "district": sub.district,
-            "phone": sub.phone,
-            "score": correct,
-            "total_questions": total,
-            "accuracy": accuracy
-        }).execute()
-    except Exception as err:
-        logger.warning(f"Leaderboard insert error: {err}")
+    if not sub.demo_mode:
+        try:
+            supabase.table("class10_leaderboard").insert({
+                "quiz_id": clean_quiz_id,
+                "student_name": sub.student_name,
+                "district": sub.district,
+                "phone": sub.phone,
+                "score": correct,
+                "total_questions": total,
+                "accuracy": accuracy
+            }).execute()
+        except Exception as err:
+            logger.warning(f"Leaderboard insert error: {err}")
 
     return SubmitQuizResponse(
         total_questions=total,
