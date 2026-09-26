@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, useId } from "react";
+import { useState, useEffect, useCallback, useId, useRef } from "react";
 import PropTypes from "prop-types";
 import { 
   Trophy, 
@@ -10,7 +10,8 @@ import {
   Timer, 
   MapPin, 
   Sparkles,
-  Award
+  Award,
+  Send
 } from "lucide-react";
 import Leaderboard from "./Leaderboard";
 
@@ -48,6 +49,38 @@ export default function Class10QuizPlayer({ examId = "class_10", quizId = null }
   const [submitting, setSubmitting] = useState(false);
   const [result, setResult] = useState(null);
   const [loadingQuiz, setLoadingQuiz] = useState(true);
+  const [timeExpired, setTimeExpired] = useState(false);
+  const [submitError, setSubmitError] = useState("");
+  const [attemptDate, setAttemptDate] = useState(null);
+  const submissionLockRef = useRef(false);
+  const submitRef = useRef(null);
+  const remainingTimeRef = useRef(0);
+
+  useEffect(() => {
+    document.title = "Bihar Board Class 10 Free Mock Test & Quiz | BiharFast";
+
+    const setMetaTag = (attrName, attrValue, content) => {
+      let element = document.querySelector(`meta[${attrName}="${attrValue}"]`);
+      if (!element) {
+        element = document.createElement("meta");
+        element.setAttribute(attrName, attrValue);
+        document.head.appendChild(element);
+      }
+      element.setAttribute("content", content);
+    };
+
+    setMetaTag("name", "description", "अभ्यास करें बिहार बोर्ड मैट्रिक परीक्षा के लिए फ्री ऑनलाइन मॉक टेस्ट और क्विज़। पाएं तुरंत रिजल्ट, विस्तृत समाधान और लीडरबोर्ड रैंकिंग।");
+    setMetaTag("property", "og:title", "Bihar Board Class 10 Free Mock Test & Quiz | BiharFast");
+    setMetaTag("property", "og:description", "अभ्यास करें बिहार बोर्ड मैट्रिक परीक्षा के लिए फ्री ऑनलाइन मॉक टेस्ट और क्विज़। पाएं तुरंत रिजल्ट, विस्तृत समाधान और लीडरबोर्ड रैंकिंग।");
+
+    let canonicalTag = document.querySelector('link[rel="canonical"]');
+    if (!canonicalTag) {
+      canonicalTag = document.createElement("link");
+      canonicalTag.setAttribute("rel", "canonical");
+      document.head.appendChild(canonicalTag);
+    }
+    canonicalTag.setAttribute("href", `https://biharfast.in${window.location.pathname}`);
+  }, []);
 
   // Dynamic Query Fetch: Supports both explicit quizId and examId
   useEffect(() => {
@@ -68,7 +101,9 @@ export default function Class10QuizPlayer({ examId = "class_10", quizId = null }
         if (isMounted && data.is_live && data.quiz) {
           setQuizMeta(data.quiz);
           setQuestions(data.questions || []);
-          setTimeLeft((data.quiz.duration_minutes || 15) * 60);
+          const durationSeconds = (data.quiz.duration_minutes || 15) * 60;
+          remainingTimeRef.current = durationSeconds;
+          setTimeLeft(durationSeconds);
         } else if (isMounted) {
           setQuizMeta(null);
           setQuestions([]);
@@ -87,8 +122,15 @@ export default function Class10QuizPlayer({ examId = "class_10", quizId = null }
   }, [examId, quizId]);
 
   // Submit Handler
-  const handleSubmit = useCallback(async () => {
-    if (submitting || !quizMeta) return;
+  const handleSubmit = useCallback(async (automatic = false) => {
+    if (submissionLockRef.current || !quizMeta) return;
+    const unansweredCount = questions.length - Object.keys(answers).length;
+    if (!automatic && unansweredCount > 0 && !window.confirm(`आपने ${unansweredCount} प्रश्नों के उत्तर नहीं दिए हैं। क्या आप अभी टेस्ट सबमिट करना चाहते हैं?`)) {
+      return;
+    }
+
+    submissionLockRef.current = true;
+    setSubmitError("");
     setSubmitting(true);
 
     try {
@@ -106,34 +148,46 @@ export default function Class10QuizPlayer({ examId = "class_10", quizId = null }
         body: JSON.stringify(payload)
       });
 
-      if (!res.ok) throw new Error("Submission failed");
+      if (!res.ok) {
+        const error = new Error("Submission failed");
+        error.status = res.status;
+        throw error;
+      }
       const resultJson = await res.json();
       setResult(resultJson);
+      setAttemptDate(new Date());
       setStep("result");
     } catch (err) {
-      alert("टेस्ट सबमिट करने में समस्या हुई। कृपया पुनः प्रयास करें।");
+      setSubmitError(err.status === 429
+        ? "कृपया 1 मिनट प्रतीक्षा करें और पुनः प्रयास करें।"
+        : "टेस्ट सबमिट करने में समस्या हुई। कृपया पुनः प्रयास करें।");
       console.error(err);
     } finally {
+      submissionLockRef.current = false;
       setSubmitting(false);
     }
-  }, [submitting, quizMeta, answers, student]);
+  }, [quizMeta, questions.length, answers, student]);
 
-  // Timer Tick
   useEffect(() => {
-    if (step !== "playing" || timeLeft <= 0) return;
+    submitRef.current = handleSubmit;
+  }, [handleSubmit]);
+
+  // Keep one interval for the full playing step; changing answers must not restart it.
+  useEffect(() => {
+    if (step !== "playing") return;
     const timer = setInterval(() => {
-      setTimeLeft((prev) => {
-        if (prev <= 1) {
-          clearInterval(timer);
-          handleSubmit();
-          return 0;
-        }
-        return prev - 1;
-      });
+      const nextTime = Math.max(remainingTimeRef.current - 1, 0);
+      remainingTimeRef.current = nextTime;
+      setTimeLeft(nextTime);
+      if (nextTime === 0) {
+        clearInterval(timer);
+        setTimeExpired(true);
+        submitRef.current?.(true);
+      }
     }, 1000);
 
     return () => clearInterval(timer);
-  }, [step, timeLeft, handleSubmit]);
+  }, [step]);
 
   const handleOptionSelect = (qId, optionKey) => {
     setAnswers((prev) => ({ ...prev, [qId]: optionKey }));
@@ -146,6 +200,8 @@ export default function Class10QuizPlayer({ examId = "class_10", quizId = null }
       ? `https://www.biharfast.in/mock-test?exam=${encodeURIComponent(examId)}&quiz_id=${encodeURIComponent(quizMeta.id)}`
       : `https://www.biharfast.in/mock-test?exam=${encodeURIComponent(examId)}`;
 
+    const badge = getResultBadge(result.accuracy_percentage);
+    const dateText = attemptDate?.toLocaleDateString("hi-IN") || "आज";
     const text = 
 `⚡ *BIHARFAST OFFICIAL - ऑनलाइन मॉक टेस्ट* ⚡
 📝 *${quizMeta.title}*
@@ -154,12 +210,29 @@ export default function Class10QuizPlayer({ examId = "class_10", quizId = null }
 📍 *जिला:* ${student.district}
 🏆 *स्कोर:* ${result.score}/${result.total_questions}
 🎯 *सटीकता:* ${result.accuracy_percentage}%
+🏅 *बैज:* ${badge.label}
+📅 *दिनांक:* ${dateText}
 
 🔥 *क्या आप मुझसे ज्यादा अंक ला सकते हैं?*
 अभी टेस्ट दें और अपना नाम बिहार के स्टेट लीडरबोर्ड पर देखें:
 👉 ${shareUrl}`;
 
     window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(text)}`, "_blank");
+  };
+
+  const shareToTelegram = () => {
+    if (!result || !quizMeta) return;
+    const shareUrl = `https://www.biharfast.in/mock-test?exam=${encodeURIComponent(examId)}&quiz_id=${encodeURIComponent(quizMeta.id)}`;
+    const badge = getResultBadge(result.accuracy_percentage);
+    const text = `${student.name} ने ${result.score}/${result.total_questions} अंक और ${result.accuracy_percentage}% सटीकता हासिल की (${badge.label})। क्या आप उनका स्कोर पार कर सकते हैं?`;
+    window.open(`https://t.me/share/url?url=${encodeURIComponent(shareUrl)}&text=${encodeURIComponent(text)}`, "_blank");
+  };
+
+  const getResultBadge = (accuracy) => {
+    if (accuracy >= 90) return { label: "उत्कृष्ट प्रदर्शन / Brilliant", className: "bg-amber-100 text-amber-900 border-amber-300" };
+    if (accuracy >= 75) return { label: "बहुत अच्छा / Good", className: "bg-emerald-100 text-emerald-900 border-emerald-300" };
+    if (accuracy >= 50) return { label: "अच्छा प्रयास / Well Tried", className: "bg-sky-100 text-sky-900 border-sky-300" };
+    return { label: "अभ्यास जारी रखें / Keep Practicing", className: "bg-orange-100 text-orange-900 border-orange-300" };
   };
 
   const formatTimer = (secs) => {
@@ -193,7 +266,7 @@ export default function Class10QuizPlayer({ examId = "class_10", quizId = null }
           <span className="px-3 py-1 bg-blue-100 text-blue-800 text-[10px] font-black uppercase tracking-wider rounded-full">
             BiharFast Official Mock Engine
           </span>
-          <h2 className="text-2xl font-black text-slate-900 mt-3">{quizMeta.title}</h2>
+          <h1 className="text-2xl font-black text-slate-900 mt-3">{quizMeta.title}</h1>
           <p className="text-xs text-slate-500 mt-1">
             लीडरबोर्ड पर रैंक पाने के लिए अपना नाम और जिला दर्ज करें
           </p>
@@ -271,17 +344,48 @@ export default function Class10QuizPlayer({ examId = "class_10", quizId = null }
   if (step === "playing") {
     return (
       <div className="max-w-2xl mx-auto my-6 px-4">
+        <h1 className="text-xl sm:text-2xl font-black text-slate-900 mb-4">{quizMeta.title}</h1>
         {/* Sticky Header with Timer */}
         <div className="sticky top-2 z-20 bg-white/95 backdrop-blur-sm border border-slate-200 p-4 rounded-2xl shadow-md flex items-center justify-between mb-6">
           <div>
             <h3 className="text-sm font-black text-slate-900">{student.name}</h3>
             <span className="text-[11px] text-slate-500 font-semibold">📍 {student.district}</span>
+            <div className="mt-2 w-48 max-w-full">
+              <div className="flex justify-between text-[10px] font-bold text-slate-600 mb-1">
+                <span>उत्तर दिए</span>
+                <span>{Object.keys(answers).length} / {questions.length}</span>
+              </div>
+              <div
+                className="h-2 rounded-full bg-slate-200 overflow-hidden"
+                role="progressbar"
+                aria-label="उत्तर दिए गए प्रश्न"
+                aria-valuemin={0}
+                aria-valuemax={questions.length}
+                aria-valuenow={Object.keys(answers).length}
+              >
+                <div
+                  className="h-full rounded-full bg-emerald-500 transition-[width] duration-300"
+                  style={{ width: `${questions.length ? (Object.keys(answers).length / questions.length) * 100 : 0}%` }}
+                />
+              </div>
+            </div>
           </div>
           <div className="flex items-center gap-2 bg-rose-50 text-rose-700 font-mono font-black px-3.5 py-1.5 rounded-xl border border-rose-200">
-            <Timer size={16} className="animate-spin" />
+            <Timer size={16} />
             <span className="text-base">{formatTimer(timeLeft)}</span>
           </div>
         </div>
+
+        {timeExpired && submitting && (
+          <div role="status" className="mb-6 rounded-xl border border-amber-300 bg-amber-50 p-4 text-sm font-bold text-amber-900">
+            समय समाप्त! उत्तर सबमिट हो रहे हैं...
+          </div>
+        )}
+        {submitError && (
+          <div role="alert" className="mb-6 rounded-xl border border-rose-300 bg-rose-50 p-4 text-sm font-bold text-rose-800">
+            {submitError}
+          </div>
+        )}
 
         {/* Questions List */}
         <div className="space-y-6">
@@ -304,6 +408,7 @@ export default function Class10QuizPlayer({ examId = "class_10", quizId = null }
                     <button
                       key={opt}
                       type="button"
+                      disabled={submitting || timeExpired}
                       onClick={() => handleOptionSelect(q.id, opt)}
                       className={`w-full text-left p-3 rounded-xl border font-semibold text-xs transition flex items-center gap-3 cursor-pointer ${
                         isSelected
@@ -328,14 +433,14 @@ export default function Class10QuizPlayer({ examId = "class_10", quizId = null }
         </div>
 
         {/* Submit Button */}
-        <div className="mt-8">
+        <div className="mt-8 pt-6 border-t border-slate-200">
           <button
             type="button"
             disabled={submitting}
             onClick={handleSubmit}
             className="w-full py-4 bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold text-base rounded-2xl shadow-lg transition flex items-center justify-center gap-2 cursor-pointer"
           >
-            {submitting ? "परिणाम तैयार हो रहा है..." : "टेस्ट सबमिट करें"}
+            {submitting ? "परिणाम तैयार हो रहा है..." : submitError ? "पुनः प्रयास करें" : "टेस्ट सबमिट करें"}
           </button>
         </div>
       </div>
@@ -344,6 +449,8 @@ export default function Class10QuizPlayer({ examId = "class_10", quizId = null }
 
   // ================= 3. RESULT & VIRAL SHARE =================
   if (step === "result" && result) {
+    const resultBadge = getResultBadge(result.accuracy_percentage);
+    const resultDate = attemptDate?.toLocaleDateString("hi-IN", { day: "numeric", month: "long", year: "numeric" }) || "आज";
     return (
       <div className="max-w-xl mx-auto my-8 px-4">
         <div className="bg-white rounded-3xl shadow-2xl border-4 border-blue-600 overflow-hidden text-center p-6 sm:p-8">
@@ -365,6 +472,9 @@ export default function Class10QuizPlayer({ examId = "class_10", quizId = null }
               <MapPin size={12} className="text-rose-500" />
               <span>जिला: {student.district}</span>
             </p>
+            <span className={`inline-flex items-center gap-1.5 mt-3 px-3 py-1.5 rounded-full border text-xs font-black ${resultBadge.className}`}>
+              <Award size={14} /> {resultBadge.label}
+            </span>
           </div>
 
           <div className="grid grid-cols-3 gap-3 bg-slate-50 p-4 rounded-2xl mb-6 border border-slate-200/80">
@@ -377,8 +487,8 @@ export default function Class10QuizPlayer({ examId = "class_10", quizId = null }
               <p className="text-xl font-black text-emerald-600">{result.accuracy_percentage}%</p>
             </div>
             <div>
-              <span className="text-[11px] text-slate-500 font-bold">गलत</span>
-              <p className="text-xl font-black text-rose-500">{result.wrong_count}</p>
+              <span className="text-[11px] text-slate-500 font-bold">तिथि</span>
+              <p className="text-xs sm:text-sm font-black text-slate-800 mt-1">{resultDate}</p>
             </div>
           </div>
 
@@ -389,7 +499,16 @@ export default function Class10QuizPlayer({ examId = "class_10", quizId = null }
               className="w-full py-3.5 bg-[#25D366] hover:bg-[#20bd5a] text-white font-black rounded-xl shadow-lg transition flex items-center justify-center gap-2 cursor-pointer"
             >
               <Share2 size={20} />
-              <span>व्हाट्सएप पर शेयर करें (दोस्तों को चुनौती दें)</span>
+              <span>Share Result on WhatsApp</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={shareToTelegram}
+              className="w-full py-3 bg-sky-600 hover:bg-sky-700 text-white font-black rounded-xl shadow transition flex items-center justify-center gap-2 cursor-pointer"
+            >
+              <Send size={18} />
+              <span>टेलीग्राम पर परिणाम साझा करें</span>
             </button>
 
             <button
@@ -397,6 +516,11 @@ export default function Class10QuizPlayer({ examId = "class_10", quizId = null }
               onClick={() => {
                 setAnswers({});
                 setResult(null);
+                setAttemptDate(null);
+                setTimeExpired(false);
+                setSubmitError("");
+                remainingTimeRef.current = (quizMeta.duration_minutes || 15) * 60;
+                setTimeLeft(remainingTimeRef.current);
                 setStep("register");
               }}
               className="w-full py-2.5 text-xs text-slate-600 hover:text-slate-900 font-bold transition flex items-center justify-center gap-1 cursor-pointer"

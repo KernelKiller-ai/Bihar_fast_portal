@@ -1,9 +1,8 @@
-import React, { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 import { 
-  ArrowLeft, Trophy, Clock, HelpCircle, AlertCircle, 
-  ShieldCheck, CheckCircle2, ChevronRight, Sparkles, 
-  BookOpen, Flame, Compass, Target, ArrowRight, Layers
+  ArrowLeft, Trophy, Clock, ShieldCheck, ChevronRight, Sparkles,
+  BookOpen, Flame, Compass, ArrowRight
 } from "lucide-react";
 import Class10QuizPlayer from "../components/Class10QuizPlayer";
 
@@ -106,31 +105,78 @@ export default function MockTestPage() {
   const selectedQuizId = searchParams.get("quiz_id");
 
   const [availableQuizzes, setAvailableQuizzes] = useState([]);
-  const [loadingList, setLoadingList] = useState(false);
+  const [loadedExamId, setLoadedExamId] = useState(null);
+  const [listError, setListError] = useState(null);
+  const [reloadCount, setReloadCount] = useState(0);
+  const loadingList = Boolean(selectedExamId && !selectedQuizId && loadedExamId !== selectedExamId);
 
   const currentExam = EXAM_CATEGORIES.find((e) => e.id === selectedExamId);
+
+  useEffect(() => {
+    document.title = "Bihar Board Class 10 Free Mock Test & Quiz | BiharFast";
+
+    const setMetaTag = (attrName, attrValue, content) => {
+      let element = document.querySelector(`meta[${attrName}="${attrValue}"]`);
+      if (!element) {
+        element = document.createElement("meta");
+        element.setAttribute(attrName, attrValue);
+        document.head.appendChild(element);
+      }
+      element.setAttribute("content", content);
+    };
+
+    setMetaTag("name", "description", "अभ्यास करें बिहार बोर्ड मैट्रिक परीक्षा के लिए फ्री ऑनलाइन मॉक टेस्ट और क्विज़। पाएं तुरंत रिजल्ट, विस्तृत समाधान और लीडरबोर्ड रैंकिंग।");
+    setMetaTag("property", "og:title", "Bihar Board Class 10 Free Mock Test & Quiz | BiharFast");
+    setMetaTag("property", "og:description", "अभ्यास करें बिहार बोर्ड मैट्रिक परीक्षा के लिए फ्री ऑनलाइन मॉक टेस्ट और क्विज़। पाएं तुरंत रिजल्ट, विस्तृत समाधान और लीडरबोर्ड रैंकिंग।");
+    setMetaTag("property", "og:url", `https://biharfast.in${window.location.pathname}`);
+
+    let canonicalTag = document.querySelector('link[rel="canonical"]');
+    if (!canonicalTag) {
+      canonicalTag = document.createElement("link");
+      canonicalTag.setAttribute("rel", "canonical");
+      document.head.appendChild(canonicalTag);
+    }
+    canonicalTag.setAttribute("href", `https://biharfast.in${window.location.pathname}`);
+  }, []);
 
   // Fetch all active test slots from backend
   useEffect(() => {
     let isMounted = true;
     if (selectedExamId && !selectedQuizId) {
-      setLoadingList(true);
       fetch(`${API_BASE_URL}/api/quiz/available`)
-        .then((res) => res.json())
+        .then((res) => {
+          if (!res.ok) {
+            const error = new Error("Failed to load available quizzes");
+            error.status = res.status;
+            throw error;
+          }
+          return res.json();
+        })
         .then((data) => {
           if (isMounted && data.success) {
             setAvailableQuizzes(data.data || []);
+            setListError(null);
           }
         })
-        .catch((e) => console.error("Failed to load available quizzes", e))
+        .catch((error) => {
+          if (isMounted) {
+            setListError({
+              examId: selectedExamId,
+              message: error.status === 429
+                ? "कृपया 1 मिनट प्रतीक्षा करें और पुनः प्रयास करें।"
+                : "प्रश्न पत्र लोड नहीं हो सके। कृपया पुनः प्रयास करें।"
+            });
+          }
+          console.error("Failed to load available quizzes", error);
+        })
         .finally(() => {
-          if (isMounted) setLoadingList(false);
+          if (isMounted) setLoadedExamId(selectedExamId);
         });
     }
     return () => {
       isMounted = false;
     };
-  }, [selectedExamId, selectedQuizId]);
+  }, [selectedExamId, selectedQuizId, reloadCount]);
 
   // Filter quizzes according to selected exam category
   const filteredPapers = availableQuizzes.filter((quiz) => {
@@ -295,13 +341,30 @@ export default function MockTestPage() {
 
         {/* Header Heading */}
         <div className="text-center space-y-1.5">
-          <h2 className="text-2xl font-black text-slate-900">
-            अपना विषय व प्रश्न पत्र चुनें
-          </h2>
+          <h1 className="text-2xl font-black text-slate-900">
+            {currentExam?.id === "class_10" ? "बिहार बोर्ड कक्षा 10 फ्री मॉक टेस्ट एवं क्विज़" : "अपना विषय व प्रश्न पत्र चुनें"}
+          </h1>
           <p className="text-xs text-slate-500 font-medium">
             नीचे दिए गए सक्रिय मॉडल सेट्स में से किसी एक पर क्लिक करके लाइव टेस्ट शुरू करें।
           </p>
         </div>
+
+        {listError?.examId === selectedExamId && (
+          <div role="alert" className="rounded-xl border border-amber-300 bg-amber-50 p-4 text-sm font-bold text-amber-900">
+            <p>{listError.message}</p>
+            <button
+              type="button"
+              onClick={() => {
+                setListError(null);
+                setLoadedExamId(null);
+                setReloadCount((count) => count + 1);
+              }}
+              className="mt-3 underline underline-offset-2 cursor-pointer"
+            >
+              पुनः प्रयास करें
+            </button>
+          </div>
+        )}
 
         {/* Loading Spinner */}
         {loadingList && (
