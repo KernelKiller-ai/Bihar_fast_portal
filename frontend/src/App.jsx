@@ -3,6 +3,7 @@ import { Routes, Route, Link } from "react-router-dom";
 import Navbar from "./components/Navbar";
 import DownloadAppBanner from "./components/DownloadAppBanner";
 import NotificationCard from "./components/NotificationCard";
+import ScrollToTop from "./components/ScrollToTop";
 import ImageResizer from "./components/ImageResizer";
 import AgeCalculator from "./components/AgeCalculator";
 import Footer from "./components/Footer";
@@ -14,7 +15,7 @@ import {
   Camera, Calculator, Flame, Sparkles, Briefcase, 
   Search, ArrowRight, Award, IdCard, Send, MessageSquare, 
   ExternalLink, Zap, TrendingUp, ShieldCheck, Loader2,
-  Wrench, CheckCircle2, Trophy, Clock
+  Wrench, CheckCircle2, Trophy, Clock, KeyRound, CalendarDays
 } from "lucide-react";
 
 // Lazy Loaded Pages (Bundle Size Optimization)
@@ -46,7 +47,17 @@ const CATEGORY_TABS = [
   { id: "results", label: "Results", icon: Award },
   { id: "admit_card", label: "Admit Card", icon: IdCard },
   { id: "jobs", label: "Govt Jobs", icon: Briefcase },
+  { id: "answer-key", label: "Answer Key", icon: KeyRound },
+  { id: "exam-calendar", label: "Exam Calendar", icon: CalendarDays },
 ];
+
+const FILTER_CATEGORY_ALIASES = {
+  jobs: ["jobs", "job"],
+  results: ["results", "result"],
+  admit_card: ["admit_card", "admit"],
+  "answer-key": ["answer-key", "answer_key", "answerkey"],
+  "exam-calendar": ["exam-calendar", "exam_calendar", "calendar"],
+};
 
 // Cleaned Direct Links (Official Government Recruitment Boards Only)
 const DIRECT_LINKS = [
@@ -91,15 +102,17 @@ export default function App() {
             .map((item) => {
               const rawCat = (item.category || item.type || "").toLowerCase().trim();
               const titleLower = (item.title || "").toLowerCase();
-              let cat = "jobs";
-
-              if (rawCat.includes("admit") || titleLower.includes("admit card") || titleLower.includes("call letter") || titleLower.includes("hall ticket")) {
-                cat = "admit_card";
-              } else if (rawCat.includes("result") || titleLower.includes("result") || titleLower.includes("merit list") || titleLower.includes("score card") || titleLower.includes("cut-off") || titleLower.includes("cutoff")) {
-                cat = "results";
-              } else {
-                cat = "jobs";
-              }
+              const normalizedTitle = titleLower.replace(/[^a-z]/g, "");
+              const cat =
+                rawCat.includes("admit") || titleLower.includes("admit card") || titleLower.includes("call letter") || titleLower.includes("hall ticket")
+                  ? "admit_card"
+                  : rawCat.includes("result") || titleLower.includes("result") || titleLower.includes("merit list") || titleLower.includes("score card") || titleLower.includes("cut-off") || titleLower.includes("cutoff")
+                    ? "results"
+                    : rawCat.replace(/[^a-z]/g, "").includes("answerkey") || normalizedTitle.includes("answerkey")
+                      ? "answer-key"
+                      : rawCat.includes("calendar") || normalizedTitle.includes("calendar") || normalizedTitle.includes("examschedule") || normalizedTitle.includes("datesheet")
+                        ? "exam-calendar"
+                        : "jobs";
 
               return {
                 ...item,
@@ -140,19 +153,8 @@ export default function App() {
 
   const filteredData = portalItems.filter((item) => {
     const cat = (item.category || "").toLowerCase();
-
-    let matchesTab = false;
-    if (activeTab === "all") {
-      matchesTab = true;
-    } else if (activeTab === "jobs") {
-      matchesTab = cat === "jobs" || cat === "job";
-    } else if (activeTab === "results") {
-      matchesTab = cat === "results" || cat === "result";
-    } else if (activeTab === "admit_card") {
-      matchesTab = cat === "admit_card" || cat === "admit";
-    } else {
-      matchesTab = cat === activeTab;
-    }
+    const acceptedCategories = FILTER_CATEGORY_ALIASES[activeTab] || [activeTab];
+    const matchesTab = activeTab === "all" || acceptedCategories.includes(cat);
       
     const q = searchQuery.toLowerCase().trim();
     const matchesSearch = 
@@ -179,6 +181,7 @@ export default function App() {
 
   return (
     <div className="min-h-screen bg-slate-100/90 text-slate-800 font-sans antialiased flex flex-col justify-between">
+      <ScrollToTop />
       <div>
         <Navbar />
         <DownloadAppBanner />
@@ -564,7 +567,7 @@ export default function App() {
                         {activeTool === "calculator" && <AgeCalculator onClose={() => setActiveTool(null)} />}
 
                         {/* Category Filter Tabs */}
-                        <div className="flex items-center gap-2 overflow-x-auto pb-2 scrollbar-none">
+                        <div className="flex items-center gap-2 overflow-x-auto scroll-smooth touch-pan-x overscroll-x-contain pb-2 scrollbar-none">
                           {CATEGORY_TABS.map((tab) => {
                             const Icon = tab.icon;
                             const isActive = activeTab === tab.id;
@@ -573,7 +576,7 @@ export default function App() {
                                 key={tab.id}
                                 type="button"
                                 onClick={() => setActiveTab(tab.id)}
-                                className={`text-xs font-black px-4 py-2.5 rounded-xl whitespace-nowrap transition-all flex items-center gap-2 border cursor-pointer ${
+                                className={`text-xs font-black px-4 py-2.5 rounded-xl whitespace-nowrap shrink-0 transition-all flex items-center gap-2 border cursor-pointer ${
                                   isActive
                                     ? "bg-slate-900 text-white border-slate-900 shadow-md scale-[1.02]"
                                     : "bg-white text-slate-800 border-slate-300 hover:bg-slate-50"
