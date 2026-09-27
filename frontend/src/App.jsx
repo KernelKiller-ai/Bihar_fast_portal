@@ -797,6 +797,7 @@ export default function App() {
             {/* Dual Routes for Class 10th Mock Test */}
             <Route path="/class-10-quiz" element={<MockTestPage />} />
             <Route path="/mock-test/class-10" element={<MockTestPage />} />
+            <Route path="/mock-test" element={<MockTestPage />} />
             
             <Route path="/upcoming-2026" element={<Upcoming2026 />} />
             <Route path="/download" element={<DownloadApp />} />

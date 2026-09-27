@@ -266,7 +266,7 @@ export default function StudentDashboard() {
             <h2 className="mt-1 text-xl font-black">Start New Full-Length Mock Test</h2>
             <p className="mt-1 text-xs text-sky-100">पूरा पेपर हल करें और अपना स्कोर इतिहास में सहेजें।</p>
           </div>
-          <Link to="/mock-test?exam=class_10" className="inline-flex shrink-0 items-center gap-2 rounded-xl bg-amber-400 px-4 py-3 text-sm font-black text-slate-950 transition hover:bg-amber-300">
+          <Link to="/class-10-quiz" className="inline-flex shrink-0 items-center gap-2 rounded-xl bg-amber-400 px-4 py-3 text-sm font-black text-slate-950 transition hover:bg-amber-300">
             मॉक टेस्ट शुरू करें <ArrowRight size={16} />
           </Link>
         </section>
