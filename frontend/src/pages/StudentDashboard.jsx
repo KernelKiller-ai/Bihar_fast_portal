@@ -205,7 +205,7 @@ export default function StudentDashboard() {
                 <Trophy size={28} className="mx-auto text-amber-500" />
                 <p className="mt-3 text-sm font-extrabold text-slate-800">आपका पहला टेस्ट यहाँ दिखाई देगा</p>
                 <p className="mt-1 text-xs text-slate-500">फुल-लेंथ टेस्ट देकर अपनी तैयारी का आकलन करें।</p>
-                <Link to="/mock-test?exam=class_10" className="mt-4 inline-flex items-center gap-2 text-sm font-black text-sky-800 hover:text-sky-950">
+                <Link to="/class-10-quiz" className="mt-4 inline-flex items-center gap-2 text-sm font-black text-sky-800 hover:text-sky-950">
                   टेस्ट चुनें <ArrowRight size={15} />
                 </Link>
               </div>
