@@ -1,7 +1,12 @@
 import React, { useEffect, useState } from "react";
 import PropTypes from "prop-types";
 import { Trophy, Medal, Award, Flame, Users, MapPin, Sparkles } from "lucide-react";
-import { supabase } from "../lib/supabaseClient"; // Aapka supabase client path
+import { createClient } from "@supabase/supabase-js";
+
+// Vite Environment variables se direct client initialize
+const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
+const supabase = createClient(supabaseUrl, supabaseAnonKey);
 
 export default function Leaderboard({ quizId }) {
   const [ranks, setRanks] = useState([]);
@@ -14,7 +19,7 @@ export default function Leaderboard({ quizId }) {
     async function loadRanks() {
       try {
         setLoading(true);
-        // Direct Supabase call: Score descending, created_at ascending
+        // Direct Supabase query
         const { data, error } = await supabase
           .from("class10_leaderboard")
           .select("id, student_name, district, score, total_questions, accuracy, created_at")
@@ -26,7 +31,6 @@ export default function Leaderboard({ quizId }) {
         if (error) throw error;
 
         if (isMounted && data) {
-          // Ranks assign karein
           const rankedData = data.map((item, index) => ({
             ...item,
             rank: index + 1
