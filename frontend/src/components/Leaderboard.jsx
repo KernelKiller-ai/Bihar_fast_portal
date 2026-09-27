@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import PropTypes from "prop-types";
-import { Trophy, Medal, Award, Flame, Users, MapPin, Sparkles } from "lucide-react";
+import { Trophy, Medal, Award, Flame, Users, MapPin, Sparkles, User } from "lucide-react";
 import { createClient } from "@supabase/supabase-js";
 
 // Vite Environment variables se direct client initialize
@@ -19,10 +19,10 @@ export default function Leaderboard({ quizId }) {
     async function loadRanks() {
       try {
         setLoading(true);
-        // Direct Supabase query
+        // avatar_url ke saath fetch
         const { data, error } = await supabase
           .from("class10_leaderboard")
-          .select("id, student_name, district, score, total_questions, accuracy, created_at")
+          .select("id, student_name, district, score, total_questions, accuracy, avatar_url, created_at")
           .eq("quiz_id", quizId)
           .order("score", { ascending: false })
           .order("created_at", { ascending: true })
@@ -54,32 +54,32 @@ export default function Leaderboard({ quizId }) {
   const getBadge = (rank) => {
     if (rank === 1) {
       return (
-        <span className="p-1.5 rounded-full bg-amber-100 text-amber-600 shadow-sm inline-flex items-center justify-center">
-          <Trophy size={18} />
+        <span className="p-1 rounded-full bg-amber-100 text-amber-600 shadow-xs inline-flex items-center justify-center">
+          <Trophy size={16} />
         </span>
       );
     }
     if (rank === 2) {
       return (
-        <span className="p-1.5 rounded-full bg-slate-200 text-slate-700 shadow-sm inline-flex items-center justify-center">
-          <Medal size={18} />
+        <span className="p-1 rounded-full bg-slate-200 text-slate-700 shadow-xs inline-flex items-center justify-center">
+          <Medal size={16} />
         </span>
       );
     }
     if (rank === 3) {
       return (
-        <span className="p-1.5 rounded-full bg-amber-50 text-amber-800 shadow-sm inline-flex items-center justify-center">
-          <Award size={18} />
+        <span className="p-1 rounded-full bg-amber-50 text-amber-800 shadow-xs inline-flex items-center justify-center">
+          <Award size={16} />
         </span>
       );
     }
-    return <span className="text-xs font-black text-slate-500 w-6 text-center">#{rank}</span>;
+    return <span className="text-xs font-black text-slate-400 w-5 text-center">#{rank}</span>;
   };
 
   return (
     <div className="bg-white border border-slate-200/90 rounded-2xl shadow-sm overflow-hidden mt-8 max-w-xl mx-auto">
       {/* Header */}
-      <div className="bg-gradient-to-r from-blue-700 via-indigo-700 to-blue-800 text-white p-4 sm:p-5">
+      <div className="bg-linear-to-r from-blue-700 via-indigo-700 to-blue-800 text-white p-4 sm:p-5">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
             <Flame className="text-amber-300 animate-bounce" size={22} />
@@ -105,29 +105,56 @@ export default function Leaderboard({ quizId }) {
           ranks.map((item) => (
             <div
               key={item.id || item.rank}
-              className={`flex items-center justify-between p-3.5 sm:px-5 hover:bg-slate-50/80 transition ${
+              className={`flex items-center justify-between p-3 sm:px-4 hover:bg-slate-50/80 transition ${
                 item.rank === 1 ? "bg-amber-50/60" : ""
               }`}
             >
-              <div className="flex items-center gap-3">
-                <div className="w-8 flex justify-center">{getBadge(item.rank)}</div>
-                <div>
-                  <h4 className="font-bold text-xs sm:text-sm text-slate-900 flex items-center gap-1.5">
-                    {item.student_name}
+              <div className="flex items-center gap-2.5 sm:gap-3 min-w-0">
+                {/* Rank Badge */}
+                <div className="w-6 flex justify-center shrink-0">{getBadge(item.rank)}</div>
+
+                {/* Profile Picture */}
+                <div className="relative shrink-0">
+                  {item.avatar_url ? (
+                    <img
+                      src={item.avatar_url}
+                      alt={item.student_name}
+                      referrerPolicy="no-referrer"
+                      className="w-9 h-9 sm:w-10 sm:h-10 rounded-full object-cover border border-slate-200 shadow-xs"
+                    />
+                  ) : (
+                    <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-blue-100 text-blue-700 flex items-center justify-center font-bold text-xs uppercase border border-blue-200 shadow-xs">
+                      {item.student_name ? item.student_name.charAt(0) : <User size={16} />}
+                    </div>
+                  )}
+
+                  {/* Topper Mini Star */}
+                  {item.rank === 1 && (
+                    <span className="absolute -top-1 -right-1 bg-amber-400 text-[10px] rounded-full w-4 h-4 flex items-center justify-center shadow-xs">
+                      👑
+                    </span>
+                  )}
+                </div>
+
+                {/* Student Info */}
+                <div className="min-w-0 truncate">
+                  <h4 className="font-bold text-xs sm:text-sm text-slate-900 flex items-center gap-1.5 truncate">
+                    <span className="truncate">{item.student_name || "छात्र"}</span>
                     {item.rank === 1 && (
-                      <span className="text-[9px] bg-amber-100 text-amber-800 font-black px-1.5 py-0.5 rounded border border-amber-300 uppercase tracking-wider">
+                      <span className="shrink-0 text-[9px] bg-amber-100 text-amber-800 font-black px-1.5 py-0.2 rounded border border-amber-300 uppercase">
                         Topper
                       </span>
                     )}
                   </h4>
                   <p className="text-[11px] text-slate-500 font-medium flex items-center gap-1 mt-0.5">
-                    <MapPin size={11} className="text-rose-500" />
-                    <span>{item.district || "बिहार"}</span>
+                    <MapPin size={11} className="text-rose-500 shrink-0" />
+                    <span className="truncate">{item.district || "बिहार"}</span>
                   </p>
                 </div>
               </div>
 
-              <div className="text-right">
+              {/* Score & Accuracy */}
+              <div className="text-right shrink-0 pl-2">
                 <span className="text-xs sm:text-sm font-black text-indigo-700">
                   {item.score}/{item.total_questions} अंक
                 </span>
