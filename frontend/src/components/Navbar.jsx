@@ -134,7 +134,7 @@ export default function Navbar() {
                       onClick={() => setProfileMenuOpen(false)}
                       className="block px-4 py-2.5 text-xs font-bold text-slate-700 transition hover:bg-sky-50 hover:text-sky-800"
                     >
-                      📊 माय डैशबोर्ड (Dashboard)
+                      ⚡ मेरी तैयारी (My Prep & Rank)
                     </Link>
                     <Link
                       to="/class-10-quiz"
