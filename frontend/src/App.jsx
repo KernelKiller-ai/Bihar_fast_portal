@@ -287,7 +287,7 @@ export default function App() {
                               to="/class-10-quiz"
                               className="flex flex-col items-center justify-center p-1.5 rounded-xl hover:bg-amber-50/80 transition group cursor-pointer text-center relative"
                             >
-                              <span className="absolute -top-1 -right-1 bg-red-600 text-white text-[9px] font-black px-1.5 py-0.2 rounded-full animate-pulse shadow-xs">
+                              <span className="absolute -top-1 -right-1 bg-red-600 text-white text-[9px] font-black px-1.5 py-0.5 rounded-full animate-pulse shadow-xs">
                                 LIVE
                               </span>
                               <div className="w-10 h-10 sm:w-11 sm:h-11 rounded-full bg-linear-to-tr from-amber-600 to-yellow-500 text-white flex items-center justify-center shadow-xs group-hover:scale-105 transition">
@@ -330,25 +330,32 @@ export default function App() {
                           </div>
                         </div>
 
-                        {/* Hero Right Banner Image (Safe Direct PNG & Aspect Ratio) */}
-                        <div className="lg:col-span-5 flex flex-col items-center lg:items-end justify-end relative h-full">
+                        {/* Hero Right Banner Card */}
+                        <div className="lg:col-span-5 flex flex-col items-center lg:items-end justify-end relative h-full pb-4">
                           <div className="text-center lg:text-right mb-2 w-full pr-2">
                             <span className="text-xl sm:text-2xl font-serif italic font-extrabold text-[#0B4F8A] block">
                               बढ़ता बिहार, <span className="text-[#C2410C]">बनता भविष्य</span>
                             </span>
                           </div>
 
-                          <div className="w-full max-w-125 relative rounded-t-3xl overflow-hidden bg-linear-to-b from-sky-200/40 via-blue-50/30 to-transparent flex items-end justify-center">
-                            <img 
-                              src="/hero-students.png" 
-                              alt="Bihar Aspirants" 
-                              width="665"
-                              height="443"
-                              fetchPriority="high"
-                              loading="eager"
-                              decoding="async"
-                              className="w-full h-auto max-h-87.5 sm:max-h-97.5 object-contain relative z-10 block drop-shadow-md select-none pointer-events-none aspect-665/443"
-                            />
+                          <div className="w-full max-w-md relative rounded-3xl overflow-hidden bg-linear-to-br from-[#0a2540] via-[#0e3b64] to-[#1e1b4b] p-6 text-white shadow-xl border border-sky-400/20 flex flex-col justify-between min-h-55">
+                            <div>
+                              <span className="bg-amber-400/20 text-amber-300 border border-amber-400/30 text-[10px] font-black px-2.5 py-1 rounded-full uppercase tracking-wider inline-block">
+                                Official Portal Aggregator
+                              </span>
+                              <h3 className="text-lg font-black text-white mt-3">
+                                सभी सरकारी भर्तियों और सेवाओं की सीधी जानकारी
+                              </h3>
+                              <p className="text-xs text-slate-300 mt-1.5 font-medium leading-relaxed">
+                                बिना किसी देरी के BPSC, BSSC, CSBC, RTPS और रिजल्ट्स से जुड़े सभी नोटिफिकेशन्स तुरंत पाएं।
+                              </p>
+                            </div>
+                            <div className="flex items-center justify-between pt-4 border-t border-white/10 text-xs font-bold text-cyan-300">
+                              <span>100% सटीक एवं सत्यापित</span>
+                              <Link to="/sitemap" className="text-white hover:underline flex items-center gap-1">
+                                सभी लिंक्स देखें <ArrowRight size={13} />
+                              </Link>
+                            </div>
                           </div>
                         </div>
                       </div>
@@ -454,7 +461,7 @@ export default function App() {
                   </section>
 
                   <main className="max-w-7xl mx-auto px-4 sm:px-6 pt-6 pb-20">
-                    {/* High-Converting Quiz Callout Banner */}
+                    {/* Quiz Callout Banner */}
                     <div className="mb-6 bg-linear-to-r from-blue-700 via-indigo-700 to-purple-800 text-white rounded-2xl p-4 sm:p-5 shadow-lg border border-indigo-400/30 flex flex-col sm:flex-row items-center justify-between gap-4">
                       <div className="flex items-center gap-3.5">
                         <div className="w-12 h-12 rounded-xl bg-amber-400/20 border border-amber-300/40 flex items-center justify-center shrink-0">
