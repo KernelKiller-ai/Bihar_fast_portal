@@ -129,7 +129,7 @@ export default function Navbar() {
                     className="absolute right-0 top-full mt-2 w-52 overflow-hidden rounded-xl border border-slate-200 bg-white py-1 shadow-2xl z-50 animate-in fade-in slide-in-from-top-1 duration-150"
                   >
                     <Link
-                      to="/student-dashboard"
+                      to="/dashboard"
                       role="menuitem"
                       onClick={() => setProfileMenuOpen(false)}
                       className="block px-4 py-2.5 text-xs font-bold text-slate-700 transition hover:bg-sky-50 hover:text-sky-800"
