@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Link } from "react-router-dom";
 import { ChevronDown, LogOut, ShieldCheck, Sparkles, UserRound } from "lucide-react";
 import { useAuth } from "../context/authContext";
@@ -6,16 +6,29 @@ import { useAuth } from "../context/authContext";
 export default function Navbar() {
   const { user, loading, openLoginModal, signOut } = useAuth();
   const [profileMenuOpen, setProfileMenuOpen] = useState(false);
+  const menuRef = useRef(null);
+
   const displayName = user?.user_metadata?.full_name || user?.user_metadata?.name || user?.email?.split("@")[0] || "छात्र";
   const initials = displayName.split(/\s+/).slice(0, 2).map((part) => part[0]).join("").toUpperCase();
+
+  // Bahar click karne par menu band karne ke liye
+  useEffect(() => {
+    function handleClickOutside(e) {
+      if (menuRef.current && !menuRef.current.contains(e.target)) {
+        setProfileMenuOpen(false);
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
 
   return (
     <nav className="w-full sticky top-0 z-50 select-none shadow-md">
       {/* 1. Indian Tricolor Micro Top Border */}
       <div className="w-full h-1 bg-linear-to-r from-[#FF9933] via-white to-[#138808]" />
 
-      {/* 2. Rich Deep Sapphire Glass Container */}
-      <div className="w-full bg-linear-to-r from-[#0a2540] via-[#0e3b64] to-[#0a2540] border-b border-cyan-500/20 shadow-inner relative overflow-hidden">
+      {/* 2. Rich Deep Sapphire Glass Container (overflow-visible zaroori hai dropdown ke liye) */}
+      <div className="w-full bg-linear-to-r from-[#0a2540] via-[#0e3b64] to-[#0a2540] border-b border-cyan-500/20 shadow-inner relative overflow-visible">
         
         {/* Subtle Ambient Light Glow */}
         <div className="absolute top-0 left-1/4 w-96 h-20 bg-sky-400/10 blur-3xl pointer-events-none" />
@@ -28,11 +41,11 @@ export default function Navbar() {
               <img 
                 src="/logo.png" 
                 alt="BiharFast Logo" 
-                width="40"
-                height="40"
-                loading="eager"
-                decoding="async"
-                className="h-9 sm:h-10 w-9 sm:w-10 object-contain aspect-square"
+                width="40" 
+                height="40" 
+                loading="eager" 
+                decoding="async" 
+                className="h-9 sm:h-10 w-9 sm:w-10 object-contain aspect-square" 
               />
             </div>
             
@@ -71,7 +84,7 @@ export default function Navbar() {
               <button
                 type="button"
                 onClick={openLoginModal}
-                className="inline-flex items-center gap-1.5 rounded-xl border border-amber-300/70 bg-amber-400 px-2.5 py-2 text-xs font-black text-slate-950 shadow transition hover:bg-amber-300 sm:px-3.5"
+                className="inline-flex items-center gap-1.5 rounded-xl border border-amber-300/70 bg-amber-400 px-2.5 py-2 text-xs font-black text-slate-950 shadow transition hover:bg-amber-300 cursor-pointer sm:px-3.5"
               >
                 <UserRound size={15} />
                 <span className="hidden sm:inline">Student Login</span>
@@ -80,19 +93,20 @@ export default function Navbar() {
             )}
 
             {!loading && user && (
-              <div className="relative">
+              <div className="relative" ref={menuRef}>
                 <button
                   type="button"
-                  onClick={() => setProfileMenuOpen((open) => !open)}
+                  onClick={() => setProfileMenuOpen((prev) => !prev)}
                   aria-expanded={profileMenuOpen}
                   aria-haspopup="menu"
-                  className="inline-flex max-w-44 items-center gap-2 rounded-xl border border-white/25 bg-white/10 p-1.5 pr-2.5 text-left text-white transition hover:bg-white/20 sm:px-2.5"
+                  className="inline-flex max-w-48 items-center gap-2 rounded-xl border border-white/25 bg-white/10 p-1.5 pr-2.5 text-left text-white transition hover:bg-white/20 cursor-pointer sm:px-2.5"
                 >
                   {user.user_metadata?.avatar_url || user.user_metadata?.picture ? (
                     <img
                       src={user.user_metadata.avatar_url || user.user_metadata.picture}
                       alt=""
-                      className="h-8 w-8 rounded-full border border-white/40 object-cover"
+                      referrerPolicy="no-referrer"
+                      className="h-8 w-8 rounded-full border border-white/40 object-cover shrink-0"
                     />
                   ) : (
                     <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-amber-400 text-xs font-black text-slate-950">
@@ -100,21 +114,35 @@ export default function Navbar() {
                     </span>
                   )}
                   <span className="hidden min-w-0 sm:block">
-                    <span className="block max-w-24 truncate text-xs font-extrabold">{displayName}</span>
+                    <span className="block max-w-28 truncate text-xs font-extrabold">{displayName}</span>
                     <span className="block text-[10px] text-sky-200">Student</span>
                   </span>
-                  <ChevronDown size={14} className="hidden sm:block" />
+                  <ChevronDown 
+                    size={14} 
+                    className={`hidden sm:block transition-transform duration-200 ${profileMenuOpen ? "rotate-180" : ""}`} 
+                  />
                 </button>
 
                 {profileMenuOpen && (
-                  <div role="menu" className="absolute right-0 top-full z-60 mt-2 w-52 overflow-hidden rounded-xl border border-slate-200 bg-white py-1 shadow-xl">
+                  <div 
+                    role="menu" 
+                    className="absolute right-0 top-full mt-2 w-52 overflow-hidden rounded-xl border border-slate-200 bg-white py-1 shadow-2xl z-50 animate-in fade-in slide-in-from-top-1 duration-150"
+                  >
                     <Link
-                      to="/dashboard"
+                      to="/student-dashboard"
                       role="menuitem"
                       onClick={() => setProfileMenuOpen(false)}
-                      className="block px-4 py-3 text-sm font-bold text-slate-800 transition hover:bg-sky-50 hover:text-sky-800"
+                      className="block px-4 py-2.5 text-xs font-bold text-slate-700 transition hover:bg-sky-50 hover:text-sky-800"
                     >
-                      My Dashboard
+                      📊 माय डैशबोर्ड (Dashboard)
+                    </Link>
+                    <Link
+                      to="/class-10-quiz"
+                      role="menuitem"
+                      onClick={() => setProfileMenuOpen(false)}
+                      className="block px-4 py-2.5 text-xs font-bold text-slate-700 transition hover:bg-sky-50 hover:text-sky-800"
+                    >
+                      🏆 स्टेट मॉक टेस्ट
                     </Link>
                     <button
                       type="button"
@@ -123,9 +151,9 @@ export default function Navbar() {
                         setProfileMenuOpen(false);
                         await signOut();
                       }}
-                      className="flex w-full items-center gap-2 border-t border-slate-100 px-4 py-3 text-left text-sm font-bold text-rose-700 transition hover:bg-rose-50"
+                      className="flex w-full items-center gap-2 border-t border-slate-100 px-4 py-2.5 text-left text-xs font-bold text-rose-600 transition hover:bg-rose-50 cursor-pointer"
                     >
-                      <LogOut size={15} /> Logout
+                      <LogOut size={14} /> लॉगआउट (Logout)
                     </button>
                   </div>
                 )}
