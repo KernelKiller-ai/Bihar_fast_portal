@@ -133,7 +133,11 @@ export default function Footer({ onOpenTool }) {
               <img 
                 src="/logo.png" 
                 alt="BiharFast Logo" 
-                className="h-14 sm:h-16 w-auto object-contain block"
+                width="64"
+                height="64"
+                loading="lazy"
+                decoding="async"
+                className="h-14 sm:h-16 w-14 sm:w-16 object-contain aspect-square block"
               />
               <p className="text-[11px] font-bold text-slate-700 mt-2">
                 Jobs &nbsp;|&nbsp; Welfare &nbsp;|&nbsp; Information
