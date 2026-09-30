@@ -282,7 +282,7 @@ export default function App() {
                               <span className="text-[10px] sm:text-[11px] font-bold text-slate-900 mt-1 leading-tight">Government<br />Jobs</span>
                             </button>
 
-                            {/* 10th Mock Test Quick Icon */}
+                            {/* Live Mock Test Quick Icon */}
                             <Link
                               to="/class-10-quiz"
                               className="flex flex-col items-center justify-center p-1.5 rounded-xl hover:bg-amber-50/80 transition group cursor-pointer text-center relative"
@@ -293,7 +293,7 @@ export default function App() {
                               <div className="w-10 h-10 sm:w-11 sm:h-11 rounded-full bg-linear-to-tr from-amber-600 to-yellow-500 text-white flex items-center justify-center shadow-xs group-hover:scale-105 transition">
                                 <Trophy size={18} />
                               </div>
-                              <span className="text-[10px] sm:text-[11px] font-black text-amber-900 mt-1 leading-tight">10th Daily<br />Mock Test</span>
+                              <span className="text-[10px] sm:text-[11px] font-black text-amber-900 mt-1 leading-tight">Live Daily<br />Mock Test</span>
                             </Link>
 
                             <Link
@@ -371,7 +371,7 @@ export default function App() {
                             className="px-3 py-1 rounded-lg bg-linear-to-r from-amber-500 to-orange-600 hover:from-amber-600 hover:to-orange-700 text-white font-extrabold transition shrink-0 shadow-xs flex items-center gap-1.5"
                           >
                             <Trophy size={13} className="text-yellow-200" />
-                            🎯 10th Mock Test & Rank
+                            🎯 Live Mock Test & Rank
                           </Link>
                           <Link 
                             to="/bseb-matric-10th" 
@@ -441,12 +441,12 @@ export default function App() {
 
                     <div className="bg-slate-50 border-t border-slate-200/80 py-2 px-4 flex items-center justify-center gap-1.5 flex-wrap text-xs text-slate-700 font-medium">
                       <span className="font-bold text-slate-700 text-[11px]">Trending:</span>
-                      {["10th Mock Test", "BPSC", "BPSSC", "CSBC पुलिस", "BCECEB", "BTSC", "BSSC Inter"].map((tag) => (
+                      {["Live Mock Test", "BPSC", "BPSSC", "CSBC पुलिस", "BCECEB", "BTSC", "BSSC Inter"].map((tag) => (
                         <button
                           key={tag}
                           type="button"
                           onClick={() => {
-                            if (tag === "10th Mock Test") {
+                            if (tag === "Live Mock Test") {
                               window.location.href = "/class-10-quiz";
                             } else {
                               setSearchQuery(tag);
