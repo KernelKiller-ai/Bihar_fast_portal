@@ -49,6 +49,8 @@ export default defineConfig({
       },
       workbox: {
         cleanupOutdatedCaches: true, // 2. Naya build aate hi purana cached bundle delete kar dega
+        skipWaiting: true,
+        clientsClaim: true,
         maximumFileSizeToCacheInBytes: 4 * 1024 * 1024,
         globPatterns: ['**/*.{js,css,html,ico,png,svg,webp}'],
         // Static assets aur APIs ko Service Worker bypass karega
