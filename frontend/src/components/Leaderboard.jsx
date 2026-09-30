@@ -1,12 +1,7 @@
 import React, { useEffect, useState } from "react";
 import PropTypes from "prop-types";
 import { Trophy, Medal, Award, Flame, Users, MapPin, Sparkles, User } from "lucide-react";
-import { createClient } from "@supabase/supabase-js";
-
-// Vite Environment variables se direct client initialize
-const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
-const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
-const supabase = createClient(supabaseUrl, supabaseAnonKey);
+import { supabase } from "../api/supabase";
 
 export default function Leaderboard({ quizId }) {
   const [ranks, setRanks] = useState([]);
