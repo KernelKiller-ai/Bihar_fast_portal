@@ -284,7 +284,7 @@ export default function App() {
 
                             {/* Live Mock Test Quick Icon */}
                             <Link
-                              to="/class-10-quiz"
+                              to="/mock-test"
                               className="flex flex-col items-center justify-center p-1.5 rounded-xl hover:bg-amber-50/80 transition group cursor-pointer text-center relative"
                             >
                               <span className="absolute -top-1 -right-1 bg-red-600 text-white text-[9px] font-black px-1.5 py-0.5 rounded-full animate-pulse shadow-xs">
@@ -293,7 +293,7 @@ export default function App() {
                               <div className="w-10 h-10 sm:w-11 sm:h-11 rounded-full bg-linear-to-tr from-amber-600 to-yellow-500 text-white flex items-center justify-center shadow-xs group-hover:scale-105 transition">
                                 <Trophy size={18} />
                               </div>
-                              <span className="text-[10px] sm:text-[11px] font-black text-amber-900 mt-1 leading-tight">Live Daily<br />Mock Test</span>
+                              <span className="text-[10px] sm:text-[11px] font-black text-amber-900 mt-1 leading-tight">All Exam<br />Mock Test</span>
                             </Link>
 
                             <Link
@@ -367,11 +367,11 @@ export default function App() {
                             <Sparkles size={13} /> Fast Hubs:
                           </span>
                           <Link 
-                            to="/class-10-quiz" 
+                            to="/mock-test" 
                             className="px-3 py-1 rounded-lg bg-linear-to-r from-amber-500 to-orange-600 hover:from-amber-600 hover:to-orange-700 text-white font-extrabold transition shrink-0 shadow-xs flex items-center gap-1.5"
                           >
                             <Trophy size={13} className="text-yellow-200" />
-                            🎯 Live Mock Test & Rank
+                            🎯 All Exam Live Mock Test & Rank
                           </Link>
                           <Link 
                             to="/bseb-matric-10th" 
@@ -447,7 +447,7 @@ export default function App() {
                           type="button"
                           onClick={() => {
                             if (tag === "Live Mock Test") {
-                              window.location.href = "/class-10-quiz";
+                              window.location.href = "/mock-test";
                             } else {
                               setSearchQuery(tag);
                             }
@@ -477,7 +477,7 @@ export default function App() {
                             </span>
                           </div>
                           <h2 className="text-base sm:text-lg font-black text-white mt-1">
-                            BSEB 10th मैट्रिक लाइव मॉक टेस्ट & बिहार स्टेट लीडरबोर्ड
+                            बिहार ऑल एग्जाम लाइव मॉक टेस्ट & राज्य लीडरबोर्ड
                           </h2>
                           <p className="text-xs text-blue-100 font-medium">
                             अपनी तैयारी परखें, जिलावार रैंक देखें और दोस्तों के साथ व्हाट्सएप पर स्कोरकार्ड शेयर करें।
@@ -486,7 +486,7 @@ export default function App() {
                       </div>
 
                       <Link
-                        to="/class-10-quiz"
+                        to="/mock-test"
                         className="w-full sm:w-auto px-6 py-3 bg-amber-400 hover:bg-amber-300 text-slate-950 font-black text-xs sm:text-sm rounded-xl shadow-md transition flex items-center justify-center gap-2 shrink-0 group active:scale-95"
                       >
                         <span>अभी फ्री टेस्ट दें</span>
@@ -639,10 +639,10 @@ export default function App() {
                           </div>
 
                           <div className="space-y-2 text-xs">
-                            <Link to="/class-10-quiz" className="p-2.5 rounded-xl border border-amber-200 bg-amber-50/50 hover:bg-amber-100/70 flex items-center justify-between transition group">
+                            <Link to="/mock-test" className="p-2.5 rounded-xl border border-amber-200 bg-amber-50/50 hover:bg-amber-100/70 flex items-center justify-between transition group">
                               <div>
                                 <p className="font-black text-amber-950 group-hover:text-amber-800 flex items-center gap-1">
-                                  <Trophy size={13} className="text-amber-600" /> 10th बोर्ड लाइव टेस्ट 2026
+                                  <Trophy size={13} className="text-amber-600" /> ऑल एग्जाम लाइव मॉक टेस्ट
                                 </p>
                                 <span className="text-[10px] text-amber-700 font-semibold">अंक, सटीकता और राज्य रैंक</span>
                               </div>

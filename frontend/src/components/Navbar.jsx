@@ -137,12 +137,12 @@ export default function Navbar() {
                       ⚡ मेरी तैयारी (My Prep & Rank)
                     </Link>
                     <Link
-                      to="/class-10-quiz"
+                      to="/mock-test"
                       role="menuitem"
                       onClick={() => setProfileMenuOpen(false)}
                       className="block px-4 py-2.5 text-xs font-bold text-slate-700 transition hover:bg-sky-50 hover:text-sky-800"
                     >
-                      🏆 स्टेट मॉक टेस्ट
+                      🏆 स्टेट लाइव मॉक टेस्ट
                     </Link>
                     <button
                       type="button"

@@ -11,7 +11,7 @@ from pydantic import BaseModel, Field, field_validator
 from database import get_db
 from rate_limiter import enforce_rate_limit
 
-logger = logging.getLogger("class10_quiz")
+logger = logging.getLogger("master_quiz")
 quiz_router = APIRouter(prefix="/api/quiz", tags=["Universal Exam & Quiz Engine"])
 
 IST_ZONE = timezone(timedelta(hours=5, minutes=30))
@@ -140,10 +140,13 @@ class TodayQuizResponse(BaseModel):
 
 class SubmitAnswersRequest(BaseModel):
     quiz_id: str = Field(..., min_length=1, max_length=100)
+    user_id: Optional[str] = Field(None, max_length=100)
     student_name: str = Field("छात्र", min_length=2, max_length=50)
     district: str = Field("बिहार", min_length=2, max_length=50)
+    exam_category: str = Field("BSEB_10TH", max_length=50)
     phone: Optional[str] = Field(None, max_length=15)
     answers: Dict[str, str] = Field(default_factory=dict, max_length=150)
+    time_taken_seconds: Optional[int] = Field(0, ge=0)
     demo_mode: bool = False
 
     @field_validator("student_name", "district")
@@ -244,7 +247,7 @@ def get_available_quizzes(request: Request):
 
     try:
         res = (
-            supabase.table("class10_quizzes")
+            supabase.table("master_quizzes")
             .select("id, title, subject, slot, quiz_date, total_questions, duration_minutes")
             .eq("is_active", True)
             .order("quiz_date", desc=True)
@@ -283,7 +286,7 @@ def get_today_quiz(
         # 1. User chose specific quiz card (Highest Priority)
         if clean_quiz_id:
             q_res = (
-                supabase.table("class10_quizzes")
+                supabase.table("master_quizzes")
                 .select("id, title, subject, slot, total_questions, duration_minutes")
                 .eq("id", clean_quiz_id)
                 .eq("is_active", True)
@@ -296,7 +299,7 @@ def get_today_quiz(
         elif clean_subject:
             # Look for today's active quiz for this exact subject
             q_res = (
-                supabase.table("class10_quizzes")
+                supabase.table("master_quizzes")
                 .select("id, title, subject, slot, total_questions, duration_minutes")
                 .eq("subject", clean_subject)
                 .eq("quiz_date", today_str)
@@ -310,7 +313,7 @@ def get_today_quiz(
             # Fallback to latest active quiz for this exact subject
             if not quiz_data:
                 fb_res = (
-                    supabase.table("class10_quizzes")
+                    supabase.table("master_quizzes")
                     .select("id, title, subject, slot, total_questions, duration_minutes")
                     .eq("subject", clean_subject)
                     .eq("is_active", True)
@@ -324,7 +327,7 @@ def get_today_quiz(
         # 3. Default fallback if nothing passed
         else:
             fb_res = (
-                supabase.table("class10_quizzes")
+                supabase.table("master_quizzes")
                 .select("id, title, subject, slot, total_questions, duration_minutes")
                 .eq("is_active", True)
                 .order("quiz_date", desc=True)
@@ -350,7 +353,7 @@ def get_today_quiz(
 
     try:
         q_res = (
-            supabase.table("class10_questions")
+            supabase.table("master_questions")
             .select("id, question_text, option_a, option_b, option_c, option_d, order_index")
             .eq("quiz_id", quiz_data["id"])
             .order("order_index", desc=False)
@@ -416,7 +419,7 @@ def submit_quiz_answers(sub: SubmitAnswersRequest, request: Request):
 
     try:
         db_res = (
-            supabase.table("class10_questions")
+            supabase.table("master_questions")
             .select("id, question_text, correct_option, explanation, order_index")
             .eq("quiz_id", clean_quiz_id)
             .order("order_index", desc=False)
@@ -472,14 +475,17 @@ def submit_quiz_answers(sub: SubmitAnswersRequest, request: Request):
 
     if not sub.demo_mode:
         try:
-            supabase.table("class10_leaderboard").insert({
+            supabase.table("master_leaderboard").insert({
                 "quiz_id": clean_quiz_id,
+                "user_id": sub.user_id,
                 "student_name": sub.student_name,
                 "district": sub.district,
+                "exam_category": sub.exam_category,
                 "phone": sub.phone,
                 "score": correct,
                 "total_questions": total,
-                "accuracy": accuracy
+                "accuracy": accuracy,
+                "time_taken_seconds": sub.time_taken_seconds
             }).execute()
         except Exception as err:
             logger.warning(f"Leaderboard insert error: {err}")
@@ -508,10 +514,11 @@ def get_quiz_leaderboard(quiz_id: str, limit: int = 25):
 
     try:
         res = (
-            supabase.table("class10_leaderboard")
-            .select("student_name, district, score, total_questions, accuracy, created_at")
+            supabase.table("master_leaderboard")
+            .select("user_id, student_name, district, exam_category, score, total_questions, accuracy, time_taken_seconds, created_at")
             .eq("quiz_id", quiz_id.strip())
             .order("score", desc=True)
+            .order("time_taken_seconds", desc=False)
             .order("created_at", desc=False)
             .limit(limit)
             .execute()
@@ -547,7 +554,7 @@ def admin_get_all_quizzes(_: bool = Depends(verify_quiz_admin)):
     
     try:
         res = (
-            supabase.table("class10_quizzes")
+            supabase.table("master_quizzes")
             .select("id, title, subject, slot, quiz_date, total_questions, duration_minutes, is_active, created_at")
             .order("quiz_date", desc=True)
             .limit(100)
@@ -566,7 +573,7 @@ def admin_get_quiz_questions(quiz_id: str, _: bool = Depends(verify_quiz_admin))
         raise HTTPException(status_code=503, detail="Database unavailable")
     try:
         res = (
-            supabase.table("class10_questions")
+            supabase.table("master_questions")
             .select("*")
             .eq("quiz_id", quiz_id.strip())
             .order("order_index", desc=False)
@@ -595,7 +602,7 @@ def admin_create_quiz(payload: AdminQuizCreateRequest, _: bool = Depends(verify_
     }
     
     try:
-        res = supabase.table("class10_quizzes").insert(data).execute()
+        res = supabase.table("master_quizzes").insert(data).execute()
         return {"success": True, "data": res.data[0] if res.data else None}
     except Exception as e:
         logger.error(f"Error creating quiz: {e}")
@@ -609,7 +616,7 @@ def admin_toggle_quiz_status(quiz_id: str, is_active: bool = Query(...), _: bool
         raise HTTPException(status_code=503, detail="Database unavailable")
 
     try:
-        supabase.table("class10_quizzes").update({"is_active": is_active}).eq("id", quiz_id.strip()).execute()
+        supabase.table("master_quizzes").update({"is_active": is_active}).eq("id", quiz_id.strip()).execute()
         return {"success": True, "message": f"Quiz status updated to {is_active}"}
     except Exception as e:
         logger.error(f"Error toggling quiz status: {e}")
@@ -623,11 +630,11 @@ def admin_delete_question(question_id: str, quiz_id: str = Query(...), _: bool =
         raise HTTPException(status_code=503, detail="Database unavailable")
     try:
         clean_quiz_id = quiz_id.strip()
-        supabase.table("class10_questions").delete().eq("id", question_id.strip()).execute()
+        supabase.table("master_questions").delete().eq("id", question_id.strip()).execute()
         
-        cnt_res = supabase.table("class10_questions").select("id", count="exact").eq("quiz_id", clean_quiz_id).execute()
+        cnt_res = supabase.table("master_questions").select("id", count="exact").eq("quiz_id", clean_quiz_id).execute()
         new_count = cnt_res.count or 0
-        supabase.table("class10_quizzes").update({"total_questions": new_count}).eq("id", clean_quiz_id).execute()
+        supabase.table("master_quizzes").update({"total_questions": new_count}).eq("id", clean_quiz_id).execute()
         
         return {"success": True, "remaining": new_count}
     except Exception as e:
@@ -641,7 +648,7 @@ def admin_delete_entire_quiz(quiz_id: str, _: bool = Depends(verify_quiz_admin))
     if not supabase:
         raise HTTPException(status_code=503, detail="Database unavailable")
     try:
-        supabase.table("class10_quizzes").delete().eq("id", quiz_id.strip()).execute()
+        supabase.table("master_quizzes").delete().eq("id", quiz_id.strip()).execute()
         return {"success": True, "message": "Quiz deleted permanently"}
     except Exception as e:
         logger.error(f"Error deleting entire quiz: {e}")
@@ -657,7 +664,7 @@ def admin_add_questions_batch(payload: AdminBatchQuestionRequest, _: bool = Depe
     clean_quiz_id = payload.quiz_id.strip()
 
     try:
-        count_res = supabase.table("class10_questions").select("id", count="exact").eq("quiz_id", clean_quiz_id).execute()
+        count_res = supabase.table("master_questions").select("id", count="exact").eq("quiz_id", clean_quiz_id).execute()
         existing_count = count_res.count or 0
     except Exception:
         existing_count = 0
@@ -678,8 +685,8 @@ def admin_add_questions_batch(payload: AdminBatchQuestionRequest, _: bool = Depe
 
     if formatted:
         try:
-            supabase.table("class10_questions").insert(formatted).execute()
-            supabase.table("class10_quizzes").update({"total_questions": existing_count + len(formatted)}).eq("id", clean_quiz_id).execute()
+            supabase.table("master_questions").insert(formatted).execute()
+            supabase.table("master_quizzes").update({"total_questions": existing_count + len(formatted)}).eq("id", clean_quiz_id).execute()
         except Exception as e:
             logger.error(f"Error saving questions: {e}")
             raise HTTPException(status_code=500, detail="Failed to save questions")

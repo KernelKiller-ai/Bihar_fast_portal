@@ -294,7 +294,7 @@ POST /api/quiz/admin/toggle-status/{quiz_id}?is_active=true
 POST /api/quiz/admin/add-questions
 ```
 
-The quiz API is backed by the `class10_quizzes`, `class10_questions`, `class10_leaderboard`, and `quiz_ip_rate_limits` tables in Supabase.
+The quiz API is backed by the `master_quizzes`, `master_questions`, `master_leaderboard`, and `quiz_ip_rate_limits` tables in Supabase.
 
 ---
 

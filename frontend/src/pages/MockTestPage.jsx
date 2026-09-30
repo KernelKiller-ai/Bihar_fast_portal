@@ -113,7 +113,7 @@ export default function MockTestPage() {
   const currentExam = EXAM_CATEGORIES.find((e) => e.id === selectedExamId);
 
   useEffect(() => {
-    document.title = "Bihar Board Class 10 Free Mock Test & Quiz | BiharFast";
+    document.title = "Bihar All Exam Free Live Mock Test & Leaderboard | BiharFast";
 
     const setMetaTag = (attrName, attrValue, content) => {
       let element = document.querySelector(`meta[${attrName}="${attrValue}"]`);
@@ -125,9 +125,9 @@ export default function MockTestPage() {
       element.setAttribute("content", content);
     };
 
-    setMetaTag("name", "description", "अभ्यास करें बिहार बोर्ड मैट्रिक परीक्षा के लिए फ्री ऑनलाइन मॉक टेस्ट और क्विज़। पाएं तुरंत रिजल्ट, विस्तृत समाधान और लीडरबोर्ड रैंकिंग।");
-    setMetaTag("property", "og:title", "Bihar Board Class 10 Free Mock Test & Quiz | BiharFast");
-    setMetaTag("property", "og:description", "अभ्यास करें बिहार बोर्ड मैट्रिक परीक्षा के लिए फ्री ऑनलाइन मॉक टेस्ट और क्विज़। पाएं तुरंत रिजल्ट, विस्तृत समाधान और लीडरबोर्ड रैंकिंग।");
+    setMetaTag("name", "description", "अभ्यास करें बिहार बोर्ड (10th/12th) एवं बिहार पुलिस, BSSC, SSC भर्ती परीक्षाओं के लिए ऑनलाइन लाइव मॉक टेस्ट। पाएं तुरंत रिजल्ट व लीडरबोर्ड रैंकिंग।");
+    setMetaTag("property", "og:title", "Bihar All Exam Free Live Mock Test & Leaderboard | BiharFast");
+    setMetaTag("property", "og:description", "अभ्यास करें बिहार बोर्ड (10th/12th) एवं बिहार पुलिस, BSSC, SSC भर्ती परीक्षाओं के लिए ऑनलाइन लाइव मॉक टेस्ट। पाएं तुरंत रिजल्ट व लीडरबोर्ड रैंकिंग।");
     setMetaTag("property", "og:url", `https://biharfast.in${window.location.pathname}`);
 
     let canonicalTag = document.querySelector('link[rel="canonical"]');
@@ -394,7 +394,7 @@ export default function MockTestPage() {
                 onClick={() => setSearchParams({ exam: "class_10" })}
                 className="px-5 py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-black rounded-xl text-xs transition shadow-xs cursor-pointer"
               >
-                10th Matric Live Test देखें
+                All Exam Live Test देखें
               </button>
               <button
                 type="button"

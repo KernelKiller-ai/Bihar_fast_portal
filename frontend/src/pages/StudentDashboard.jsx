@@ -89,7 +89,7 @@ export default function StudentDashboard() {
             <button type="button" onClick={openLoginModal} className="rounded-xl bg-sky-800 px-5 py-3 text-sm font-black text-white transition hover:bg-sky-900">
               Student Login
             </button>
-            <Link to="/class-10-quiz" className="inline-flex items-center justify-center gap-2 rounded-xl border border-slate-300 px-5 py-3 text-sm font-black text-slate-800 transition hover:bg-slate-50">
+            <Link to="/mock-test" className="inline-flex items-center justify-center gap-2 rounded-xl border border-slate-300 px-5 py-3 text-sm font-black text-slate-800 transition hover:bg-slate-50">
               5 प्रश्नों का फ्री डेमो <ArrowRight size={16} />
             </Link>
           </div>
@@ -205,7 +205,7 @@ export default function StudentDashboard() {
                 <Trophy size={28} className="mx-auto text-amber-500" />
                 <p className="mt-3 text-sm font-extrabold text-slate-800">आपका पहला टेस्ट यहाँ दिखाई देगा</p>
                 <p className="mt-1 text-xs text-slate-500">फुल-लेंथ टेस्ट देकर अपनी तैयारी का आकलन करें।</p>
-                <Link to="/class-10-quiz" className="mt-4 inline-flex items-center gap-2 text-sm font-black text-sky-800 hover:text-sky-950">
+                <Link to="/mock-test" className="mt-4 inline-flex items-center gap-2 text-sm font-black text-sky-800 hover:text-sky-950">
                   टेस्ट चुनें <ArrowRight size={15} />
                 </Link>
               </div>
@@ -266,7 +266,7 @@ export default function StudentDashboard() {
             <h2 className="mt-1 text-xl font-black">Start New Full-Length Mock Test</h2>
             <p className="mt-1 text-xs text-sky-100">पूरा पेपर हल करें और अपना स्कोर इतिहास में सहेजें।</p>
           </div>
-          <Link to="/class-10-quiz" className="inline-flex shrink-0 items-center gap-2 rounded-xl bg-amber-400 px-4 py-3 text-sm font-black text-slate-950 transition hover:bg-amber-300">
+          <Link to="/mock-test" className="inline-flex shrink-0 items-center gap-2 rounded-xl bg-amber-400 px-4 py-3 text-sm font-black text-slate-950 transition hover:bg-amber-300">
             मॉक टेस्ट शुरू करें <ArrowRight size={16} />
           </Link>
         </section>

@@ -64,7 +64,7 @@ export default function Class10QuizPlayer({ examId = "class_10", quizId = null }
   const profileName = user?.user_metadata?.full_name || user?.user_metadata?.name || user?.email?.split("@")[0] || "";
 
   useEffect(() => {
-    document.title = "Bihar Board Class 10 Free Mock Test & Quiz | BiharFast";
+    document.title = "Bihar State Live Mock Test & Quiz Hub | BiharFast";
 
     const setMetaTag = (attrName, attrValue, content) => {
       let element = document.querySelector(`meta[${attrName}="${attrValue}"]`);
@@ -76,9 +76,9 @@ export default function Class10QuizPlayer({ examId = "class_10", quizId = null }
       element.setAttribute("content", content);
     };
 
-    setMetaTag("name", "description", "अभ्यास करें बिहार बोर्ड मैट्रिक परीक्षा के लिए फ्री ऑनलाइन मॉक टेस्ट और क्विज़। पाएं तुरंत रिजल्ट, विस्तृत समाधान और लीडरबोर्ड रैंकिंग।");
-    setMetaTag("property", "og:title", "Bihar Board Class 10 Free Mock Test & Quiz | BiharFast");
-    setMetaTag("property", "og:description", "अभ्यास करें बिहार बोर्ड मैट्रिक परीक्षा के लिए फ्री ऑनलाइन मॉक टेस्ट और क्विज़। पाएं तुरंत रिजल्ट, विस्तृत समाधान और लीडरबोर्ड रैंकिंग।");
+    setMetaTag("name", "description", "अभ्यास करें बिहार बोर्ड मैट्रिक, इंटर व बिहार पुलिस, BSSC लाइव मॉक टेस्ट और क्विज़। पाएं तुरंत रिजल्ट, विस्तृत समाधान और लीडरबोर्ड रैंकिंग।");
+    setMetaTag("property", "og:title", "Bihar State Live Mock Test & Quiz Hub | BiharFast");
+    setMetaTag("property", "og:description", "अभ्यास करें बिहार बोर्ड मैट्रिक, इंटर व बिहार पुलिस, BSSC लाइव मॉक टेस्ट और क्विज़। पाएं तुरंत रिजल्ट, विस्तृत समाधान और लीडरबोर्ड रैंकिंग।");
 
     let canonicalTag = document.querySelector('link[rel="canonical"]');
     if (!canonicalTag) {
@@ -146,6 +146,18 @@ export default function Class10QuizPlayer({ examId = "class_10", quizId = null }
     setStep("playing");
   };
 
+function getExamCategoryCode(examId, subject) {
+  const combined = `${examId || ""} ${subject || ""}`.toLowerCase();
+  if (combined.includes("10") || combined.includes("matric")) return "BSEB_10TH";
+  if (combined.includes("12") || combined.includes("inter")) return "BSEB_12TH";
+  if (combined.includes("police")) return "BIHAR_POLICE";
+  if (combined.includes("bssc")) return "BSSC_INTER";
+  if (combined.includes("ssc_gd")) return "SSC_GD";
+  if (combined.includes("rrb")) return "RRB_GROUP_D";
+  if (combined.includes("daroga") || combined.includes("bpssc")) return "BIHAR_DAROGA";
+  return "BSEB_10TH";
+}
+
   // Submit Handler
   const handleSubmit = useCallback(async (automatic = false) => {
     if (submissionLockRef.current || !quizMeta) return;
@@ -159,12 +171,16 @@ export default function Class10QuizPlayer({ examId = "class_10", quizId = null }
     setSubmitting(true);
 
     try {
+      const timeTaken = startedAtRef.current ? Math.max(0, Math.round((Date.now() - startedAtRef.current) / 1000)) : 0;
       const payload = {
         quiz_id: quizMeta.id,
+        user_id: user?.id || null,
         answers: answers,
         student_name: student.name.trim() || profileName || "छात्र",
         district: student.district || "बिहार",
+        exam_category: getExamCategoryCode(examId, quizMeta.subject),
         phone: student.phone.trim() || null,
+        time_taken_seconds: timeTaken,
         demo_mode: demoMode
       };
 
@@ -652,7 +668,7 @@ export default function Class10QuizPlayer({ examId = "class_10", quizId = null }
           </div>
         </div>
 
-        <Leaderboard quizId={quizMeta.id} />
+        <Leaderboard quizId={quizMeta.id} examCategory={getExamCategoryCode(examId, quizMeta.subject)} />
       </div>
     );
   }

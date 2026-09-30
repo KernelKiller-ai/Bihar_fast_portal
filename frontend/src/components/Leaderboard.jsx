@@ -3,7 +3,7 @@ import PropTypes from "prop-types";
 import { Trophy, Medal, Award, Flame, Users, MapPin, Sparkles, User } from "lucide-react";
 import { supabase } from "../api/supabase";
 
-export default function Leaderboard({ quizId }) {
+export default function Leaderboard({ quizId, examCategory }) {
   const [ranks, setRanks] = useState([]);
   const [loading, setLoading] = useState(true);
 
@@ -14,12 +14,18 @@ export default function Leaderboard({ quizId }) {
     async function loadRanks() {
       try {
         setLoading(true);
-        // avatar_url ke saath fetch
-        const { data, error } = await supabase
-          .from("class10_leaderboard")
-          .select("id, student_name, district, score, total_questions, accuracy, avatar_url, created_at")
-          .eq("quiz_id", quizId)
+        let query = supabase
+          .from("master_leaderboard")
+          .select("id, quiz_id, user_id, student_name, district, exam_category, score, total_questions, accuracy, time_taken_seconds, avatar_url, created_at")
+          .eq("quiz_id", quizId);
+
+        if (examCategory) {
+          query = query.eq("exam_category", examCategory);
+        }
+
+        const { data, error } = await query
           .order("score", { ascending: false })
+          .order("time_taken_seconds", { ascending: true, nullsFirst: false })
           .order("created_at", { ascending: true })
           .limit(50);
 
@@ -44,7 +50,7 @@ export default function Leaderboard({ quizId }) {
     return () => {
       isMounted = false;
     };
-  }, [quizId]);
+  }, [quizId, examCategory]);
 
   const getBadge = (rank) => {
     if (rank === 1) {
@@ -164,5 +170,6 @@ export default function Leaderboard({ quizId }) {
 }
 
 Leaderboard.propTypes = {
-  quizId: PropTypes.string.isRequired
+  quizId: PropTypes.string.isRequired,
+  examCategory: PropTypes.string
 };
