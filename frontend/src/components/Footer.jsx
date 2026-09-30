@@ -222,12 +222,12 @@ export default function Footer({ onOpenTool }) {
                 </Link>
               </li>
               <li>
-                <Link to="/" className="hover:text-blue-700 flex items-center gap-2 transition">
+                <Link to="/jobs" className="hover:text-blue-700 flex items-center gap-2 transition">
                   <Briefcase size={13} className="text-slate-400" /> Government Jobs
                 </Link>
               </li>
               <li>
-                <Link to="/" className="hover:text-blue-700 flex items-center gap-2 transition">
+                <Link to="/sitemap" className="hover:text-blue-700 flex items-center gap-2 transition">
                   <Users size={13} className="text-slate-400" /> Welfare Schemes
                 </Link>
               </li>
@@ -237,21 +237,21 @@ export default function Footer({ onOpenTool }) {
                 </Link>
               </li>
               <li>
-                <Link to="/" className="hover:text-blue-700 flex items-center gap-2 transition">
+                <Link to="/results" className="hover:text-blue-700 flex items-center gap-2 transition">
                   <FileText size={13} className="text-slate-400" /> Results
                 </Link>
               </li>
               <li>
-                <button 
-                  type="button"
+                <Link 
+                  to="/age-calculator"
                   onClick={() => onOpenTool?.("resizer")}
                   className="hover:text-blue-700 flex items-center gap-2 transition text-left cursor-pointer"
                 >
                   <Wrench size={13} className="text-slate-400" /> Useful Tools
-                </button>
+                </Link>
               </li>
               <li>
-                <Link to="/" className="hover:text-blue-700 flex items-center gap-2 transition">
+                <Link to="/sitemap" className="hover:text-blue-700 flex items-center gap-2 transition">
                   <Bell size={13} className="text-slate-400" /> Alerts & Updates
                 </Link>
               </li>
@@ -364,7 +364,7 @@ export default function Footer({ onOpenTool }) {
                 </a>
               </li>
               <li>
-                <Link to="/" className="hover:text-blue-700 flex items-center gap-2 font-bold text-slate-800 transition">
+                <Link to="/sitemap" className="hover:text-blue-700 flex items-center gap-2 font-bold text-slate-800 transition">
                   <FolderOpen size={13} className="text-blue-600 shrink-0" /> All Categories
                 </Link>
               </li>

@@ -229,9 +229,9 @@ export default function MockTestPage() {
             {EXAM_CATEGORIES.map((exam) => {
               const Icon = exam.icon;
               return (
-                <div
+                <Link
                   key={exam.id}
-                  onClick={() => setSearchParams({ exam: exam.id })}
+                  to={`/mock-test?exam=${exam.id}`}
                   className="bg-white rounded-2xl p-5 border border-slate-200 hover:border-blue-500 hover:shadow-md transition cursor-pointer flex flex-col justify-between group"
                 >
                   <div>
@@ -259,7 +259,7 @@ export default function MockTestPage() {
                     <span>विषय सूची देखें</span>
                     <ChevronRight size={15} className="group-hover:translate-x-1 transition" />
                   </div>
-                </div>
+                </Link>
               );
             })}
           </div>
@@ -327,13 +327,13 @@ export default function MockTestPage() {
         
         {/* Navigation Breadcrumb */}
         <div className="flex items-center justify-between bg-white p-4 rounded-2xl border border-slate-200 shadow-xs">
-          <button
-            type="button"
+          <Link
+            to="/mock-test"
             onClick={() => setSearchParams({})}
             className="flex items-center gap-1.5 text-xs font-bold text-slate-600 hover:text-blue-700 transition cursor-pointer"
           >
             <ArrowLeft size={14} /> सभी परीक्षाएं देखें (Change Category)
-          </button>
+          </Link>
           <span className="text-xs font-black text-slate-900">
             चयनित परीक्षा: <span className="text-blue-700">{currentExam?.title}</span>
           </span>
@@ -441,13 +441,13 @@ export default function MockTestPage() {
                   </div>
                 </div>
 
-                <button
-                  type="button"
+                <Link
+                  to={`/mock-test?exam=${selectedExamId}&quiz_id=${paper.id}`}
                   onClick={() => setSearchParams({ exam: selectedExamId, quiz_id: paper.id })}
                   className="w-full py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-black flex items-center justify-center gap-1.5 transition shadow-xs cursor-pointer"
                 >
                   टेस्ट शुरू करें <ArrowRight size={14} />
-                </button>
+                </Link>
               </div>
             ))}
           </div>

@@ -271,8 +271,8 @@ export default function App() {
 
                           {/* Quick Navigation Icons */}
                           <div className="grid grid-cols-5 gap-2 pt-2 max-w-lg mx-auto lg:mx-0">
-                            <button
-                              type="button"
+                            <Link
+                              to="/jobs"
                               onClick={() => { setActiveTab("jobs"); setSearchQuery(""); }}
                               className="flex flex-col items-center justify-center p-1.5 rounded-xl hover:bg-blue-50/80 transition group cursor-pointer text-center"
                             >
@@ -280,7 +280,7 @@ export default function App() {
                                 <Briefcase size={18} />
                               </div>
                               <span className="text-[10px] sm:text-[11px] font-bold text-slate-900 mt-1 leading-tight">Government<br />Jobs</span>
-                            </button>
+                            </Link>
 
                             {/* Live Mock Test Quick Icon */}
                             <Link
@@ -306,8 +306,8 @@ export default function App() {
                               <span className="text-[10px] sm:text-[11px] font-bold text-slate-900 mt-1 leading-tight">RTPS<br />Services</span>
                             </Link>
 
-                            <button
-                              type="button"
+                            <Link
+                              to="/results"
                               onClick={() => { setActiveTab("results"); setSearchQuery(""); }}
                               className="flex flex-col items-center justify-center p-1.5 rounded-xl hover:bg-purple-50/80 transition group cursor-pointer text-center"
                             >
@@ -315,10 +315,10 @@ export default function App() {
                                 <Award size={18} />
                               </div>
                               <span className="text-[10px] sm:text-[11px] font-bold text-slate-900 mt-1 leading-tight">Exam<br />Results</span>
-                            </button>
+                            </Link>
 
-                            <button
-                              type="button"
+                            <Link
+                              to="/age-calculator"
                               onClick={() => handleOpenTool("resizer")}
                               className="flex flex-col items-center justify-center p-1.5 rounded-xl hover:bg-rose-50/80 transition group cursor-pointer text-center"
                             >
@@ -326,7 +326,7 @@ export default function App() {
                                 <Wrench size={18} />
                               </div>
                               <span className="text-[10px] sm:text-[11px] font-bold text-slate-900 mt-1 leading-tight">Useful<br />Tools</span>
-                            </button>
+                            </Link>
                           </div>
                         </div>
 
@@ -442,20 +442,24 @@ export default function App() {
                     <div className="bg-slate-50 border-t border-slate-200/80 py-2 px-4 flex items-center justify-center gap-1.5 flex-wrap text-xs text-slate-700 font-medium">
                       <span className="font-bold text-slate-700 text-[11px]">Trending:</span>
                       {["Live Mock Test", "BPSC", "BPSSC", "CSBC पुलिस", "BCECEB", "BTSC", "BSSC Inter"].map((tag) => (
-                        <button
-                          key={tag}
-                          type="button"
-                          onClick={() => {
-                            if (tag === "Live Mock Test") {
-                              window.location.href = "/mock-test";
-                            } else {
-                              setSearchQuery(tag);
-                            }
-                          }}
-                          className="px-2.5 py-0.5 rounded-full bg-white hover:bg-blue-50 text-slate-800 hover:text-blue-800 text-[11px] font-bold border border-slate-300 transition cursor-pointer shadow-xs"
-                        >
-                          #{tag}
-                        </button>
+                        tag === "Live Mock Test" ? (
+                          <Link
+                            key={tag}
+                            to="/mock-test"
+                            className="px-2.5 py-0.5 rounded-full bg-white hover:bg-blue-50 text-slate-800 hover:text-blue-800 text-[11px] font-bold border border-slate-300 transition cursor-pointer shadow-xs"
+                          >
+                            #{tag}
+                          </Link>
+                        ) : (
+                          <button
+                            key={tag}
+                            type="button"
+                            onClick={() => setSearchQuery(tag)}
+                            className="px-2.5 py-0.5 rounded-full bg-white hover:bg-blue-50 text-slate-800 hover:text-blue-800 text-[11px] font-bold border border-slate-300 transition cursor-pointer shadow-xs"
+                          >
+                            #{tag}
+                          </button>
+                        )
                       ))}
                     </div>
                   </section>
@@ -581,10 +585,11 @@ export default function App() {
                           {CATEGORY_TABS.map((tab) => {
                             const Icon = tab.icon;
                             const isActive = activeTab === tab.id;
+                            const tabPath = tab.id === "all" ? "/" : tab.id === "jobs" ? "/jobs" : tab.id === "results" ? "/results" : tab.id === "admit_card" ? "/admit-card" : "/sitemap";
                             return (
-                              <button
+                              <Link
                                 key={tab.id}
-                                type="button"
+                                to={tabPath}
                                 onClick={() => setActiveTab(tab.id)}
                                 className={`text-xs font-black px-4 py-2.5 rounded-xl whitespace-nowrap shrink-0 transition-all flex items-center gap-2 border cursor-pointer ${
                                   isActive
@@ -594,7 +599,7 @@ export default function App() {
                               >
                                 <Icon size={15} className={isActive ? "text-amber-400" : "text-slate-600"} />
                                 {tab.label}
-                              </button>
+                              </Link>
                             );
                           })}
                         </div>

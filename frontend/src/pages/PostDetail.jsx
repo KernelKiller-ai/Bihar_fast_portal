@@ -296,7 +296,10 @@ export default function PostDetail({ notices = [] }) {
           Home
         </Link>
         <ChevronRight size={13} className="text-slate-400 shrink-0" />
-        <Link to="/" className="hover:text-blue-700 transition capitalize shrink-0">
+        <Link 
+          to={(category || "").toLowerCase().includes("job") ? "/jobs" : (category || "").toLowerCase().includes("result") ? "/results" : (category || "").toLowerCase().includes("admit") ? "/admit-card" : "/sitemap"} 
+          className="hover:text-blue-700 transition capitalize shrink-0"
+        >
           {category || "Updates"}
         </Link>
         <ChevronRight size={13} className="text-slate-400 shrink-0" />
