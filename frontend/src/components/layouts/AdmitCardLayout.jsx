@@ -12,7 +12,6 @@ import {
   CheckCircle2
 } from "lucide-react";
 import { Link } from "react-router-dom";
-import ShareAlertBar from "./ShareAlertBar";
 
 export default function AdmitCardLayout({ post }) {
   const downloadUrl = post.applyUrl || post.pdfUrl || post.pdf_url || "#";

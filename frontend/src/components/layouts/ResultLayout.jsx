@@ -11,7 +11,6 @@ import {
   FileText 
 } from "lucide-react";
 import { Link } from "react-router-dom";
-import ShareAlertBar from "./ShareAlertBar";
 import { addExternalLinkSafety } from "../../utils/sanitizeHtml";
 
 export default function ResultLayout({ post }) {
