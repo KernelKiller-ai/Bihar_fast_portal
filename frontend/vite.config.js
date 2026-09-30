@@ -4,6 +4,7 @@ import tailwindcss from '@tailwindcss/vite'
 import { VitePWA } from 'vite-plugin-pwa'
 
 export default defineConfig({
+  base: '/', // 1. Subroutes par CSS/JS assets hamesha root se load honge
   plugins: [
     react(),
     tailwindcss(),
@@ -47,15 +48,15 @@ export default defineConfig({
         ]
       },
       workbox: {
+        cleanupOutdatedCaches: true, // 2. Naya build aate hi purana cached bundle delete kar dega
         maximumFileSizeToCacheInBytes: 4 * 1024 * 1024,
-        globPatterns: ['**/*.{js,css,html,ico,png,svg}'],
-        // Ye sabse important hai: API aur XML routes ko Service Worker bypass karega
-        navigateFallbackDenylist: [/^\/api/, /\.xml$/]
+        globPatterns: ['**/*.{js,css,html,ico,png,svg,webp}'],
+        // Static assets aur APIs ko Service Worker bypass karega
+        navigateFallbackDenylist: [/^\/api/, /\.xml$/, /^\/assets\//]
       }
     })
   ],
   build: {
-    // Cross-world preload warning fix
     modulePreload: {
       polyfill: false
     },

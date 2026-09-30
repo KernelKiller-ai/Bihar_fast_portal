@@ -9,7 +9,7 @@
       "destination": "https://bihar-fast-portal.onrender.com/api/:path*"
     },
     {
-      "source": "/(.*)",
+      "source": "/((?!assets/|favicon.ico|robots.txt|sitemap.*\\.xml|.*\\.(?:css|js|png|jpg|jpeg|svg|webp|ico|json|woff2?)).*)",
       "destination": "/index.html"
     }
   ]
