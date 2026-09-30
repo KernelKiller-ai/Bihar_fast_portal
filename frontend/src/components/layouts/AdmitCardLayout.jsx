@@ -50,10 +50,8 @@ export default function AdmitCardLayout({ post }) {
         <p className="text-xs text-sky-200 mt-1.5 font-medium">विभाग: {dept} • परीक्षा केंद्र एवं रोल नंबर विवरण</p>
       </header>
 
-      <div className="p-5 sm:p-7 space-y-6">
-        {/* Dynamic Share Bar */}
-        <ShareAlertBar title={title} dept={dept} />
-
+      {/* Main Content Body Container */}
+      <div className="p-5 sm:p-6 space-y-6">
         {/* Direct Download Callout */}
         <div className="bg-emerald-50 border-2 border-emerald-500 rounded-2xl p-5 text-center space-y-2">
           <p className="text-xs font-bold text-emerald-950">आधिकारिक सर्वर से सीधा प्रवेश पत्र डाउनलोड करें</p>

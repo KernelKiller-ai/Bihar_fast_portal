@@ -165,10 +165,7 @@ export default function ResultLayout({ post }) {
           </section>
         )}
 
-        {/* ✅ Share & Community Bar moved to the bottom */}
-        <div className="border-t border-slate-200 pt-6">
-          <ShareAlertBar title={title} dept={dept} />
-        </div>
+        
       </div>
     </article>
   );

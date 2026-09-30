@@ -236,10 +236,7 @@ export default function JobLayout({ post }) {
           </section>
         )}
 
-        {/* ✅ Share & Community Bar moved to the bottom of all details */}
-        <div className="border-t border-slate-200 pt-6">
-          <ShareAlertBar title={title} dept={dept || ""} />
-        </div>
+        
 
       </div>
     </article>
