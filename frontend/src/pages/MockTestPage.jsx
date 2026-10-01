@@ -187,10 +187,17 @@ export default function MockTestPage() {
       return subj.startsWith("bseb_10") || subj.includes("10");
     }
     if (selectedExamId === "bseb_12_science") {
-      return subj.includes("12_117") || subj.includes("12_118") || subj.includes("12_119") || subj.includes("12_121") || subj.includes("12_science");
+      return subj.startsWith("bseb_12_1") || subj.includes("12_science");
     }
     if (selectedExamId === "bseb_12_arts") {
-      return subj.includes("12_3") || subj.includes("12_2") || subj.includes("12_arts") || subj.includes("lang");
+      return (
+        subj.startsWith("bseb_12_2") ||
+        subj.startsWith("bseb_12_3") ||
+        subj.startsWith("bseb_12_lang") ||
+        subj.includes("12_arts") ||
+        subj.includes("12_commerce") ||
+        subj.includes("lang")
+      );
     }
     return subj.includes(selectedExamId);
   });

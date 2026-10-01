@@ -52,6 +52,7 @@ export default function Class10QuizPlayer({ examId = "class_10", quizId = null }
   const [submitting, setSubmitting] = useState(false);
   const [result, setResult] = useState(null);
   const [loadingQuiz, setLoadingQuiz] = useState(true);
+  const [quizLoadMessage, setQuizLoadMessage] = useState("");
   const [timeExpired, setTimeExpired] = useState(false);
   const [submitError, setSubmitError] = useState("");
   const [attemptDate, setAttemptDate] = useState(null);
@@ -94,6 +95,7 @@ export default function Class10QuizPlayer({ examId = "class_10", quizId = null }
     let isMounted = true;
     async function fetchQuiz() {
       setLoadingQuiz(true);
+      setQuizLoadMessage("");
       try {
         let endpoint = `${API_BASE_URL}/api/quiz/today`;
         if (quizId) {
@@ -104,19 +106,29 @@ export default function Class10QuizPlayer({ examId = "class_10", quizId = null }
 
         const res = await fetch(endpoint);
         const data = await res.json();
+        if (!res.ok) {
+          throw new Error(data.detail || "प्रश्न पत्र लोड नहीं हो सका।");
+        }
         
         if (isMounted && data.is_live && data.quiz) {
           setQuizMeta(data.quiz);
           setQuestions(data.questions || []);
+          setQuizLoadMessage("");
           const durationSeconds = (data.quiz.duration_minutes || 15) * 60;
           remainingTimeRef.current = durationSeconds;
           setTimeLeft(durationSeconds);
         } else if (isMounted) {
           setQuizMeta(null);
           setQuestions([]);
+          setQuizLoadMessage(data.message || "इस परीक्षा के लिए कोई सक्रिय टेस्ट उपलब्ध नहीं है।");
         }
       } catch (err) {
         console.error("Quiz dynamic load error:", err);
+        if (isMounted) {
+          setQuizMeta(null);
+          setQuestions([]);
+          setQuizLoadMessage(err.message || "प्रश्न पत्र लोड नहीं हो सका। कृपया पुनः प्रयास करें।");
+        }
       } finally {
         if (isMounted) setLoadingQuiz(false);
       }
@@ -332,7 +344,9 @@ function getExamCategoryCode(examId, subject) {
     return (
       <div className="max-w-md mx-auto my-12 p-8 bg-white rounded-3xl text-center shadow-md border border-slate-200">
         <h3 className="text-lg font-black text-slate-800">सत्र वर्तमान में बंद है</h3>
-        <p className="text-xs text-slate-500 mt-2">इस परीक्षा के लिए नया टेस्ट जल्द ही लाइव किया जाएगा।</p>
+        <p className="text-xs text-slate-500 mt-2">
+          {quizLoadMessage || "इस परीक्षा के लिए नया टेस्ट जल्द ही लाइव किया जाएगा।"}
+        </p>
       </div>
     );
   }
