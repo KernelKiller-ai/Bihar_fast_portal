@@ -102,10 +102,17 @@
   </head>
   <body class="bg-slate-50 text-slate-900 antialiased selection:bg-[#0B4F8A] selection:text-white">
     <div id="root">
-      <header style="padding: 1rem; text-align: center;">
-        <h1 style="font-size: 1.5rem; font-weight: bold; color: #0B4F8A;">BiharFast - बिहार सरकारी नौकरी, एडमिट कार्ड व रिजल्ट</h1>
-        <p>नवीनतम सरकारी भर्तियां, प्रवेश पत्र और परीक्षा परिणाम सीधे आधिकारिक स्रोत से।</p>
-      </header>
+      <div style="min-height: 80vh; display: flex; flex-direction: column; align-items: center; justify-content: center; background-color: #f8fafc; font-family: system-ui, -apple-system, sans-serif; text-align: center; padding: 1.5rem;">
+        <div style="width: 44px; height: 44px; border: 4px solid #cbd5e1; border-top-color: #0B5C9E; border-radius: 50%; animation: spin 0.7s linear infinite; margin-bottom: 1rem;"></div>
+        <h2 style="font-size: 1.125rem; font-weight: 800; color: #0F172A; margin: 0; letter-spacing: -0.025em;">BiharFast Official</h2>
+        <p style="font-size: 0.8125rem; color: #64748B; margin-top: 0.25rem; font-weight: 600;">लोड हो रहा है, कृपया प्रतीक्षा करें...</p>
+        <style>
+          @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+          }
+        </style>
+      </div>
     </div>
     <script type="module" src="/src/main.jsx"></script>
     <script>
