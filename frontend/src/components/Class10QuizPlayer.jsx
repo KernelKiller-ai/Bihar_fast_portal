@@ -31,6 +31,15 @@ const BIHAR_DISTRICTS = [
   "Supaul", "Vaishali (Hajipur)", "West Champaran (Bettiah)"
 ];
 
+function shuffleQuestions(questions) {
+  const shuffled = [...questions];
+  for (let index = shuffled.length - 1; index > 0; index -= 1) {
+    const randomIndex = Math.floor(Math.random() * (index + 1));
+    [shuffled[index], shuffled[randomIndex]] = [shuffled[randomIndex], shuffled[index]];
+  }
+  return shuffled;
+}
+
 export default function Class10QuizPlayer({ examId = "class_10", quizId = null }) {
   const { user, openLoginModal } = useAuth();
   const studentNameId = useId();
@@ -147,6 +156,7 @@ export default function Class10QuizPlayer({ examId = "class_10", quizId = null }
       openLoginModal();
       return;
     }
+    setQuestions(shuffleQuestions(questions));
     setDemoMode(isDemo);
     setAnswers({});
     setResult(null);
