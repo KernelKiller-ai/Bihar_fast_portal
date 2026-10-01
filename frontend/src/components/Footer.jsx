@@ -124,7 +124,7 @@ export default function Footer({ onOpenTool }) {
 
       {/* 2. Main 5-Column Content Grid */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 pb-8 relative z-10">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-[repeat(14,minmax(0,1fr))] gap-8 items-start">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-14 gap-8 items-start">
           
           {/* Column 1: Brand Info & Clean Slogan (Span 3) */}
           <div className="lg:col-span-3 flex flex-col items-start">
