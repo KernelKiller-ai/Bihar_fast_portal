@@ -53,6 +53,7 @@ export default function Class10QuizPlayer({ examId = "class_10", quizId = null }
   const [result, setResult] = useState(null);
   const [loadingQuiz, setLoadingQuiz] = useState(true);
   const [quizLoadMessage, setQuizLoadMessage] = useState("");
+  const [failedAvatarUrl, setFailedAvatarUrl] = useState("");
   const [timeExpired, setTimeExpired] = useState(false);
   const [submitError, setSubmitError] = useState("");
   const [attemptDate, setAttemptDate] = useState(null);
@@ -63,6 +64,7 @@ export default function Class10QuizPlayer({ examId = "class_10", quizId = null }
   const startedAtRef = useRef(null);
   const activeQuestions = demoMode ? questions.slice(0, 5) : questions;
   const profileName = user?.user_metadata?.full_name || user?.user_metadata?.name || user?.email?.split("@")[0] || "";
+  const profileAvatar = user?.user_metadata?.avatar_url || user?.user_metadata?.picture || "";
 
   useEffect(() => {
     document.title = "Bihar State Live Mock Test & Quiz Hub | BiharFast";
@@ -572,9 +574,19 @@ function getExamCategoryCode(examId, subject) {
           </div>
 
           <div className="my-6">
-            <div className="w-16 h-16 bg-amber-100 text-amber-600 rounded-full flex items-center justify-center mx-auto mb-3 shadow-inner">
-              <Trophy size={32} />
-            </div>
+            {profileAvatar && profileAvatar !== failedAvatarUrl ? (
+              <img
+                src={profileAvatar}
+                alt={`${student.name || profileName} की प्रोफाइल फोटो`}
+                referrerPolicy="no-referrer"
+                onError={() => setFailedAvatarUrl(profileAvatar)}
+                className="w-16 h-16 rounded-full object-cover mx-auto mb-3 border-2 border-amber-200 shadow-inner"
+              />
+            ) : (
+              <div className="w-16 h-16 bg-amber-100 text-amber-600 rounded-full flex items-center justify-center mx-auto mb-3 shadow-inner">
+                <Trophy size={32} />
+              </div>
+            )}
             <h2 className="text-2xl font-black text-slate-900">{student.name}</h2>
             <p className="text-xs text-slate-500 font-semibold flex items-center justify-center gap-1 mt-0.5">
               <MapPin size={12} className="text-rose-500" />
