@@ -44,6 +44,7 @@ export default function Navbar() {
                 width="40" 
                 height="40" 
                 loading="eager" 
+                fetchpriority="high"
                 decoding="async" 
                 className="h-9 sm:h-10 w-9 sm:w-10 object-contain aspect-square" 
               />

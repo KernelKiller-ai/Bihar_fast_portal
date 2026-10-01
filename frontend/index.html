@@ -69,36 +69,55 @@
     <link rel="shortcut icon" type="image/png" href="/logo-192.png" />
     <link rel="apple-touch-icon" href="/logo-192.png" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-    <!-- OneSignal Web Push -->
-    <script src="https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.page.js" defer></script>
+    <!-- Optimized Lazy Third-Party Scripts (AdSense, OneSignal, GA4) for Maximum PageSpeed -->
     <script>
-      window.OneSignalDeferred = window.OneSignalDeferred || [];
-      OneSignalDeferred.push(async function(OneSignal) {
-        await OneSignal.init({
-          appId: "b7c92f29-666a-42e6-ba4b-5148849d773f",
-          notifyButton: {
-            enable: true,
-          },
-          allowLocalhostAsSecureOrigin: true,
-        });
-      });
-    </script>
+      (function() {
+        let loaded = false;
+        function loadThirdPartyScripts() {
+          if (loaded) return;
+          loaded = true;
 
-    <!-- Google Analytics (GA4) -->
-    <script async src="https://www.googletagmanager.com/gtag/js?id=G-2N03Q64SX9"></script>
-    <script>
-      window.dataLayer = window.dataLayer || [];
-      function gtag(){dataLayer.push(arguments);}
-      gtag('js', new Date());
-      gtag('config', 'G-2N03Q64SX9');
+          // 1. OneSignal Web Push
+          const osScript = document.createElement('script');
+          osScript.src = "https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.page.js";
+          osScript.defer = true;
+          document.head.appendChild(osScript);
+
+          window.OneSignalDeferred = window.OneSignalDeferred || [];
+          window.OneSignalDeferred.push(async function(OneSignal) {
+            await OneSignal.init({
+              appId: "b7c92f29-666a-42e6-ba4b-5148849d773f",
+              notifyButton: { enable: true },
+              allowLocalhostAsSecureOrigin: true,
+            });
+          });
+
+          // 2. Google Analytics (GA4)
+          const gaScript = document.createElement('script');
+          gaScript.src = "https://www.googletagmanager.com/gtag/js?id=G-2N03Q64SX9";
+          gaScript.async = true;
+          document.head.appendChild(gaScript);
+
+          window.dataLayer = window.dataLayer || [];
+          function gtag(){ dataLayer.push(arguments); }
+          gtag('js', new Date());
+          gtag('config', 'G-2N03Q64SX9');
+
+          // 3. Google AdSense
+          const adsScript = document.createElement('script');
+          adsScript.src = "https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-9958508128722430";
+          adsScript.async = true;
+          adsScript.crossOrigin = "anonymous";
+          document.head.appendChild(adsScript);
+        }
+
+        const events = ['mousemove', 'touchstart', 'scroll', 'keydown'];
+        events.forEach(function(event) {
+          window.addEventListener(event, loadThirdPartyScripts, { passive: true, once: true });
+        });
+        setTimeout(loadThirdPartyScripts, 3500);
+      })();
     </script>
-    
-    <!-- Google AdSense -->
-    <script 
-      async 
-      src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-9958508128722430"
-      crossorigin="anonymous"
-    ></script>
   </head>
   <body class="bg-slate-50 text-slate-900 antialiased selection:bg-[#0B4F8A] selection:text-white">
     <div id="root">
