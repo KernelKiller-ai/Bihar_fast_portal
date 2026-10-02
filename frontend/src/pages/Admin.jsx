@@ -8,6 +8,51 @@ import AdminQuizManager from "../components/AdminQuizManager";
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "https://bihar-fast-portal.onrender.com";
 
+const categoryFieldConfig = {
+  jobs: {
+    showTotalPosts: true,
+    totalPostsLabel: "Total Posts / Vacancies",
+    totalPostsPlaceholder: "उदा. 1,957 पद",
+    lastDateLabel: "Apply Last Date",
+    lastDatePlaceholder: "उदा. 30 अक्टूबर 2026",
+    eligibilityLabel: "Eligibility Criteria",
+    eligibilityPlaceholder: "उदा. 10th/12th/Graduate",
+    applyUrlLabel: "Direct Apply Online URL",
+    pdfUrlLabel: "Official Notification PDF Link",
+  },
+  admit_card: {
+    showTotalPosts: false,
+    totalPostsFallback: "जारी (Released)",
+    lastDateLabel: "Exam Date / Schedule",
+    lastDatePlaceholder: "उदा. 15 से 22 नवम्बर 2026",
+    eligibilityLabel: "Login Requirement",
+    eligibilityPlaceholder: "उदा. Application No. & DOB / Password",
+    applyUrlLabel: "Direct Admit Card Download Link (Server 1)",
+    pdfUrlLabel: "Exam Notice / Guidelines PDF Link",
+  },
+  results: {
+    showTotalPosts: false,
+    totalPostsFallback: "Result Declared",
+    lastDateLabel: "Result Declaration Date",
+    lastDatePlaceholder: "उदा. 24 अक्टूबर 2026",
+    eligibilityLabel: "Credentials Required",
+    eligibilityPlaceholder: "उदा. Roll Code & Roll Number",
+    applyUrlLabel: "Direct Result / Scorecard Link",
+    pdfUrlLabel: "Merit List / Cut-off PDF Link",
+  },
+  schemes: {
+    showTotalPosts: true,
+    totalPostsLabel: "योजना लाभ (Financial Benefit / Grant)",
+    totalPostsPlaceholder: "उदा. ₹10,000 प्रोत्साहन राशि / ₹4 लाख तक लोन",
+    lastDateLabel: "आवेदन की अंतिम तिथि (या सक्रिय)",
+    lastDatePlaceholder: "उदा. सक्रिय योजना / 31 दिसम्बर 2026",
+    eligibilityLabel: "पात्रता एवं जरूरी दस्तावेज",
+    eligibilityPlaceholder: "उदा. बिहार स्थायी निवासी, 12th 1st Division, आधार, आय",
+    applyUrlLabel: "आधिकारिक ऑनलाइन आवेदन लिंक",
+    pdfUrlLabel: "सरकारी दिशा-निर्देश / दिशा-निर्देश PDF",
+  },
+};
+
 export default function Admin() {
   const [authPin, setAuthPin] = useState("");
   const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -47,6 +92,7 @@ export default function Admin() {
     how_to_apply: [""],
     selection_process: [""]
   });
+  const categoryFields = categoryFieldConfig[formData.category] || categoryFieldConfig.jobs;
 
   const authHeaders = (token = authPin, includeJson = false) => ({
     ...(includeJson ? { "Content-Type": "application/json" } : {}),
@@ -171,6 +217,9 @@ export default function Admin() {
     // Clean empty FAQs and steps
     const cleanedPayload = {
       ...formData,
+      total_posts: categoryFields.showTotalPosts
+        ? formData.total_posts
+        : categoryFields.totalPostsFallback,
       slug: formData.slug || formData.title.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, ""),
       meta_title: formData.meta_title || formData.title,
       meta_desc: formData.meta_desc || formData.short_desc,
@@ -518,7 +567,15 @@ export default function Admin() {
                   <label className="block text-xs font-black text-slate-700 mb-1">Category *</label>
                   <select
                     value={formData.category}
-                    onChange={(e) => setFormData({ ...formData, category: e.target.value })}
+                    onChange={(e) => setFormData({
+                      ...formData,
+                      category: e.target.value,
+                      total_posts: "",
+                      last_date: "",
+                      eligibility: "",
+                      apply_url: "",
+                      pdf_url: "",
+                    })}
                     className="w-full border border-slate-300 rounded-xl p-3 text-xs font-semibold focus:outline-[#0B4F8A]"
                   >
                     <option value="jobs">Government Jobs</option>
@@ -528,60 +585,67 @@ export default function Admin() {
                   </select>
                 </div>
 
-                <div>
-                  <label className="block text-xs font-black text-slate-700 mb-1">Total Posts</label>
-                  <input
-                    type="text"
-                    value={formData.total_posts}
-                    onChange={(e) => setFormData({ ...formData, total_posts: e.target.value })}
-                    placeholder="e.g. 1,957 पद"
-                    className="w-full border border-slate-300 rounded-xl p-3 text-xs font-semibold focus:outline-[#0B4F8A]"
-                  />
-                </div>
+                <div
+                  key={formData.category}
+                  className="sm:col-span-2 grid grid-cols-1 sm:grid-cols-2 gap-4 category-fields-enter"
+                >
+                  {categoryFields.showTotalPosts && (
+                    <div>
+                      <label className="block text-xs font-black text-slate-700 mb-1">{categoryFields.totalPostsLabel}</label>
+                      <input
+                        type="text"
+                        value={formData.total_posts}
+                        onChange={(e) => setFormData({ ...formData, total_posts: e.target.value })}
+                        placeholder={categoryFields.totalPostsPlaceholder}
+                        className="w-full border border-slate-300 rounded-xl p-3 text-xs font-semibold focus:outline-[#0B4F8A]"
+                      />
+                    </div>
+                  )}
 
-                <div>
-                  <label className="block text-xs font-black text-slate-700 mb-1">Last Date *</label>
-                  <input
-                    type="text"
-                    value={formData.last_date}
-                    onChange={(e) => setFormData({ ...formData, last_date: e.target.value })}
-                    placeholder="e.g. 30 अक्टूबर 2026"
-                    required
-                    className="w-full border border-slate-300 rounded-xl p-3 text-xs font-semibold focus:outline-[#0B4F8A]"
-                  />
-                </div>
+                  <div>
+                    <label className="block text-xs font-black text-slate-700 mb-1">{categoryFields.lastDateLabel} *</label>
+                    <input
+                      type="text"
+                      value={formData.last_date}
+                      onChange={(e) => setFormData({ ...formData, last_date: e.target.value })}
+                      placeholder={categoryFields.lastDatePlaceholder}
+                      required
+                      className="w-full border border-slate-300 rounded-xl p-3 text-xs font-semibold focus:outline-[#0B4F8A]"
+                    />
+                  </div>
 
-                <div>
-                  <label className="block text-xs font-black text-slate-700 mb-1">Eligibility Criteria</label>
-                  <input
-                    type="text"
-                    value={formData.eligibility}
-                    onChange={(e) => setFormData({ ...formData, eligibility: e.target.value })}
-                    placeholder="e.g. मान्यता प्राप्त विश्वविद्यालय से स्नातक डिग्री"
-                    className="w-full border border-slate-300 rounded-xl p-3 text-xs font-semibold focus:outline-[#0B4F8A]"
-                  />
-                </div>
+                  <div>
+                    <label className="block text-xs font-black text-slate-700 mb-1">{categoryFields.eligibilityLabel}</label>
+                    <input
+                      type="text"
+                      value={formData.eligibility}
+                      onChange={(e) => setFormData({ ...formData, eligibility: e.target.value })}
+                      placeholder={categoryFields.eligibilityPlaceholder}
+                      className="w-full border border-slate-300 rounded-xl p-3 text-xs font-semibold focus:outline-[#0B4F8A]"
+                    />
+                  </div>
 
-                <div>
-                  <label className="block text-xs font-black text-slate-700 mb-1">Apply URL</label>
-                  <input
-                    type="url"
-                    value={formData.apply_url}
-                    onChange={(e) => setFormData({ ...formData, apply_url: e.target.value })}
-                    placeholder="https://bpsc.bih.nic.in"
-                    className="w-full border border-slate-300 rounded-xl p-3 text-xs font-semibold focus:outline-[#0B4F8A]"
-                  />
-                </div>
+                  <div>
+                    <label className="block text-xs font-black text-slate-700 mb-1">{categoryFields.applyUrlLabel}</label>
+                    <input
+                      type="url"
+                      value={formData.apply_url}
+                      onChange={(e) => setFormData({ ...formData, apply_url: e.target.value })}
+                      placeholder="https://..."
+                      className="w-full border border-slate-300 rounded-xl p-3 text-xs font-semibold focus:outline-[#0B4F8A]"
+                    />
+                  </div>
 
-                <div>
-                  <label className="block text-xs font-black text-slate-700 mb-1">PDF Notification Link</label>
-                  <input
-                    type="url"
-                    value={formData.pdf_url}
-                    onChange={(e) => setFormData({ ...formData, pdf_url: e.target.value })}
-                    placeholder="https://bpsc.bih.nic.in/doc.pdf"
-                    className="w-full border border-slate-300 rounded-xl p-3 text-xs font-semibold focus:outline-[#0B4F8A]"
-                  />
+                  <div>
+                    <label className="block text-xs font-black text-slate-700 mb-1">{categoryFields.pdfUrlLabel}</label>
+                    <input
+                      type="url"
+                      value={formData.pdf_url}
+                      onChange={(e) => setFormData({ ...formData, pdf_url: e.target.value })}
+                      placeholder="https://..."
+                      className="w-full border border-slate-300 rounded-xl p-3 text-xs font-semibold focus:outline-[#0B4F8A]"
+                    />
+                  </div>
                 </div>
               </div>
 
