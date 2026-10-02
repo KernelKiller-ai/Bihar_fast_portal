@@ -182,7 +182,7 @@ export default function App() {
   const topAlertItem = liveScrapedItems.length > 0 ? liveScrapedItems[0] : portalItems[0] || null;
 
   return (
-    <div className="min-h-screen bg-slate-100/90 text-slate-800 font-sans antialiased flex flex-col justify-between">
+    <div className="min-h-screen w-full max-w-full min-w-0 overflow-x-hidden bg-slate-100/90 text-slate-800 font-sans antialiased flex flex-col justify-between">
       <ScrollToTop />
       <LoginModal />
       <div>
@@ -203,7 +203,7 @@ export default function App() {
               element={
                 <>
                   <section className="relative w-full bg-white border-b border-slate-200 overflow-hidden select-none">
-                    <div className="max-w-[1550px] mx-auto pt-4 sm:pt-6">
+                    <div className="w-full max-w-[1550px] mx-auto pt-4 sm:pt-6">
                       <div className="px-4 sm:px-8 grid grid-cols-1 lg:grid-cols-12 gap-6 items-end">
                         <div className="lg:col-span-7 space-y-4 text-center lg:text-left z-10 pb-4">
                           <div className="flex flex-col items-center lg:items-start">
@@ -237,15 +237,15 @@ export default function App() {
                             </p>
                           </div>
 
-                          <div className="pt-1 max-w-xl mx-auto lg:mx-0">
-                            <div className="relative flex items-center bg-white border-2 border-[#0B4F8A] rounded-2xl shadow-md overflow-hidden p-1 focus-within:ring-2 focus-within:ring-blue-400 transition-all">
-                              <Search className="text-slate-600 ml-3 shrink-0" size={19} />
+                          <div className="w-full max-w-xl mx-auto lg:mx-0 pt-1">
+                            <div className="relative flex w-full items-center bg-white border-2 border-[#0B4F8A] rounded-2xl shadow-md overflow-hidden p-1 focus-within:ring-2 focus-within:ring-blue-400 transition-all">
+                              <Search className="text-slate-600 ml-2 sm:ml-3 shrink-0" size={19} />
                               <input
                                 type="text"
                                 placeholder="Search jobs, results, admit cards..."
                                 value={searchQuery}
                                 onChange={(e) => setSearchQuery(e.target.value)}
-                                className="w-full py-2 px-3 text-xs sm:text-sm text-slate-900 placeholder:text-slate-500 font-semibold focus:outline-none"
+                                className="min-w-0 flex-1 w-full py-2 px-2 sm:px-3 text-xs sm:text-sm text-slate-900 placeholder:text-slate-500 font-semibold focus:outline-none"
                               />
                               {searchQuery && (
                                 <button
@@ -262,7 +262,7 @@ export default function App() {
                                   const el = document.getElementById("active-circulars-section");
                                   if (el) el.scrollIntoView({ behavior: "smooth" });
                                 }}
-                                className="bg-[#0B4F8A] hover:bg-[#073863] text-white font-black text-xs sm:text-sm px-6 py-2.5 rounded-xl transition shrink-0 cursor-pointer shadow-xs"
+                                className="bg-[#0B4F8A] hover:bg-[#073863] text-white font-black text-xs sm:text-sm px-3 sm:px-6 py-2.5 rounded-xl transition shrink-0 cursor-pointer shadow-xs"
                               >
                                 Search
                               </button>
