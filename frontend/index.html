@@ -77,20 +77,22 @@
           if (loaded) return;
           loaded = true;
 
-          // 1. OneSignal Web Push
-          const osScript = document.createElement('script');
-          osScript.src = "https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.page.js";
-          osScript.defer = true;
-          document.head.appendChild(osScript);
+          // 1. OneSignal Web Push (configured only for the production domain)
+          if (window.location.hostname === "biharfast.in" || window.location.hostname === "www.biharfast.in") {
+            const osScript = document.createElement('script');
+            osScript.src = "https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.page.js";
+            osScript.defer = true;
+            document.head.appendChild(osScript);
 
-          window.OneSignalDeferred = window.OneSignalDeferred || [];
-          window.OneSignalDeferred.push(async function(OneSignal) {
-            await OneSignal.init({
-              appId: "b7c92f29-666a-42e6-ba4b-5148849d773f",
-              notifyButton: { enable: true },
-              allowLocalhostAsSecureOrigin: true,
+            window.OneSignalDeferred = window.OneSignalDeferred || [];
+            window.OneSignalDeferred.push(async function(OneSignal) {
+              await OneSignal.init({
+                appId: "b7c92f29-666a-42e6-ba4b-5148849d773f",
+                notifyButton: { enable: true },
+                allowLocalhostAsSecureOrigin: true,
+              });
             });
-          });
+          }
 
           // 2. Google Analytics (GA4)
           const gaScript = document.createElement('script');

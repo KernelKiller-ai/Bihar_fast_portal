@@ -14,7 +14,7 @@ import {
   Trophy,
   XCircle,
 } from "lucide-react";
-import { useAuth } from "../context/authContext";
+import { useAuth } from "../context/AuthContext.jsx";
 import { getStudentAttempts, getStudentDistrict, saveStudentDistrict } from "../utils/studentHistory";
 
 const DISTRICTS = [

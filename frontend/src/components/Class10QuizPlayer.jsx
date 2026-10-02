@@ -14,7 +14,7 @@ import {
   Send
 } from "lucide-react";
 import Leaderboard from "./Leaderboard";
-import { useAuth } from "../context/authContext";
+import { useAuth } from "../context/AuthContext.jsx";
 import { savePendingStudentAttempt, saveStudentAttempt } from "../utils/studentHistory";
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "https://bihar-fast-portal.onrender.com";

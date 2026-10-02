@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import { Link } from "react-router-dom";
 import { ChevronDown, LogOut, ShieldCheck, Sparkles, UserRound } from "lucide-react";
-import { useAuth } from "../context/authContext";
+import { useAuth } from "../context/AuthContext.jsx";
 
 export default function Navbar() {
   const { user, loading, openLoginModal, signOut } = useAuth();
@@ -44,7 +44,7 @@ export default function Navbar() {
                 width="40" 
                 height="40" 
                 loading="eager" 
-                fetchpriority="high"
+                fetchPriority="high"
                 decoding="async" 
                 className="h-9 sm:h-10 w-9 sm:w-10 object-contain aspect-square" 
               />

@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { LockKeyhole, ShieldCheck, X } from "lucide-react";
-import { useAuth } from "../context/AuthContext";
+import { useAuth } from "../context/AuthContext.jsx";
 
 const BENEFITS = [
   "Save Test History",
