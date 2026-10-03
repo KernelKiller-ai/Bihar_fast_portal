@@ -207,8 +207,8 @@ export default function App() {
                       <div className="px-4 sm:px-8 grid grid-cols-1 lg:grid-cols-12 gap-6 items-end">
                         <div className="lg:col-span-7 space-y-4 text-center lg:text-left z-10 pb-4">
                           <div className="flex flex-col items-center lg:items-start">
-                            <img 
-                              src="/logo.png" 
+                            <img
+                              src="/logo-192.png"
                               alt="BiharFast Logo" 
                               width="64"
                               height="64"
@@ -216,24 +216,14 @@ export default function App() {
                               decoding="async"
                               className="h-14 sm:h-16 w-14 sm:w-16 object-contain aspect-square"
                             />
-                            <p className="text-xs sm:text-sm font-black text-slate-800 mt-1.5 tracking-wide">
-                              Jobs | Welfare | Information
-                            </p>
-                            <p className="text-[10.5px] sm:text-xs text-slate-600 font-bold tracking-wider">
-                              — सही जानकारी, बेहतर बिहार —
-                            </p>
                           </div>
 
                           <div className="space-y-1">
                             <h1 className="text-2xl sm:text-4xl lg:text-[38px] font-black text-[#0B3B66] tracking-tight leading-tight">
-                              Bihar Government <br className="hidden sm:block" />
-                              Opportunities, <span className="text-[#C2410C]">Now Faster.</span>
+                              Bihar’s Fastest Gateway to Jobs &amp; Public Services.
                             </h1>
                             <p className="text-xs sm:text-sm text-slate-700 font-bold pt-1">
-                              Latest Jobs | Direct Fast Portals | Useful Tools | All in One Place
-                            </p>
-                            <p className="text-[11px] text-slate-600 font-semibold">
-                              Trusted • Simple • Fast • For a Brighter Bihar
+                              – सटीक जानकारी, बेहतर बिहार – | State &amp; Central Vacancies, Board Results &amp; Useful Tools
                             </p>
                           </div>
 
