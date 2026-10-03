@@ -212,9 +212,9 @@ export default function Footer({ onOpenTool }) {
 
           {/* Column 2: Explore (Span 2) */}
           <div className="lg:col-span-2">
-            <h4 className="text-slate-900 font-extrabold text-[13px] tracking-tight mb-3 border-b-2 border-slate-900 pb-1 inline-block">
+            <h2 className="text-slate-900 font-extrabold text-[13px] tracking-tight mb-3 border-b-2 border-slate-900 pb-1 inline-block">
               Explore
-            </h4>
+            </h2>
             <ul className="space-y-2.5 text-xs text-slate-600 font-medium">
               <li>
                 <Link to="/" className="hover:text-blue-700 flex items-center gap-2 transition">
@@ -260,9 +260,9 @@ export default function Footer({ onOpenTool }) {
 
           {/* Column 3: Quick Links & Archives (Span 2) */}
           <div className="lg:col-span-2">
-            <h4 className="text-slate-900 font-extrabold text-[13px] tracking-tight mb-3 border-b-2 border-slate-900 pb-1 inline-block">
+            <h2 className="text-slate-900 font-extrabold text-[13px] tracking-tight mb-3 border-b-2 border-slate-900 pb-1 inline-block">
               Quick Links &amp; Archives
-            </h4>
+            </h2>
             <ul className="space-y-2.5 text-xs text-slate-600 font-medium">
               <li>
                 <Link to="/sitemap" className="hover:text-blue-700 flex items-center gap-2 transition">
@@ -324,9 +324,9 @@ export default function Footer({ onOpenTool }) {
 
           {/* Column 4: Popular Categories (Span 2) */}
           <div className="lg:col-span-2">
-            <h4 className="text-slate-900 font-extrabold text-[13px] tracking-tight mb-3 border-b-2 border-slate-900 pb-1 inline-block">
+            <h2 className="text-slate-900 font-extrabold text-[13px] tracking-tight mb-3 border-b-2 border-slate-900 pb-1 inline-block">
               Popular Categories
-            </h4>
+            </h2>
             <ul className="space-y-2.5 text-xs text-slate-600 font-medium">
               <li>
                 <a href="https://bpsc.bihar.gov.in" target="_blank" rel="noreferrer" className="hover:text-blue-700 flex items-center gap-2 transition">
@@ -373,9 +373,9 @@ export default function Footer({ onOpenTool }) {
 
           {/* Column 5: Legal & Support (Span 2) */}
           <div className="lg:col-span-2">
-            <h4 className="text-slate-900 font-extrabold text-[13px] tracking-tight mb-3 border-b-2 border-slate-900 pb-1 inline-block">
+            <h2 className="text-slate-900 font-extrabold text-[13px] tracking-tight mb-3 border-b-2 border-slate-900 pb-1 inline-block">
               Legal &amp; Support
-            </h4>
+            </h2>
             <ul className="space-y-2.5 text-xs text-slate-600 font-medium">
               <li><Link to="/about" className="hover:text-blue-700 transition">About Us</Link></li>
               <li><Link to="/contact" className="hover:text-blue-700 transition">Contact Us</Link></li>
@@ -395,9 +395,9 @@ export default function Footer({ onOpenTool }) {
               </svg>
             </div>
 
-            <h4 className="text-slate-900 font-extrabold text-[13px] tracking-tight mb-2 border-b-2 border-slate-900 pb-1 inline-block">
+            <h2 className="text-slate-900 font-extrabold text-[13px] tracking-tight mb-2 border-b-2 border-slate-900 pb-1 inline-block">
               Stay Connected
-            </h4>
+            </h2>
             <p className="text-xs text-slate-600 leading-relaxed font-normal">
               Get the latest updates directly to your inbox.
             </p>

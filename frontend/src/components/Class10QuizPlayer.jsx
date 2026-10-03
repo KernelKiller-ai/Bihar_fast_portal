@@ -355,7 +355,7 @@ function getExamCategoryCode(examId, subject) {
   if (!quizMeta || questions.length === 0) {
     return (
       <div className="max-w-md mx-auto my-12 p-8 bg-white rounded-3xl text-center shadow-md border border-slate-200">
-        <h3 className="text-lg font-black text-slate-800">सत्र वर्तमान में बंद है</h3>
+        <h1 className="text-lg font-black text-slate-800">सत्र वर्तमान में बंद है</h1>
         <p className="text-xs text-slate-500 mt-2">
           {quizLoadMessage || "इस परीक्षा के लिए नया टेस्ट जल्द ही लाइव किया जाएगा।"}
         </p>
@@ -468,7 +468,7 @@ function getExamCategoryCode(examId, subject) {
         {/* Sticky Header with Timer */}
         <div className="sticky top-2 z-20 bg-white/95 backdrop-blur-sm border border-slate-200 p-4 rounded-2xl shadow-md flex items-center justify-between mb-6">
           <div>
-            <h3 className="text-sm font-black text-slate-900">{student.name}</h3>
+            <h2 className="text-sm font-black text-slate-900">{student.name}</h2>
             <span className="text-[11px] text-slate-500 font-semibold">📍 {student.district}</span>
             <div className="mt-2 w-48 max-w-full">
               <div className="flex justify-between text-[10px] font-bold text-slate-600 mb-1">
@@ -558,7 +558,7 @@ function getExamCategoryCode(examId, subject) {
             type="button"
             disabled={submitting}
             onClick={handleSubmit}
-            className="w-full py-4 bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold text-base rounded-2xl shadow-lg transition flex items-center justify-center gap-2 cursor-pointer"
+            className="w-full py-4 bg-emerald-700 hover:bg-emerald-800 text-white font-extrabold text-base rounded-2xl shadow-lg transition flex items-center justify-center gap-2 cursor-pointer"
           >
             {submitting ? "परिणाम तैयार हो रहा है..." : submitError ? "पुनः प्रयास करें" : demoMode ? "डेमो सबमिट करें" : "टेस्ट सबमिट करें"}
           </button>
@@ -644,7 +644,7 @@ function getExamCategoryCode(examId, subject) {
             <button
               type="button"
               onClick={shareToTelegram}
-              className="w-full py-3 bg-sky-600 hover:bg-sky-700 text-white font-black rounded-xl shadow transition flex items-center justify-center gap-2 cursor-pointer"
+              className="w-full py-3 bg-sky-700 hover:bg-sky-800 text-white font-black rounded-xl shadow transition flex items-center justify-center gap-2 cursor-pointer"
             >
               <Send size={18} />
               <span>टेलीग्राम पर परिणाम साझा करें</span>
@@ -673,10 +673,10 @@ function getExamCategoryCode(examId, subject) {
 
         {/* Detailed Solutions */}
         <div className="mt-8 bg-white border border-slate-200 rounded-2xl p-5 shadow-xs">
-          <h3 className="font-extrabold text-sm text-slate-900 mb-4 flex items-center gap-2">
+          <h2 className="font-extrabold text-sm text-slate-900 mb-4 flex items-center gap-2">
             <Sparkles size={16} className="text-amber-500" />
             विस्तृत समाधान व उत्तर कुंजी (Solutions)
-          </h3>
+          </h2>
 
           <div className="space-y-4">
             {result.results?.map((item, idx) => (

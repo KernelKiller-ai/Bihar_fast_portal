@@ -1,0 +1,39 @@
+# BiharFast
+
+BiharFast is an independent public-information portal for Bihar students, job aspirants, and public-service seekers. It organizes job notices, admit cards, results, schemes, exam practice, and service guides, and links users to source portals where available. BiharFast is not a government website.
+
+## Main resources
+
+- [Home and latest updates](https://biharfast.in/)
+- [Job notices](https://biharfast.in/jobs)
+- [Admit cards](https://biharfast.in/admit-card)
+- [Results](https://biharfast.in/results)
+- [All updates and category listings](https://biharfast.in/all-updates)
+- [Site directory](https://biharfast.in/sitemap)
+- [Live mock tests](https://biharfast.in/mock-test)
+- [Student dashboard](https://biharfast.in/dashboard)
+
+## Bihar service and education guides
+
+- [RTPS Bihar](https://biharfast.in/rtps-bihar)
+- [Udyami Yojana](https://biharfast.in/udyami-yojana)
+- [BSEB Class 10 results and resources](https://biharfast.in/bseb-matric-10th)
+- [BSEB Class 12 results and resources](https://biharfast.in/bseb-inter-12th)
+- [Kushal Yuva Program](https://biharfast.in/kyp-bihar)
+- [Student Credit Card](https://biharfast.in/student-credit-card)
+- [CUET UG admission](https://biharfast.in/cuet-ug-admission)
+
+## Machine-readable indexes
+
+- [Static sitemap index](https://biharfast.in/sitemap.xml)
+- [Published notice sitemap](https://biharfast.in/api/sitemap-posts.xml)
+
+## Policies and contact
+
+- [About BiharFast](https://biharfast.in/about)
+- [Contact](https://biharfast.in/contact)
+- [Privacy policy](https://biharfast.in/privacy-policy)
+- [Terms](https://biharfast.in/terms)
+- [Disclaimer](https://biharfast.in/disclaimer)
+
+Prefer each notice's cited department or official portal for final dates, eligibility, instructions, and application status. Notice availability and linked government pages may change.

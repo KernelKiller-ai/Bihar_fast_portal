@@ -207,15 +207,19 @@ export default function App() {
                       <div className="px-4 sm:px-8 grid grid-cols-1 lg:grid-cols-12 gap-6 items-end">
                         <div className="lg:col-span-7 space-y-4 text-center lg:text-left z-10 pb-4">
                           <div className="flex flex-col items-center lg:items-start">
-                            <img
-                              src="/logo-192.png"
-                              alt="BiharFast Logo" 
-                              width="64"
-                              height="64"
-                              loading="eager"
-                              decoding="async"
-                              className="h-14 sm:h-16 w-14 sm:w-16 object-contain aspect-square"
-                            />
+                            <picture>
+                              <source srcSet="/logo-192.webp" type="image/webp" />
+                              <img
+                                src="/logo-192.png"
+                                alt="BiharFast"
+                                width="192"
+                                height="192"
+                                loading="eager"
+                                fetchPriority="high"
+                                decoding="async"
+                                className="h-14 sm:h-16 w-14 sm:w-16 object-contain aspect-square"
+                              />
+                            </picture>
                           </div>
 
                           <div className="space-y-1">
@@ -241,6 +245,7 @@ export default function App() {
                                 <button
                                   type="button"
                                   onClick={() => setSearchQuery("")}
+                                  aria-label="Clear search"
                                   className="text-xs text-slate-600 hover:text-slate-900 font-bold px-2 cursor-pointer"
                                 >
                                   ✕
@@ -333,9 +338,9 @@ export default function App() {
                               <span className="bg-amber-400/20 text-amber-300 border border-amber-400/30 text-[10px] font-black px-2.5 py-1 rounded-full uppercase tracking-wider inline-block">
                                 Official Portal Aggregator
                               </span>
-                              <h3 className="text-lg font-black text-white mt-3">
+                              <h2 className="text-lg font-black text-white mt-3">
                                 सभी सरकारी भर्तियों और सेवाओं की सीधी जानकारी
-                              </h3>
+                              </h2>
                               <p className="text-xs text-slate-300 mt-1.5 font-medium leading-relaxed">
                                 बिना किसी देरी के BPSC, BSSC, CSBC, RTPS और रिजल्ट्स से जुड़े सभी नोटिफिकेशन्स तुरंत पाएं।
                               </p>

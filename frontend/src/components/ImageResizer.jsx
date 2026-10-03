@@ -263,7 +263,7 @@ export default function ImageResizer({ onClose }) {
             <button
               type="button"
               onClick={handleDownload}
-              className="w-2/3 bg-[#1E8E3E] hover:bg-emerald-700 text-white font-extrabold text-xs py-2.5 rounded-xl flex items-center justify-center gap-1.5 shadow-sm transition cursor-pointer"
+              className="w-2/3 bg-[#166534] hover:bg-emerald-800 text-white font-extrabold text-xs py-2.5 rounded-xl flex items-center justify-center gap-1.5 shadow-sm transition cursor-pointer"
             >
               <Download size={15} /> डाउनलोड करें ({outputSizeKb} KB)
             </button>

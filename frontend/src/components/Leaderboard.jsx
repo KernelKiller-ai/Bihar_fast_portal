@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import PropTypes from "prop-types";
 import { Trophy, Medal, Award, Flame, Users, MapPin, Sparkles, User } from "lucide-react";
 import { supabase } from "../api/supabase";
@@ -84,7 +84,7 @@ export default function Leaderboard({ quizId, examCategory }) {
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
             <Flame className="text-amber-300 animate-bounce" size={22} />
-            <h3 className="font-extrabold text-base sm:text-lg">बिहार स्टेट लाइव लीडरबोर्ड</h3>
+            <h2 className="font-extrabold text-base sm:text-lg">बिहार स्टेट लाइव लीडरबोर्ड</h2>
           </div>
           <span className="text-[11px] bg-white/20 px-2.5 py-0.5 rounded-full font-bold flex items-center gap-1 backdrop-blur-xs">
             <Users size={12} /> {ranks.length} छात्र
@@ -139,14 +139,14 @@ export default function Leaderboard({ quizId, examCategory }) {
 
                 {/* Student Info */}
                 <div className="min-w-0 truncate">
-                  <h4 className="font-bold text-xs sm:text-sm text-slate-900 flex items-center gap-1.5 truncate">
+                  <h3 className="font-bold text-xs sm:text-sm text-slate-900 flex items-center gap-1.5 truncate">
                     <span className="truncate">{item.student_name || "छात्र"}</span>
                     {item.rank === 1 && (
                       <span className="shrink-0 text-[9px] bg-amber-100 text-amber-800 font-black px-1.5 py-0.2 rounded border border-amber-300 uppercase">
                         Topper
                       </span>
                     )}
-                  </h4>
+                  </h3>
                   <p className="text-[11px] text-slate-500 font-medium flex items-center gap-1 mt-0.5">
                     <MapPin size={11} className="text-rose-500 shrink-0" />
                     <span className="truncate">{item.district || "बिहार"}</span>
