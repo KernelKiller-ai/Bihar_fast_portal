@@ -207,19 +207,16 @@ export default function App() {
                       <div className="px-4 sm:px-8 grid grid-cols-1 lg:grid-cols-12 gap-6 items-end">
                         <div className="lg:col-span-7 space-y-4 text-center lg:text-left z-10 pb-4">
                           <div className="flex flex-col items-center lg:items-start">
-                            <picture>
-                              <source srcSet="/logo-192.webp" type="image/webp" />
-                              <img
-                                src="/logo-192.png"
-                                alt="BiharFast"
-                                width="192"
-                                height="192"
-                                loading="eager"
-                                fetchPriority="high"
-                                decoding="async"
-                                className="h-14 sm:h-16 w-14 sm:w-16 object-contain aspect-square"
-                              />
-                            </picture>
+                            <img
+                              src="/logo-192.webp"
+                              alt="BiharFast"
+                              width="48"
+                              height="48"
+                              loading="eager"
+                              fetchPriority="high"
+                              decoding="async"
+                              className="h-12 w-12 sm:h-16 sm:w-16 object-contain aspect-square"
+                            />
                           </div>
 
                           <div className="space-y-1">
