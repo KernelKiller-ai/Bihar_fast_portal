@@ -10,7 +10,7 @@ import urllib.request
 import urllib.parse
 
 from fastapi import Depends, FastAPI, HTTPException, BackgroundTasks, Query, Request, Response, status
-from fastapi.responses import JSONResponse
+from fastapi.responses import JSONResponse, PlainTextResponse
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.middleware.gzip import GZipMiddleware
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
@@ -283,6 +283,11 @@ def send_telegram_alert(title: str, dept: str, total_posts: str, last_date: str,
         logger.error(f"Telegram broadcast error: {err}")
 
 # ----------------- PUBLIC ROUTES -----------------
+@app.get("/robots.txt", response_class=PlainTextResponse)
+def robots_txt():
+    return "User-agent: *\nDisallow: /\n"
+
+
 @app.get("/")
 def health_check():
     return Response(
