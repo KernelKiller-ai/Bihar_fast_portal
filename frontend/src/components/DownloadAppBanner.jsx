@@ -22,7 +22,7 @@ export default function DownloadAppBanner() {
         <a
           href="/biharfast.apk"
           download="BiharFast.apk"
-          className="inline-flex shrink-0 items-center gap-1.5 rounded-xl bg-emerald-600 px-3 py-2.5 text-xs font-black text-white shadow-sm transition hover:bg-emerald-700 active:scale-95"
+          className="inline-flex shrink-0 items-center gap-1.5 rounded-xl bg-emerald-700 px-3 py-2.5 text-xs font-black text-white shadow-sm transition hover:bg-emerald-800 active:scale-95"
         >
           <Download size={14} aria-hidden="true" />
           Download

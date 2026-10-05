@@ -124,7 +124,7 @@ export default function Footer({ onOpenTool }) {
 
       {/* 2. Main 5-Column Content Grid */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 pb-8 relative z-10">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-[repeat(14,minmax(0,1fr))] gap-8 items-start">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-14 gap-8 items-start">
           
           {/* Column 1: Brand Info & Clean Slogan (Span 3) */}
           <div className="lg:col-span-3 flex flex-col items-start">
@@ -133,7 +133,11 @@ export default function Footer({ onOpenTool }) {
               <img 
                 src="/logo.png" 
                 alt="BiharFast Logo" 
-                className="h-14 sm:h-16 w-auto object-contain block"
+                width="64"
+                height="64"
+                loading="lazy"
+                decoding="async"
+                className="h-14 sm:h-16 w-14 sm:w-16 object-contain aspect-square block"
               />
               <p className="text-[11px] font-bold text-slate-700 mt-2">
                 Jobs &nbsp;|&nbsp; Welfare &nbsp;|&nbsp; Information
@@ -208,9 +212,9 @@ export default function Footer({ onOpenTool }) {
 
           {/* Column 2: Explore (Span 2) */}
           <div className="lg:col-span-2">
-            <h4 className="text-slate-900 font-extrabold text-[13px] tracking-tight mb-3 border-b-2 border-slate-900 pb-1 inline-block">
+            <h2 className="text-slate-900 font-extrabold text-[13px] tracking-tight mb-3 border-b-2 border-slate-900 pb-1 inline-block">
               Explore
-            </h4>
+            </h2>
             <ul className="space-y-2.5 text-xs text-slate-600 font-medium">
               <li>
                 <Link to="/" className="hover:text-blue-700 flex items-center gap-2 transition">
@@ -218,12 +222,12 @@ export default function Footer({ onOpenTool }) {
                 </Link>
               </li>
               <li>
-                <Link to="/" className="hover:text-blue-700 flex items-center gap-2 transition">
+                <Link to="/jobs" className="hover:text-blue-700 flex items-center gap-2 transition">
                   <Briefcase size={13} className="text-slate-400" /> Government Jobs
                 </Link>
               </li>
               <li>
-                <Link to="/" className="hover:text-blue-700 flex items-center gap-2 transition">
+                <Link to="/sitemap" className="hover:text-blue-700 flex items-center gap-2 transition">
                   <Users size={13} className="text-slate-400" /> Welfare Schemes
                 </Link>
               </li>
@@ -233,21 +237,21 @@ export default function Footer({ onOpenTool }) {
                 </Link>
               </li>
               <li>
-                <Link to="/" className="hover:text-blue-700 flex items-center gap-2 transition">
+                <Link to="/results" className="hover:text-blue-700 flex items-center gap-2 transition">
                   <FileText size={13} className="text-slate-400" /> Results
                 </Link>
               </li>
               <li>
-                <button 
-                  type="button"
+                <Link 
+                  to="/age-calculator"
                   onClick={() => onOpenTool?.("resizer")}
                   className="hover:text-blue-700 flex items-center gap-2 transition text-left cursor-pointer"
                 >
                   <Wrench size={13} className="text-slate-400" /> Useful Tools
-                </button>
+                </Link>
               </li>
               <li>
-                <Link to="/" className="hover:text-blue-700 flex items-center gap-2 transition">
+                <Link to="/sitemap" className="hover:text-blue-700 flex items-center gap-2 transition">
                   <Bell size={13} className="text-slate-400" /> Alerts & Updates
                 </Link>
               </li>
@@ -256,9 +260,9 @@ export default function Footer({ onOpenTool }) {
 
           {/* Column 3: Quick Links & Archives (Span 2) */}
           <div className="lg:col-span-2">
-            <h4 className="text-slate-900 font-extrabold text-[13px] tracking-tight mb-3 border-b-2 border-slate-900 pb-1 inline-block">
+            <h2 className="text-slate-900 font-extrabold text-[13px] tracking-tight mb-3 border-b-2 border-slate-900 pb-1 inline-block">
               Quick Links &amp; Archives
-            </h4>
+            </h2>
             <ul className="space-y-2.5 text-xs text-slate-600 font-medium">
               <li>
                 <Link to="/sitemap" className="hover:text-blue-700 flex items-center gap-2 transition">
@@ -320,9 +324,9 @@ export default function Footer({ onOpenTool }) {
 
           {/* Column 4: Popular Categories (Span 2) */}
           <div className="lg:col-span-2">
-            <h4 className="text-slate-900 font-extrabold text-[13px] tracking-tight mb-3 border-b-2 border-slate-900 pb-1 inline-block">
+            <h2 className="text-slate-900 font-extrabold text-[13px] tracking-tight mb-3 border-b-2 border-slate-900 pb-1 inline-block">
               Popular Categories
-            </h4>
+            </h2>
             <ul className="space-y-2.5 text-xs text-slate-600 font-medium">
               <li>
                 <a href="https://bpsc.bihar.gov.in" target="_blank" rel="noreferrer" className="hover:text-blue-700 flex items-center gap-2 transition">
@@ -360,7 +364,7 @@ export default function Footer({ onOpenTool }) {
                 </a>
               </li>
               <li>
-                <Link to="/" className="hover:text-blue-700 flex items-center gap-2 font-bold text-slate-800 transition">
+                <Link to="/sitemap" className="hover:text-blue-700 flex items-center gap-2 font-bold text-slate-800 transition">
                   <FolderOpen size={13} className="text-blue-600 shrink-0" /> All Categories
                 </Link>
               </li>
@@ -369,9 +373,9 @@ export default function Footer({ onOpenTool }) {
 
           {/* Column 5: Legal & Support (Span 2) */}
           <div className="lg:col-span-2">
-            <h4 className="text-slate-900 font-extrabold text-[13px] tracking-tight mb-3 border-b-2 border-slate-900 pb-1 inline-block">
+            <h2 className="text-slate-900 font-extrabold text-[13px] tracking-tight mb-3 border-b-2 border-slate-900 pb-1 inline-block">
               Legal &amp; Support
-            </h4>
+            </h2>
             <ul className="space-y-2.5 text-xs text-slate-600 font-medium">
               <li><Link to="/about" className="hover:text-blue-700 transition">About Us</Link></li>
               <li><Link to="/contact" className="hover:text-blue-700 transition">Contact Us</Link></li>
@@ -391,9 +395,9 @@ export default function Footer({ onOpenTool }) {
               </svg>
             </div>
 
-            <h4 className="text-slate-900 font-extrabold text-[13px] tracking-tight mb-2 border-b-2 border-slate-900 pb-1 inline-block">
+            <h2 className="text-slate-900 font-extrabold text-[13px] tracking-tight mb-2 border-b-2 border-slate-900 pb-1 inline-block">
               Stay Connected
-            </h4>
+            </h2>
             <p className="text-xs text-slate-600 leading-relaxed font-normal">
               Get the latest updates directly to your inbox.
             </p>

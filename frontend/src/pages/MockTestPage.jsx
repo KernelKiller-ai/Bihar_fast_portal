@@ -113,7 +113,7 @@ export default function MockTestPage() {
   const currentExam = EXAM_CATEGORIES.find((e) => e.id === selectedExamId);
 
   useEffect(() => {
-    document.title = "Bihar Board Class 10 Free Mock Test & Quiz | BiharFast";
+    document.title = "Bihar All Exam Free Live Mock Test & Leaderboard | BiharFast";
 
     const setMetaTag = (attrName, attrValue, content) => {
       let element = document.querySelector(`meta[${attrName}="${attrValue}"]`);
@@ -125,9 +125,9 @@ export default function MockTestPage() {
       element.setAttribute("content", content);
     };
 
-    setMetaTag("name", "description", "अभ्यास करें बिहार बोर्ड मैट्रिक परीक्षा के लिए फ्री ऑनलाइन मॉक टेस्ट और क्विज़। पाएं तुरंत रिजल्ट, विस्तृत समाधान और लीडरबोर्ड रैंकिंग।");
-    setMetaTag("property", "og:title", "Bihar Board Class 10 Free Mock Test & Quiz | BiharFast");
-    setMetaTag("property", "og:description", "अभ्यास करें बिहार बोर्ड मैट्रिक परीक्षा के लिए फ्री ऑनलाइन मॉक टेस्ट और क्विज़। पाएं तुरंत रिजल्ट, विस्तृत समाधान और लीडरबोर्ड रैंकिंग।");
+    setMetaTag("name", "description", "अभ्यास करें बिहार बोर्ड (10th/12th) एवं बिहार पुलिस, BSSC, SSC भर्ती परीक्षाओं के लिए ऑनलाइन लाइव मॉक टेस्ट। पाएं तुरंत रिजल्ट व लीडरबोर्ड रैंकिंग।");
+    setMetaTag("property", "og:title", "Bihar All Exam Free Live Mock Test & Leaderboard | BiharFast");
+    setMetaTag("property", "og:description", "अभ्यास करें बिहार बोर्ड (10th/12th) एवं बिहार पुलिस, BSSC, SSC भर्ती परीक्षाओं के लिए ऑनलाइन लाइव मॉक टेस्ट। पाएं तुरंत रिजल्ट व लीडरबोर्ड रैंकिंग।");
     setMetaTag("property", "og:url", `https://biharfast.in${window.location.pathname}`);
 
     let canonicalTag = document.querySelector('link[rel="canonical"]');
@@ -187,10 +187,17 @@ export default function MockTestPage() {
       return subj.startsWith("bseb_10") || subj.includes("10");
     }
     if (selectedExamId === "bseb_12_science") {
-      return subj.includes("12_117") || subj.includes("12_118") || subj.includes("12_119") || subj.includes("12_121") || subj.includes("12_science");
+      return subj.startsWith("bseb_12_1") || subj.includes("12_science");
     }
     if (selectedExamId === "bseb_12_arts") {
-      return subj.includes("12_3") || subj.includes("12_2") || subj.includes("12_arts") || subj.includes("lang");
+      return (
+        subj.startsWith("bseb_12_2") ||
+        subj.startsWith("bseb_12_3") ||
+        subj.startsWith("bseb_12_lang") ||
+        subj.includes("12_arts") ||
+        subj.includes("12_commerce") ||
+        subj.includes("lang")
+      );
     }
     return subj.includes(selectedExamId);
   });
@@ -229,9 +236,9 @@ export default function MockTestPage() {
             {EXAM_CATEGORIES.map((exam) => {
               const Icon = exam.icon;
               return (
-                <div
+                <Link
                   key={exam.id}
-                  onClick={() => setSearchParams({ exam: exam.id })}
+                  to={`/mock-test?exam=${exam.id}`}
                   className="bg-white rounded-2xl p-5 border border-slate-200 hover:border-blue-500 hover:shadow-md transition cursor-pointer flex flex-col justify-between group"
                 >
                   <div>
@@ -259,7 +266,7 @@ export default function MockTestPage() {
                     <span>विषय सूची देखें</span>
                     <ChevronRight size={15} className="group-hover:translate-x-1 transition" />
                   </div>
-                </div>
+                </Link>
               );
             })}
           </div>
@@ -327,13 +334,13 @@ export default function MockTestPage() {
         
         {/* Navigation Breadcrumb */}
         <div className="flex items-center justify-between bg-white p-4 rounded-2xl border border-slate-200 shadow-xs">
-          <button
-            type="button"
+          <Link
+            to="/mock-test"
             onClick={() => setSearchParams({})}
             className="flex items-center gap-1.5 text-xs font-bold text-slate-600 hover:text-blue-700 transition cursor-pointer"
           >
             <ArrowLeft size={14} /> सभी परीक्षाएं देखें (Change Category)
-          </button>
+          </Link>
           <span className="text-xs font-black text-slate-900">
             चयनित परीक्षा: <span className="text-blue-700">{currentExam?.title}</span>
           </span>
@@ -394,7 +401,7 @@ export default function MockTestPage() {
                 onClick={() => setSearchParams({ exam: "class_10" })}
                 className="px-5 py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-black rounded-xl text-xs transition shadow-xs cursor-pointer"
               >
-                10th Matric Live Test देखें
+                All Exam Live Test देखें
               </button>
               <button
                 type="button"
@@ -441,13 +448,13 @@ export default function MockTestPage() {
                   </div>
                 </div>
 
-                <button
-                  type="button"
+                <Link
+                  to={`/mock-test?exam=${selectedExamId}&quiz_id=${paper.id}`}
                   onClick={() => setSearchParams({ exam: selectedExamId, quiz_id: paper.id })}
                   className="w-full py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-black flex items-center justify-center gap-1.5 transition shadow-xs cursor-pointer"
                 >
                   टेस्ट शुरू करें <ArrowRight size={14} />
-                </button>
+                </Link>
               </div>
             ))}
           </div>

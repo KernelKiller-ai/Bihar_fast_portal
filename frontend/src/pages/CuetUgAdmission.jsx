@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import { Link } from "react-router-dom";
 import { 
   ExternalLink, 
   Download, 
@@ -10,7 +11,8 @@ import {
   Sparkles,
   GraduationCap,
   BookOpen,
-  CheckCircle2
+  CheckCircle2,
+  ChevronRight
 } from "lucide-react";
 
 export default function CuetUgAdmission() {
@@ -129,7 +131,7 @@ export default function CuetUgAdmission() {
             <button
               type="button"
               onClick={handleShare}
-              className="inline-flex items-center gap-1.5 bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition cursor-pointer shadow-xs"
+              className="inline-flex items-center gap-1.5 bg-emerald-700 hover:bg-emerald-800 text-white px-4 py-2 rounded-lg text-sm font-medium transition cursor-pointer shadow-xs"
             >
               <Share2 className="w-4 h-4" /> {isCopied ? "लिंक कॉपी हो गया!" : "दोस्तों के साथ शेयर करें"}
             </button>
@@ -146,6 +148,15 @@ export default function CuetUgAdmission() {
       </div>
 
       <main className="max-w-4xl mx-auto px-4 -mt-6">
+        {/* Accessible Breadcrumb Navigation */}
+        <nav aria-label="Breadcrumb" className="flex items-center gap-1.5 text-xs text-slate-600 font-semibold mb-4 bg-white/90 backdrop-blur-xs p-2.5 rounded-lg border border-slate-200 shadow-xs overflow-x-auto">
+          <Link to="/" className="hover:text-blue-700 transition flex items-center gap-1 shrink-0">
+            Home
+          </Link>
+          <ChevronRight size={13} className="text-slate-400 shrink-0" />
+          <span className="font-bold text-slate-800 shrink-0">CUET UG एडमिशन हब</span>
+        </nav>
+
         {/* Real-time Status Card */}
         <div className="bg-white rounded-xl p-4 shadow-sm border border-slate-200 flex items-center justify-between gap-3 mb-6">
           <div className="flex items-center gap-3">
@@ -356,6 +367,40 @@ export default function CuetUgAdmission() {
                 अधिकतर एकीकृत कोर्सेज (जैसे 4-Year B.A. B.Ed, B.Sc B.Ed, या 5-Year Integrated BA LLB) के लिए संबंधित डोमेन विषय के साथ जनरल टेस्ट (Section III) अनिवार्य होता है।
               </p>
             </div>
+          </div>
+        </section>
+
+        {/* Interconnected Hubs Navigation Section */}
+        <section className="bg-slate-50 rounded-xl border border-slate-200 p-5 mt-6 mb-6">
+          <h3 className="text-sm font-extrabold text-slate-900 mb-3 flex items-center gap-2">
+            <Sparkles className="w-4 h-4 text-amber-500" />
+            अन्य महत्वपूर्ण बिहार पोर्टल्स एवं हब्स (Explore Related Hubs)
+          </h3>
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 text-xs font-semibold">
+            <Link to="/mock-test" className="p-2.5 rounded-lg bg-white border border-slate-200 hover:border-amber-400 hover:text-amber-700 transition text-center shadow-xs">
+              📝 ऑल एग्जामॉक टेस्ट
+            </Link>
+            <Link to="/bseb-matric-10th" className="p-2.5 rounded-lg bg-white border border-slate-200 hover:border-blue-400 hover:text-blue-700 transition text-center shadow-xs">
+              🎓 10th मैट्रिक हब
+            </Link>
+            <Link to="/bseb-inter-12th" className="p-2.5 rounded-lg bg-white border border-slate-200 hover:border-indigo-400 hover:text-indigo-700 transition text-center shadow-xs">
+              📚 12th इंटर हब
+            </Link>
+            <Link to="/rtps-bihar" className="p-2.5 rounded-lg bg-white border border-slate-200 hover:border-emerald-400 hover:text-emerald-700 transition text-center shadow-xs">
+              🛡️ RTPS सेवाएं
+            </Link>
+            <Link to="/udyami-yojana" className="p-2.5 rounded-lg bg-white border border-slate-200 hover:border-purple-400 hover:text-purple-700 transition text-center shadow-xs">
+              💼 उद्यमी योजना
+            </Link>
+            <Link to="/kyp-bihar" className="p-2.5 rounded-lg bg-white border border-slate-200 hover:border-rose-400 hover:text-rose-700 transition text-center shadow-xs">
+              💻 KYP कंप्यूटर हब
+            </Link>
+            <Link to="/student-credit-card" className="p-2.5 rounded-lg bg-white border border-slate-200 hover:border-cyan-400 hover:text-cyan-700 transition text-center shadow-xs">
+              💳 स्टूडेंट क्रेडिट कार्ड
+            </Link>
+            <Link to="/sitemap" className="p-2.5 rounded-lg bg-white border border-slate-200 hover:border-slate-400 hover:text-slate-900 transition text-center shadow-xs">
+              📁 सभी अपडेट्स एवं आर्काइव
+            </Link>
           </div>
         </section>
       </main>

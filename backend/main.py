@@ -34,7 +34,7 @@ ADMIN_API_TOKEN = os.getenv("ADMIN_API_TOKEN", "").strip()
 
 # Telegram Channel Integration Keys
 TELEGRAM_BOT_TOKEN = os.getenv("TELEGRAM_BOT_TOKEN", "").strip()
-TELEGRAM_CHANNEL_ID = os.getenv("TELEGRAM_CHANNEL_ID", "").strip()  # e.g. "@biharfast_official" ya chat id
+TELEGRAM_CHANNEL_ID = (os.getenv("TELEGRAM_CHANNEL_ID") or os.getenv("TELEGRAM_CHAT_ID") or "").strip()  # e.g. "@biharfast_official" ya chat id
 
 bearer_scheme = HTTPBearer(auto_error=False)
 

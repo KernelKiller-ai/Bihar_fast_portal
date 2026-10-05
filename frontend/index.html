@@ -52,13 +52,6 @@
     }
     </script>
 
-    <!-- Performance Optimizations -->
-    <link rel="preload" as="image" href="/hero-students.webp" type="image/webp" fetchpriority="high" />
-    <link rel="preconnect" href="https://bihar-fast-portal.onrender.com" />
-    <link rel="preconnect" href="https://www.googletagmanager.com" crossorigin />
-    <link rel="preconnect" href="https://pagead2.googlesyndication.com" crossorigin />
-    <link rel="dns-prefetch" href="https://www.google-analytics.com" />
-
     <!-- PWA & Mobile Theme Settings -->
     <meta name="theme-color" content="#0B4F8A" />
     <meta name="mobile-web-app-capable" content="yes" />
@@ -66,55 +59,90 @@
     <meta name="apple-mobile-web-app-title" content="BiharFast" />
     
     <!-- Favicons -->
-    <link rel="icon" type="image/png" sizes="192x192" href="/logo-192.png" />
+    <link rel="icon" type="image/png" href="/logo-192.png" />
     <link rel="shortcut icon" type="image/png" href="/logo-192.png" />
     <link rel="apple-touch-icon" href="/logo-192.png" />
-    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-    <!-- OneSignal Web Push -->
-    <script src="https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.page.js" defer></script>
+    <link rel="preload" as="image" href="/logo-192.webp" type="image/webp" fetchpriority="high" />
+    <!-- Optimized Lazy Third-Party Scripts (AdSense, OneSignal, GA4) for Maximum PageSpeed -->
     <script>
-      window.OneSignalDeferred = window.OneSignalDeferred || [];
-      OneSignalDeferred.push(async function(OneSignal) {
-        await OneSignal.init({
-          appId: "b7c92f29-666a-42e6-ba4b-5148849d773f",
-          notifyButton: {
-            enable: true,
-          },
-          allowLocalhostAsSecureOrigin: true,
-        });
-      });
-    </script>
+      (function() {
+        let loaded = false;
+        function loadThirdPartyScripts() {
+          if (loaded) return;
+          loaded = true;
 
-    <!-- Google Analytics (GA4) -->
-    <script async src="https://www.googletagmanager.com/gtag/js?id=G-2N03Q64SX9"></script>
-    <script>
-      window.dataLayer = window.dataLayer || [];
-      function gtag(){dataLayer.push(arguments);}
-      gtag('js', new Date());
-      gtag('config', 'G-2N03Q64SX9');
+          // 1. OneSignal Web Push (configured only for the production domain)
+          if (window.location.hostname === "biharfast.in" || window.location.hostname === "www.biharfast.in") {
+            const osScript = document.createElement('script');
+            osScript.src = "https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.page.js";
+            osScript.defer = true;
+            document.head.appendChild(osScript);
+
+            window.OneSignalDeferred = window.OneSignalDeferred || [];
+            window.OneSignalDeferred.push(async function(OneSignal) {
+              await OneSignal.init({
+                appId: "b7c92f29-666a-42e6-ba4b-5148849d773f",
+                notifyButton: { enable: true },
+                allowLocalhostAsSecureOrigin: true,
+              });
+            });
+          }
+
+          // 2. Google Analytics (GA4)
+          const gaScript = document.createElement('script');
+          gaScript.src = "https://www.googletagmanager.com/gtag/js?id=G-2N03Q64SX9";
+          gaScript.async = true;
+          document.head.appendChild(gaScript);
+
+          window.dataLayer = window.dataLayer || [];
+          function gtag(){ dataLayer.push(arguments); }
+          gtag('js', new Date());
+          gtag('config', 'G-2N03Q64SX9');
+
+          // 3. Google AdSense
+          const adsScript = document.createElement('script');
+          adsScript.src = "https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-9958508128722430";
+          adsScript.async = true;
+          adsScript.crossOrigin = "anonymous";
+          document.head.appendChild(adsScript);
+        }
+
+        function scheduleThirdPartyScripts() {
+          if ('requestIdleCallback' in window) {
+            window.requestIdleCallback(loadThirdPartyScripts, { timeout: 10000 });
+          } else {
+            window.setTimeout(loadThirdPartyScripts, 8000);
+          }
+        }
+
+        if (document.readyState === 'complete') {
+          scheduleThirdPartyScripts();
+        } else {
+          window.addEventListener('load', scheduleThirdPartyScripts, { once: true });
+        }
+      })();
     </script>
-    
-    <!-- Google AdSense -->
-    <script 
-      async 
-      src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-9958508128722430"
-      crossorigin="anonymous"
-    ></script>
   </head>
-  <body class="bg-slate-50 text-slate-900 antialiased selection:bg-[#0B4F8A] selection:text-white">
-    <div id="root">
-      <header style="padding: 1rem; text-align: center;">
-        <h1 style="font-size: 1.5rem; font-weight: bold; color: #0B4F8A;">BiharFast - बिहार सरकारी नौकरी, एडमिट कार्ड व रिजल्ट</h1>
-        <p>नवीनतम सरकारी भर्तियां, प्रवेश पत्र और परीक्षा परिणाम सीधे आधिकारिक स्रोत से।</p>
-      </header>
+  <body class="w-full max-w-full overflow-x-hidden bg-slate-50 text-slate-900 antialiased selection:bg-[#0B4F8A] selection:text-white">
+    <div id="root" class="w-full max-w-full overflow-x-hidden">
+      <div id="initial-hero-skeleton" style="padding: 1rem; text-align: center; font-family: system-ui, sans-serif;">
+        <picture>
+          <source srcset="/logo-192.webp" type="image/webp" />
+          <img src="/logo-192.png" alt="BiharFast" width="192" height="192" fetchpriority="high" decoding="async" style="width: 64px; height: 64px; object-fit: contain;" />
+        </picture>
+        <h1 style="font-size: 1.5rem; font-weight: 800; color: #0B3B66; margin: 0 0 0.5rem;">
+          Bihar’s Fastest Gateway to Jobs &amp; Public Services.
+        </h1>
+        <p style="font-size: 0.875rem; color: #475569; margin: 0;">– सटीक जानकारी, बेहतर बिहार –</p>
+      </div>
     </div>
     <script type="module" src="/src/main.jsx"></script>
     <script>
-      if ('serviceWorker' in navigator) {
-        window.addEventListener('load', () => {
-          navigator.serviceWorker.register('/sw.js', { scope: '/' });
-        });
-      }
+      window.addEventListener('load', () => {
+        if ('serviceWorker' in navigator) {
+          navigator.serviceWorker.register('/sw.js');
+        }
+      });
     </script>
   </body>
 </html>

@@ -276,9 +276,9 @@ export default function AdminQuizManager({ adminToken, apiBaseUrl }) {
       {/* Top Header Controls */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-white p-4 rounded-2xl border border-slate-200 shadow-xs">
         <div>
-          <h1 className="text-lg font-black text-slate-900 flex items-center gap-2">
+          <h2 className="text-lg font-black text-slate-900 flex items-center gap-2">
             <GraduationCap className="text-blue-700" size={22} /> BiharFast Universal Quiz Control Station
-          </h1>
+          </h2>
           <p className="text-xs text-slate-500">
             BSEB 10th, 12th (Science/Arts/Commerce) और सरकारी नौकरी परीक्षाओं के लिए टेस्ट व प्रश्न प्रबंधित करें
           </p>
@@ -555,7 +555,7 @@ export default function AdminQuizManager({ adminToken, apiBaseUrl }) {
                     </select>
                     <input type="text" placeholder="स्पष्टीकरण..." value={explanation} onChange={e => setExplanation(e.target.value)} className="col-span-2 p-2 border rounded-lg font-medium" />
                   </div>
-                  <button type="submit" className="w-full py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white font-black rounded-xl transition cursor-pointer">
+                  <button type="submit" className="w-full py-2.5 bg-emerald-700 hover:bg-emerald-800 text-white font-black rounded-xl transition cursor-pointer">
                     + प्रश्न सेव करें
                   </button>
                 </form>

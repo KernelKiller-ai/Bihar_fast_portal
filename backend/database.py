@@ -202,7 +202,7 @@ def fetch_today_quiz_record(slot: str = "slot_1", subject: Optional[str] = None)
 
     today_str = get_current_ist_date()
     query = (
-        client.table("class10_quizzes")
+        client.table("master_quizzes")
         .select("id, title, subject, slot, quiz_date, total_questions, duration_minutes, is_active")
         .eq("quiz_date", today_str)
         .eq("slot", slot)
@@ -217,7 +217,7 @@ def fetch_today_quiz_record(slot: str = "slot_1", subject: Optional[str] = None)
 
     # Fallback to latest active quiz across slots
     fallback_query = (
-        client.table("class10_quizzes")
+        client.table("master_quizzes")
         .select("id, title, subject, slot, quiz_date, total_questions, duration_minutes, is_active")
         .eq("is_active", True)
     )
@@ -234,7 +234,7 @@ def fetch_quiz_questions_for_student(quiz_id: str) -> List[Dict[str, Any]]:
         raise RuntimeError("Database client not available")
 
     res = (
-        client.table("class10_questions")
+        client.table("master_questions")
         .select("id, question_text, option_a, option_b, option_c, option_d, order_index")
         .eq("quiz_id", quiz_id.strip())
         .order("order_index", desc=False)
@@ -249,6 +249,9 @@ def insert_leaderboard_record(
     score: int,
     total_questions: int,
     accuracy: float,
+    user_id: Optional[str] = None,
+    exam_category: str = "BSEB_10TH",
+    time_taken_seconds: Optional[int] = 0,
     phone: Optional[str] = None
 ) -> Optional[Dict[str, Any]]:
     """Inserts candidate score record into the district-based leaderboard."""
@@ -257,14 +260,17 @@ def insert_leaderboard_record(
         return None
 
     try:
-        res = client.table("class10_leaderboard").insert({
+        res = client.table("master_leaderboard").insert({
             "quiz_id": quiz_id.strip(),
+            "user_id": user_id,
             "student_name": student_name.strip() or "छात्र",
             "district": district.strip() or "बिहार",
+            "exam_category": exam_category.strip() or "BSEB_10TH",
             "phone": phone.strip() if phone else None,
             "score": score,
             "total_questions": total_questions,
-            "accuracy": accuracy
+            "accuracy": accuracy,
+            "time_taken_seconds": time_taken_seconds
         }).execute()
         return res.data[0] if res.data else None
     except Exception as e:
@@ -272,17 +278,18 @@ def insert_leaderboard_record(
         return None
 
 def fetch_quiz_leaderboard_db(quiz_id: str, limit: int = 25) -> List[Dict[str, Any]]:
-    """Retrieves sorted district leaderboard rankers for a quiz."""
+    """Retrieves sorted district leaderboard rankers for a quiz sorted by score desc, time_taken_seconds asc."""
     client = get_db()
     if not client:
         return []
 
     try:
         res = (
-            client.table("class10_leaderboard")
-            .select("student_name, district, score, total_questions, accuracy, created_at")
+            client.table("master_leaderboard")
+            .select("user_id, student_name, district, exam_category, score, total_questions, accuracy, time_taken_seconds, created_at")
             .eq("quiz_id", quiz_id.strip())
             .order("score", desc=True)
+            .order("time_taken_seconds", desc=False)
             .order("created_at", desc=False)
             .limit(limit)
             .execute()
@@ -302,7 +309,7 @@ def admin_fetch_all_quizzes_db(limit: int = 50) -> List[Dict[str, Any]]:
 
     try:
         res = (
-            client.table("class10_quizzes")
+            client.table("master_quizzes")
             .select("id, title, subject, slot, quiz_date, total_questions, duration_minutes, is_active, created_at")
             .order("quiz_date", desc=True)
             .limit(limit)
@@ -336,7 +343,7 @@ def admin_create_quiz_db(
             "total_questions": 0,
             "is_active": is_active
         }
-        res = client.table("class10_quizzes").insert(payload).execute()
+        res = client.table("master_quizzes").insert(payload).execute()
         return res.data[0] if res.data else None
     except Exception as e:
         logger.error(f"Admin create quiz DB error: {e}")
@@ -349,7 +356,7 @@ def admin_toggle_quiz_status_db(quiz_id: str, is_active: bool) -> bool:
         return False
 
     try:
-        client.table("class10_quizzes").update({"is_active": is_active}).eq("id", quiz_id.strip()).execute()
+        client.table("master_quizzes").update({"is_active": is_active}).eq("id", quiz_id.strip()).execute()
         return True
     except Exception as e:
         logger.error(f"Admin toggle quiz DB error: {e}")
@@ -363,7 +370,7 @@ def admin_add_questions_batch_db(quiz_id: str, questions: List[Dict[str, Any]]) 
 
     clean_quiz_id = quiz_id.strip()
     try:
-        cnt_res = client.table("class10_questions").select("id", count="exact").eq("quiz_id", clean_quiz_id).execute()
+        cnt_res = client.table("master_questions").select("id", count="exact").eq("quiz_id", clean_quiz_id).execute()
         offset = cnt_res.count or 0
 
         formatted = []
@@ -380,9 +387,9 @@ def admin_add_questions_batch_db(quiz_id: str, questions: List[Dict[str, Any]]) 
                 "order_index": idx
             })
 
-        client.table("class10_questions").insert(formatted).execute()
+        client.table("master_questions").insert(formatted).execute()
         new_total = offset + len(formatted)
-        client.table("class10_quizzes").update({"total_questions": new_total}).eq("id", clean_quiz_id).execute()
+        client.table("master_quizzes").update({"total_questions": new_total}).eq("id", clean_quiz_id).execute()
         return len(formatted)
     except Exception as e:
         logger.error(f"Admin add questions batch DB error: {e}")

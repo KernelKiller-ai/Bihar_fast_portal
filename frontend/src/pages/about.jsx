@@ -25,23 +25,23 @@ export default function About() {
             <div className="w-9 h-9 rounded-lg bg-[#0B4F8A] text-white flex items-center justify-center mb-3">
               <ShieldCheck size={18} />
             </div>
-            <h3 className="font-extrabold text-slate-900 text-sm">Primary Sources</h3>
+            <h2 className="font-extrabold text-slate-900 text-sm">Primary Sources</h2>
             <p className="text-xs text-slate-500 mt-1">We cite and link the official department portal or gazette whenever available.</p>
           </div>
 
           <div className="p-4 rounded-xl bg-slate-50 border border-slate-200">
-            <div className="w-9 h-9 rounded-lg bg-emerald-600 text-white flex items-center justify-center mb-3">
+            <div className="w-9 h-9 rounded-lg bg-emerald-700 text-white flex items-center justify-center mb-3">
               <Zap size={18} />
             </div>
-            <h3 className="font-extrabold text-slate-900 text-sm">Fast and Accessible</h3>
+            <h2 className="font-extrabold text-slate-900 text-sm">Fast and Accessible</h2>
             <p className="text-xs text-slate-500 mt-1">Lightweight pages designed for practical use on rural and urban connections.</p>
           </div>
 
           <div className="p-4 rounded-xl bg-slate-50 border border-slate-200">
-            <div className="w-9 h-9 rounded-lg bg-amber-500 text-white flex items-center justify-center mb-3">
+            <div className="w-9 h-9 rounded-lg bg-amber-500 text-slate-950 flex items-center justify-center mb-3">
               <Users size={18} />
             </div>
-            <h3 className="font-extrabold text-slate-900 text-sm">Student-Centric</h3>
+            <h2 className="font-extrabold text-slate-900 text-sm">Student-Centric</h2>
             <p className="text-xs text-slate-500 mt-1">Clear summaries help students understand important dates, eligibility, and next steps.</p>
           </div>
         </section>

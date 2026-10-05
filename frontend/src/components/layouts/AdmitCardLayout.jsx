@@ -59,7 +59,7 @@ export default function AdmitCardLayout({ post }) {
             href={downloadUrl}
             target="_blank"
             rel="noreferrer"
-            className="inline-flex items-center gap-2 bg-emerald-600 hover:bg-emerald-700 text-white font-black text-sm px-6 py-2.5 rounded-xl shadow transition active:scale-95 cursor-pointer"
+            className="inline-flex items-center gap-2 bg-emerald-700 hover:bg-emerald-800 text-white font-black text-sm px-6 py-2.5 rounded-xl shadow transition active:scale-95 cursor-pointer"
           >
             <Download size={16} /> डाउनलोड एडमिट कार्ड (Official Direct Server)
           </a>

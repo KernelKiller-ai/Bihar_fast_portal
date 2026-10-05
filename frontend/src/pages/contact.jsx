@@ -70,7 +70,7 @@ export default function Contact() {
             <div className="w-10 h-10 rounded-xl bg-blue-600 text-white flex items-center justify-center mx-auto mb-2">
               <Mail size={18} />
             </div>
-            <h4 className="font-bold text-xs text-slate-900">आधिकारिक ईमेल</h4>
+            <h2 className="font-bold text-xs text-slate-900">आधिकारिक ईमेल</h2>
             <a href="mailto:support@biharfast.in" className="text-[11px] text-blue-700 hover:underline mt-1 font-mono select-all">support@biharfast.in</a>
           </div>
 
@@ -78,7 +78,7 @@ export default function Contact() {
             <div className="w-10 h-10 rounded-xl bg-emerald-600 text-white flex items-center justify-center mx-auto mb-2">
               <MessageSquare size={18} />
             </div>
-            <h4 className="font-bold text-xs text-slate-900">कम्युनिटी चैनल</h4>
+            <h2 className="font-bold text-xs text-slate-900">कम्युनिटी चैनल</h2>
             <p className="text-[11px] text-slate-500 mt-1">टेलीग्राम & व्हाट्सएप ग्रुप्स</p>
           </div>
 
@@ -86,7 +86,7 @@ export default function Contact() {
             <div className="w-10 h-10 rounded-xl bg-purple-600 text-white flex items-center justify-center mx-auto mb-2">
               <MapPin size={18} />
             </div>
-            <h4 className="font-bold text-xs text-slate-900">राज्य / क्षेत्र</h4>
+            <h2 className="font-bold text-xs text-slate-900">राज्य / क्षेत्र</h2>
             <p className="text-[11px] text-slate-500 mt-1">पटना / शेखपुरा, बिहार (भारत)</p>
           </div>
         </div>

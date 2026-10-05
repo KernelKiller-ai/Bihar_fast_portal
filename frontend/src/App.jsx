@@ -182,7 +182,7 @@ export default function App() {
   const topAlertItem = liveScrapedItems.length > 0 ? liveScrapedItems[0] : portalItems[0] || null;
 
   return (
-    <div className="min-h-screen bg-slate-100/90 text-slate-800 font-sans antialiased flex flex-col justify-between">
+    <div className="min-h-screen w-full max-w-full min-w-0 overflow-x-hidden bg-slate-100/90 text-slate-800 font-sans antialiased flex flex-col justify-between">
       <ScrollToTop />
       <LoginModal />
       <div>
@@ -203,54 +203,46 @@ export default function App() {
               element={
                 <>
                   <section className="relative w-full bg-white border-b border-slate-200 overflow-hidden select-none">
-                    <div className="max-w-[1550px] mx-auto pt-4 sm:pt-6">
+                    <div className="w-full max-w-[1550px] mx-auto pt-4 sm:pt-6">
                       <div className="px-4 sm:px-8 grid grid-cols-1 lg:grid-cols-12 gap-6 items-end">
                         <div className="lg:col-span-7 space-y-4 text-center lg:text-left z-10 pb-4">
                           <div className="flex flex-col items-center lg:items-start">
-                            <img 
-                              src="/logo.png" 
-                              alt="BiharFast Logo" 
-                              width="64"
-                              height="64"
+                            <img
+                              src="/logo-192.webp"
+                              alt="BiharFast"
+                              width="48"
+                              height="48"
                               loading="eager"
+                              fetchPriority="high"
                               decoding="async"
-                              className="h-14 sm:h-16 w-14 sm:w-16 object-contain aspect-square"
+                              className="h-12 w-12 sm:h-16 sm:w-16 object-contain aspect-square"
                             />
-                            <p className="text-xs sm:text-sm font-black text-slate-800 mt-1.5 tracking-wide">
-                              Jobs | Welfare | Information
-                            </p>
-                            <p className="text-[10.5px] sm:text-xs text-slate-600 font-bold tracking-wider">
-                              — सही जानकारी, बेहतर बिहार —
-                            </p>
                           </div>
 
                           <div className="space-y-1">
                             <h1 className="text-2xl sm:text-4xl lg:text-[38px] font-black text-[#0B3B66] tracking-tight leading-tight">
-                              Bihar Government <br className="hidden sm:block" />
-                              Opportunities, <span className="text-[#C2410C]">Now Faster.</span>
+                              Bihar’s Fastest Gateway to Jobs &amp; Public Services.
                             </h1>
                             <p className="text-xs sm:text-sm text-slate-700 font-bold pt-1">
-                              Latest Jobs | Direct Fast Portals | Useful Tools | All in One Place
-                            </p>
-                            <p className="text-[11px] text-slate-600 font-semibold">
-                              Trusted • Simple • Fast • For a Brighter Bihar
+                              – सटीक जानकारी, बेहतर बिहार – | State &amp; Central Vacancies, Board Results &amp; Useful Tools
                             </p>
                           </div>
 
-                          <div className="pt-1 max-w-xl mx-auto lg:mx-0">
-                            <div className="relative flex items-center bg-white border-2 border-[#0B4F8A] rounded-2xl shadow-md overflow-hidden p-1 focus-within:ring-2 focus-within:ring-blue-400 transition-all">
-                              <Search className="text-slate-600 ml-3 shrink-0" size={19} />
+                          <div className="w-full max-w-xl mx-auto lg:mx-0 pt-1">
+                            <div className="relative flex w-full items-center bg-white border-2 border-[#0B4F8A] rounded-2xl shadow-md overflow-hidden p-1 focus-within:ring-2 focus-within:ring-blue-400 transition-all">
+                              <Search className="text-slate-600 ml-2 sm:ml-3 shrink-0" size={19} />
                               <input
                                 type="text"
                                 placeholder="Search jobs, results, admit cards..."
                                 value={searchQuery}
                                 onChange={(e) => setSearchQuery(e.target.value)}
-                                className="w-full py-2 px-3 text-xs sm:text-sm text-slate-900 placeholder:text-slate-500 font-semibold focus:outline-none"
+                                className="min-w-0 flex-1 w-full py-2 px-2 sm:px-3 text-xs sm:text-sm text-slate-900 placeholder:text-slate-500 font-semibold focus:outline-none"
                               />
                               {searchQuery && (
                                 <button
                                   type="button"
                                   onClick={() => setSearchQuery("")}
+                                  aria-label="Clear search"
                                   className="text-xs text-slate-600 hover:text-slate-900 font-bold px-2 cursor-pointer"
                                 >
                                   ✕
@@ -262,7 +254,7 @@ export default function App() {
                                   const el = document.getElementById("active-circulars-section");
                                   if (el) el.scrollIntoView({ behavior: "smooth" });
                                 }}
-                                className="bg-[#0B4F8A] hover:bg-[#073863] text-white font-black text-xs sm:text-sm px-6 py-2.5 rounded-xl transition shrink-0 cursor-pointer shadow-xs"
+                                className="bg-[#0B4F8A] hover:bg-[#073863] text-white font-black text-xs sm:text-sm px-3 sm:px-6 py-2.5 rounded-xl transition shrink-0 cursor-pointer shadow-xs"
                               >
                                 Search
                               </button>
@@ -271,8 +263,8 @@ export default function App() {
 
                           {/* Quick Navigation Icons */}
                           <div className="grid grid-cols-5 gap-2 pt-2 max-w-lg mx-auto lg:mx-0">
-                            <button
-                              type="button"
+                            <Link
+                              to="/jobs"
                               onClick={() => { setActiveTab("jobs"); setSearchQuery(""); }}
                               className="flex flex-col items-center justify-center p-1.5 rounded-xl hover:bg-blue-50/80 transition group cursor-pointer text-center"
                             >
@@ -280,11 +272,11 @@ export default function App() {
                                 <Briefcase size={18} />
                               </div>
                               <span className="text-[10px] sm:text-[11px] font-bold text-slate-900 mt-1 leading-tight">Government<br />Jobs</span>
-                            </button>
+                            </Link>
 
-                            {/* 10th Mock Test Quick Icon */}
+                            {/* Live Mock Test Quick Icon */}
                             <Link
-                              to="/class-10-quiz"
+                              to="/mock-test"
                               className="flex flex-col items-center justify-center p-1.5 rounded-xl hover:bg-amber-50/80 transition group cursor-pointer text-center relative"
                             >
                               <span className="absolute -top-1 -right-1 bg-red-600 text-white text-[9px] font-black px-1.5 py-0.5 rounded-full animate-pulse shadow-xs">
@@ -293,7 +285,7 @@ export default function App() {
                               <div className="w-10 h-10 sm:w-11 sm:h-11 rounded-full bg-linear-to-tr from-amber-600 to-yellow-500 text-white flex items-center justify-center shadow-xs group-hover:scale-105 transition">
                                 <Trophy size={18} />
                               </div>
-                              <span className="text-[10px] sm:text-[11px] font-black text-amber-900 mt-1 leading-tight">10th Daily<br />Mock Test</span>
+                              <span className="text-[10px] sm:text-[11px] font-black text-amber-900 mt-1 leading-tight">All Exam<br />Mock Test</span>
                             </Link>
 
                             <Link
@@ -306,8 +298,8 @@ export default function App() {
                               <span className="text-[10px] sm:text-[11px] font-bold text-slate-900 mt-1 leading-tight">RTPS<br />Services</span>
                             </Link>
 
-                            <button
-                              type="button"
+                            <Link
+                              to="/results"
                               onClick={() => { setActiveTab("results"); setSearchQuery(""); }}
                               className="flex flex-col items-center justify-center p-1.5 rounded-xl hover:bg-purple-50/80 transition group cursor-pointer text-center"
                             >
@@ -315,10 +307,10 @@ export default function App() {
                                 <Award size={18} />
                               </div>
                               <span className="text-[10px] sm:text-[11px] font-bold text-slate-900 mt-1 leading-tight">Exam<br />Results</span>
-                            </button>
+                            </Link>
 
-                            <button
-                              type="button"
+                            <Link
+                              to="/age-calculator"
                               onClick={() => handleOpenTool("resizer")}
                               className="flex flex-col items-center justify-center p-1.5 rounded-xl hover:bg-rose-50/80 transition group cursor-pointer text-center"
                             >
@@ -326,7 +318,7 @@ export default function App() {
                                 <Wrench size={18} />
                               </div>
                               <span className="text-[10px] sm:text-[11px] font-bold text-slate-900 mt-1 leading-tight">Useful<br />Tools</span>
-                            </button>
+                            </Link>
                           </div>
                         </div>
 
@@ -343,9 +335,9 @@ export default function App() {
                               <span className="bg-amber-400/20 text-amber-300 border border-amber-400/30 text-[10px] font-black px-2.5 py-1 rounded-full uppercase tracking-wider inline-block">
                                 Official Portal Aggregator
                               </span>
-                              <h3 className="text-lg font-black text-white mt-3">
+                              <h2 className="text-lg font-black text-white mt-3">
                                 सभी सरकारी भर्तियों और सेवाओं की सीधी जानकारी
-                              </h3>
+                              </h2>
                               <p className="text-xs text-slate-300 mt-1.5 font-medium leading-relaxed">
                                 बिना किसी देरी के BPSC, BSSC, CSBC, RTPS और रिजल्ट्स से जुड़े सभी नोटिफिकेशन्स तुरंत पाएं।
                               </p>
@@ -367,11 +359,11 @@ export default function App() {
                             <Sparkles size={13} /> Fast Hubs:
                           </span>
                           <Link 
-                            to="/class-10-quiz" 
+                            to="/mock-test" 
                             className="px-3 py-1 rounded-lg bg-linear-to-r from-amber-500 to-orange-600 hover:from-amber-600 hover:to-orange-700 text-white font-extrabold transition shrink-0 shadow-xs flex items-center gap-1.5"
                           >
                             <Trophy size={13} className="text-yellow-200" />
-                            🎯 10th Mock Test & Rank
+                            🎯 All Exam Live Mock Test & Rank
                           </Link>
                           <Link 
                             to="/bseb-matric-10th" 
@@ -441,21 +433,25 @@ export default function App() {
 
                     <div className="bg-slate-50 border-t border-slate-200/80 py-2 px-4 flex items-center justify-center gap-1.5 flex-wrap text-xs text-slate-700 font-medium">
                       <span className="font-bold text-slate-700 text-[11px]">Trending:</span>
-                      {["10th Mock Test", "BPSC", "BPSSC", "CSBC पुलिस", "BCECEB", "BTSC", "BSSC Inter"].map((tag) => (
-                        <button
-                          key={tag}
-                          type="button"
-                          onClick={() => {
-                            if (tag === "10th Mock Test") {
-                              window.location.href = "/class-10-quiz";
-                            } else {
-                              setSearchQuery(tag);
-                            }
-                          }}
-                          className="px-2.5 py-0.5 rounded-full bg-white hover:bg-blue-50 text-slate-800 hover:text-blue-800 text-[11px] font-bold border border-slate-300 transition cursor-pointer shadow-xs"
-                        >
-                          #{tag}
-                        </button>
+                      {["Live Mock Test", "BPSC", "BPSSC", "CSBC पुलिस", "BCECEB", "BTSC", "BSSC Inter"].map((tag) => (
+                        tag === "Live Mock Test" ? (
+                          <Link
+                            key={tag}
+                            to="/mock-test"
+                            className="px-2.5 py-0.5 rounded-full bg-white hover:bg-blue-50 text-slate-800 hover:text-blue-800 text-[11px] font-bold border border-slate-300 transition cursor-pointer shadow-xs"
+                          >
+                            #{tag}
+                          </Link>
+                        ) : (
+                          <button
+                            key={tag}
+                            type="button"
+                            onClick={() => setSearchQuery(tag)}
+                            className="px-2.5 py-0.5 rounded-full bg-white hover:bg-blue-50 text-slate-800 hover:text-blue-800 text-[11px] font-bold border border-slate-300 transition cursor-pointer shadow-xs"
+                          >
+                            #{tag}
+                          </button>
+                        )
                       ))}
                     </div>
                   </section>
@@ -477,7 +473,7 @@ export default function App() {
                             </span>
                           </div>
                           <h2 className="text-base sm:text-lg font-black text-white mt-1">
-                            BSEB 10th मैट्रिक लाइव मॉक टेस्ट & बिहार स्टेट लीडरबोर्ड
+                            बिहार ऑल एग्जाम लाइव मॉक टेस्ट & राज्य लीडरबोर्ड
                           </h2>
                           <p className="text-xs text-blue-100 font-medium">
                             अपनी तैयारी परखें, जिलावार रैंक देखें और दोस्तों के साथ व्हाट्सएप पर स्कोरकार्ड शेयर करें।
@@ -486,7 +482,7 @@ export default function App() {
                       </div>
 
                       <Link
-                        to="/class-10-quiz"
+                        to="/mock-test"
                         className="w-full sm:w-auto px-6 py-3 bg-amber-400 hover:bg-amber-300 text-slate-950 font-black text-xs sm:text-sm rounded-xl shadow-md transition flex items-center justify-center gap-2 shrink-0 group active:scale-95"
                       >
                         <span>अभी फ्री टेस्ट दें</span>
@@ -581,10 +577,11 @@ export default function App() {
                           {CATEGORY_TABS.map((tab) => {
                             const Icon = tab.icon;
                             const isActive = activeTab === tab.id;
+                            const tabPath = tab.id === "all" ? "/" : tab.id === "jobs" ? "/jobs" : tab.id === "results" ? "/results" : tab.id === "admit_card" ? "/admit-card" : "/sitemap";
                             return (
-                              <button
+                              <Link
                                 key={tab.id}
-                                type="button"
+                                to={tabPath}
                                 onClick={() => setActiveTab(tab.id)}
                                 className={`text-xs font-black px-4 py-2.5 rounded-xl whitespace-nowrap shrink-0 transition-all flex items-center gap-2 border cursor-pointer ${
                                   isActive
@@ -594,7 +591,7 @@ export default function App() {
                               >
                                 <Icon size={15} className={isActive ? "text-amber-400" : "text-slate-600"} />
                                 {tab.label}
-                              </button>
+                              </Link>
                             );
                           })}
                         </div>
@@ -639,10 +636,10 @@ export default function App() {
                           </div>
 
                           <div className="space-y-2 text-xs">
-                            <Link to="/class-10-quiz" className="p-2.5 rounded-xl border border-amber-200 bg-amber-50/50 hover:bg-amber-100/70 flex items-center justify-between transition group">
+                            <Link to="/mock-test" className="p-2.5 rounded-xl border border-amber-200 bg-amber-50/50 hover:bg-amber-100/70 flex items-center justify-between transition group">
                               <div>
                                 <p className="font-black text-amber-950 group-hover:text-amber-800 flex items-center gap-1">
-                                  <Trophy size={13} className="text-amber-600" /> 10th बोर्ड लाइव टेस्ट 2026
+                                  <Trophy size={13} className="text-amber-600" /> ऑल एग्जाम लाइव मॉक टेस्ट
                                 </p>
                                 <span className="text-[10px] text-amber-700 font-semibold">अंक, सटीकता और राज्य रैंक</span>
                               </div>

@@ -1,468 +1,124 @@
-# BiharFast — Project Documentation
+# BiharFast Project Documentation
 
-## 1. Overview
+## Current operational snapshot
 
-BiharFast is a Bihar-focused public information and recruitment platform built to simplify access to government updates, job notifications, admit cards, scheme information, and citizen services in one place.
+BiharFast is a Bihar-focused public information portal for government notices, jobs, admit cards, results, schemes, education resources, and citizen-service hubs. This snapshot describes the checked-in application and deployment configuration; it is not a live uptime, data-freshness, or production-capacity check.
 
-The platform is designed for users who want fast, clean, and trustworthy government-related information without navigating multiple official portals manually.
+The current repository contains:
 
-This project combines:
+- A React 19 / Vite frontend using React Router, Tailwind CSS 4, Lucide icons, and optional Supabase Auth.
+- A FastAPI backend that serves notice and quiz APIs and accesses Supabase through the Python client.
+- Optional Upstash Redis caching and rate-limit support, plus a Telegram channel alert integration.
+- Vercel frontend routing/cache configuration and a Vercel function for crawler-facing post metadata.
+- A Supabase migration for `ai_usage_ledger` and `scraped_inbox`; no canonical `notices` or quiz-table DDL is checked in.
 
-- a modern React frontend for public-facing information
-- a FastAPI backend for data delivery and API orchestration
-- Supabase as the main structured data layer
-- Upstash Redis for faster caching and feed speed
-- Python scrapers to collect updates from official government and board portals
+Current UI work includes the category-driven admin notice form, mobile layout constraints for small viewports, and an `AuthProvider` at the application root. The authenticated user flow uses Google OAuth through Supabase when configured. Student quiz history is stored in browser `localStorage`; non-demo quiz results are also submitted to the backend leaderboard.
 
----
+The production domains and backend URL appear in source/configuration. Their current availability and the live Supabase schema were not independently queried for this documentation pass.
 
-## 2. What this project does
+## Product overview
 
-BiharFast helps users find and track:
+The site centralizes access to public notices and direct action links for Bihar students, job aspirants, and public-service seekers. Main public capabilities include:
 
-- Government job updates
-- BPSC / CSBC / BPSSC / BCECEB / BTSC / BSSC-related notices
-- Results and admit cards
-- Welfare schemes and Yojana announcements
-- RTPS and local citizen service portals
-- Educational and student opportunity updates
-- Important Bihar government public notices
+- A notice feed with client-side category filtering and text search.
+- Slug-based notice detail pages, including direct apply/download links.
+- Dedicated results/admit-card/job aggregations and topic hubs such as RTPS Bihar, Udyami Yojana, BSEB results, KYP, Student Credit Card, and CUET.
+- Class 10 and other configured mock-test experiences, scorecards, answer explanations, and a leaderboard.
+- A student dashboard backed by local browser history and Supabase Auth identity.
+- An admin portal for notice publishing and quiz management.
 
-The site is organized around a real-time notification feed and dedicated hub pages for major Bihar information categories.
+The site presents verified-information messaging, but this repository does not establish an automated source-verification workflow for every submitted URL. Admin notice publishing is a manual bearer-token-protected API flow.
 
----
+## Recent implementation updates
 
-## 3. Why this project matters
+1. **Category-driven admin form:** category values are `jobs`, `admit_card`, `results`, and `schemes`; field labels and placeholders adapt to the selected category. The total-posts field is hidden for admit cards and results, and the submit payload includes the configured fallback value.
+2. **Mobile overflow work:** root and major layout widths are constrained, and the navbar/search layout has compact mobile behavior intended for narrow viewports including 360px. This is an implementation target verified in the previous development pass, not a claim that every route has been exhaustively tested at every device size.
+3. **Global auth context:** `AuthProvider` wraps the routed application in `frontend/src/main.jsx`; `App` and the global UI therefore render inside the provider.
 
-The project solves a common problem: important public information is spread across many websites, sometimes with slow access, inconsistent UI, and cluttered layouts.
-
-BiharFast reduces that friction by delivering a cleaner experience with:
-
-- centralized updates
-- direct official links
-- better category organization
-- dedicated landing pages for high-value services
-- responsive mobile-first UI
-- quick access to trending opportunities
-
----
-
-## 4. High-level architecture
+## Architecture and request flow
 
 ```text
-User Browser
-    │
-    ▼
-React Frontend (Vite + React Router)
-    │
-    ├── Home feed / search / category pages
-    ├── Post detail pages
-    ├── Hub pages (RTPS, Yojana, BSEB, etc.)
-    └── Tool pages (resizer, age calculator, etc.)
-    │
-    ▼
-FastAPI Backend
-    │
-    ├── Supabase data fetching
-    ├── Redis cache layer
-    ├── article detail API
-    ├── sync API for inserts/updates
-    └── newsletter subscribe endpoint
-    │
-    ▼
-Supabase Database
-    │
-    ├── jobs
-    ├── schemes
-    ├── citizen_services
-    ├── results_admit_cards
-    └── subscribers
+Browser (React SPA)
+  ├─ React Router pages, feed filters, quiz state, auth context
+  ├─ Supabase Auth client (public anon key, when configured)
+  └─ HTTP requests
+       └─ FastAPI (public/admin/quiz APIs)
+            ├─ Supabase Postgres via server-side Python client
+            ├─ Optional Upstash Redis cache/rate limiter
+            └─ Optional Telegram notification on new notice
 ```
 
----
-
-## 5. Project structure
-
-```text
-bihar_fast/
-├── backend/
-│   ├── .env
-│   ├── main.py
-│   ├── requirements.txt
-│   ├── quick_feed_sync.py
-│   ├── seed_latest_updates.py
-│   ├── sync_engine.py
-│   ├── telegram_bot.py
-│   ├── data/
-│   ├── scrapers/
-│   └── venv/
-│
-├── frontend/
-│   ├── public/
-│   ├── src/
-│   ├── index.html
-│   ├── package.json
-│   ├── vite.config.js
-│   ├── vercel.json
-│   └── eslint.config.js
-│
-├── package.json
-├── document.md
-├── .gitignore
-└── README.md (if added later)
-```
-
-### Backend responsibilities
-
-- `main.py` contains the main FastAPI app, routes, API logic, CORS config, and database access
-- `sync_engine.py` handles sync logic and data ingestion operations
-- `quick_feed_sync.py` helps with rapid feed refreshes
-- `seed_latest_updates.py` populates or refreshes latest notices
-- `telegram_bot.py` sends alerts and notifications to Telegram
-- `scrapers/` contains portal-specific scraping logic for government boards and services
-- `data/` stores curated or processed information
-
-### Frontend responsibilities
-
-- `src/App.jsx` contains the core home page, feed logic, filters, and hub navigation
-- `src/pages/` contains specific landing pages and detail pages
-- `src/components/` contains reusable UI blocks like Navbar, Footer, NotificationCard, etc.
-- `src/data/portalData.js` holds static government portal info and permanent services data
-- `src/utils/slug.js` provides slug generation for URLs and post linking
-
----
-
-## 6. Tech stack
-
-### Frontend
-
-- React 19
-- Vite
-- React Router DOM
-- Lucide React icons
-- CSS and custom design system
-- Service worker/PWA support for app-like behavior
-
-### Backend
-
-- Python
-- FastAPI
-- Supabase Python Client
-- Upstash Redis
-- Python dotenv
-- Requests and BeautifulSoup for scraping
-
-### Data and integrations
-
-- Supabase for structured storage
-- Redis for caching homepage and post data
-- Telegram alerts for sync/notice updates
-- Domain whitelist for trusted government URLs
-
----
-
-## 7. Core features
-
-### 7.1 Live notice feed
-The home page fetches notices from the backend and groups them under categories such as:
-
-- jobs
-- results
-- admit cards
-- schemes
-- citizen services
-
-This gives users a quick overview of current opportunities and official updates.
-
-### 7.2 Detail pages with SEO-friendly URLs
-Every notice can be opened as a dedicated detail page using slug-based routing.
-
-This improves:
-
-- readability
-- direct sharing
-- indexed URL structure
-- better public discoverability
-
-### 7.3 Dedicated hub pages
-The platform includes dedicated sections for high-traffic topics such as:
-
-- BSEB 10th / 12th result pages
-- RTPS Bihar service hub
-- Udyami Yojana page
-- Student Credit Card page
-- Kushal Yuva Program page
-- CUET UG admission page
-
-These pages help users go directly to the most relevant service instead of searching widely.
-
-### 7.4 Official domain validation
-The backend enforces safe URL handling by validating links against trusted official Bihar government domains.
-
-This protects the system from unsafe or unofficial donation or spam-style URLs.
-
-### 7.5 Subscription and sync support
-The backend exposes:
+The frontend's main feed requests `GET /api/notices` (with `/api/posts` as a backend alias). A notice detail page fetches `GET /api/posts/{slug}`. The frontend also contains `frontend/api/post-seo.js`, which returns crawler-facing HTML metadata for `/post/:slug`; Vercel routes matching post pages to this function. The FastAPI sitemap endpoint supplies published post slugs.
 
-- a subscription endpoint for newsletter signups
-- a protected sync endpoint to insert or update notices
-- Telegram integration for updates and alert broadcasting
+FastAPI uses CORS allowlists, gzip middleware, rate limits, and a global exception handler. Public feed/detail data can be cached in Upstash Redis when configured, and response headers include browser/CDN cache directives. Redis errors generally fall back to uncached operation. No React error-boundary component was identified in the inspected application.
 
-### 7.6 Admin-ready structure
-The project includes admin-related views and internal sync functionality so content updates can be managed without manually editing the frontend.
+## Routes and APIs
 
-### 7.7 Class 10 live quiz system
-The latest release adds a dynamic Class 10 mock-test system at `/class-10-quiz`.
+### Frontend routes
 
-Public quiz capabilities include:
+The checked-in route map includes `/`, `/post/:slug`, `/sitemap`, `/all-updates`, `/jobs`, `/admit-card`, and `/results`; about/contact/legal pages; `/admin` and `/admin-portal`; education/service hubs; `/class-10-quiz`, `/mock-test/class-10`, `/mock-test`, `/upcoming-2026`, `/download`, and `/dashboard`.
 
-- 24x7 active quiz mode with no fixed exam-window lockout
-- automatic preference for today's active quiz, with fallback to the latest active quiz
-- optional subject filtering
-- student registration with name, district, and optional phone number
-- timed mock-test experience with server-side answer evaluation
-- score, accuracy, attempted, correct, and wrong counts with answer explanations
-- Bihar district leaderboard for each quiz
-- WhatsApp sharing of the result and quiz link
-- IP-based protection limited to six submissions per day
-- Indian Standard Time (IST) for date and daily-attempt calculations
+Schemes are part of the backend notice category set and home aggregation; no dedicated `/schemes` route was identified in the current route map.
 
-The admin dashboard includes a dedicated `10th Quiz Control Hub`. Authorized admins can list quiz slots, create a quiz with subject/date/duration settings, switch a quiz live or offline, inspect questions, and add questions through either a single-question form or bulk JSON import.
+### FastAPI routes
 
----
+| Method | Path | Purpose / access |
+|---|---|---|
+| GET | `/` | Health response |
+| GET | `/api/notices`, `/api/posts` | Published active notice feed |
+| GET | `/api/posts/{slug}` | Published active notice detail |
+| GET | `/api/admin/posts` | Admin notice list; bearer token |
+| POST | `/api/admin/posts` | Create/publish notice; bearer token |
+| PUT | `/api/admin/posts/{post_id}` | Update notice; bearer token |
+| POST | `/api/admin/posts/{post_id}/status` | Update notice status; bearer token |
+| GET | `/api/sitemap-posts.xml` | Dynamic sitemap for published notices |
+| GET | `/api/quiz/available`, `/api/quiz/today` | Public quiz selection/questions |
+| POST | `/api/quiz/submit` | Evaluate answers and optionally persist leaderboard entry |
+| GET | `/api/quiz/leaderboard/{quiz_id}` | Public leaderboard |
+| GET/POST/DELETE | `/api/quiz/admin/...` | Admin quiz, question, and status management; bearer token |
 
-## 8. API overview
+See [docs/trd.md](./docs/trd.md) for the fuller endpoint inventory and operational notes.
 
-The frontend connects to a backend API with a base URL configured as follows:
+The frontend footer calls `POST /api/subscribe`, and a database helper can upsert an email to `subscribers`, but no matching FastAPI route was found in the current tracked `backend/main.py`. Treat this as an integration discrepancy, not a confirmed working subscription feature.
 
-```text
-VITE_API_BASE_URL or default: https://bihar-fast-portal.onrender.com
-```
+## Authentication and state
 
-### Main endpoints
+- `AuthProvider` restores the Supabase session and listens for auth-state changes.
+- Google OAuth redirects to `/dashboard`. Authentication may be unavailable if the frontend Supabase URL/anon key is not configured.
+- The admin portal uses a separate shared bearer token entered in the admin UI; it is not the student Supabase session.
+- Feed, filter, quiz-player, and modal state is client-side React state.
+- Up to 50 student test attempts per user are kept in `localStorage`, keyed by Supabase user ID. A pending demo result may be attached after sign-in.
+- Quiz submissions are evaluated server-side. Non-demo results are persisted for the leaderboard; demo submissions do not consume the daily IP allowance or enter the leaderboard.
 
-#### Home feed
-```http
-GET /api/notices
-GET /api/posts
-```
-Returns the latest merged feed across jobs, schemes, results, and services.
+## Database and schema caveat
 
-#### Category-based endpoints
-```http
-GET /api/jobs
-GET /api/schemes
-GET /api/services
-GET /api/admissions
-GET /api/results
-```
+Observed Supabase table names include `notices`, `subscribers`, `master_quizzes`, `master_questions`, `master_leaderboard`, and `quiz_ip_rate_limits`. A tracked migration additionally modifies `ai_usage_ledger` and `scraped_inbox`.
 
-#### Post detail
-```http
-GET /api/posts/{slug}
-```
+The checked-in source does not include the canonical `public.notices` DDL or a catalog export. The requested count of 28 columns, exact types/defaults/nullability, indexes, constraints, user-profile schema, and JSONB definitions (including `important_dates` and `application_fees`) therefore cannot be verified here. [docs/backend_schema.md](./docs/backend_schema.md) lists only observed field usage and explicitly marks unknowns rather than inferring a database contract.
 
-#### Sync post
-```http
-POST /api/posts/sync
-Headers:
-  x_sync_secret: <secret>
-```
-Used for admin/internal insert or update flows.
+## Hosting and configuration
 
-#### Subscription
-```http
-POST /api/subscribe
-```
-Used to add a user email to the subscribers list.
+- Frontend: Vercel-style `frontend/vercel.json` rewrites `/api/*` to `https://bihar-fast-portal.onrender.com`, maps `/post/:slug` to the SEO function, and applies immutable one-year caching to `/assets/*`.
+- Backend: source defaults and deployment URLs reference `https://bihar-fast-portal.onrender.com`; local FastAPI development is configured in project docs/requirements, not proven by a checked-in deployment manifest.
+- Backend configuration uses Supabase URL/key, optional Upstash REST credentials, `ADMIN_API_TOKEN`, and optional Telegram credentials. The actual Supabase server key resolver accepts `SUPABASE_SECRET_KEY`, then `SUPABASE_SERVICE_ROLE_KEY`, then `SUPABASE_KEY`.
+- Frontend auth uses `VITE_SUPABASE_URL` and `VITE_SUPABASE_ANON_KEY`; API requests use `VITE_API_BASE_URL` where the source supports it.
+- A GitHub Actions workflow pings the backend keep-alive URL on a schedule. This is not a capacity guarantee.
 
-#### Class 10 quiz
-```http
-GET  /api/quiz/today?subject=science
-POST /api/quiz/submit
-GET  /api/quiz/leaderboard/{quiz_id}
-```
+Never commit real credentials. Configure secrets through the relevant hosting environment.
 
-`/api/quiz/today` returns the active quiz and questions. It first checks the current IST date and then falls back to the most recent active quiz. Quiz submissions are evaluated by the backend and recorded for the district leaderboard.
+## Source-grounded limitations and follow-up
 
-Admin quiz routes require the admin bearer token:
+- No full notices/quiz-table schema migrations or Supabase RLS policy definitions are checked in. Verify RLS and exact schema against the Supabase project before operational changes.
+- No persisted profile or quiz-attempt-history table access was found; the student history view uses local storage, while leaderboard entries are server-backed.
+- The `is_official_https_url` helper exists in backend database utilities, but no call from the notice creation/update handlers was found. Do not interpret the helper as enforced validation.
+- The create handler normalizes its category to the four supported values. The update handler's current category normalization handles results/admit cards and otherwise maps to jobs; confirm/fix that behavior before relying on editing a scheme category.
+- SEO crawler HTML is implemented for post routes; analytics instrumentation for CTR, search position, DAU, and retention was not established by this scan.
 
-```http
-GET  /api/quiz/admin/all-quizzes
-POST /api/quiz/admin/create-quiz
-POST /api/quiz/admin/toggle-status/{quiz_id}?is_active=true
-POST /api/quiz/admin/add-questions
-```
+## Documentation index
 
-The quiz API is backed by the `class10_quizzes`, `class10_questions`, `class10_leaderboard`, and `quiz_ip_rate_limits` tables in Supabase.
-
----
-
-## 9. Environment configuration
-
-Backend environment variables are usually stored in `.env` under the `backend/` folder.
-
-Example:
-
-```env
-SUPABASE_URL=your_supabase_url
-SUPABASE_SECRET_KEY=your_supabase_key
-SUPABASE_SERVICE_ROLE_KEY=your_service_role_key
-
-UPSTASH_REDIS_REST_URL=your_redis_url
-UPSTASH_REDIS_REST_TOKEN=your_redis_token
-
-INTERNAL_SYNC_SECRET=your_secret_key
-ALLOWED_ORIGINS=http://localhost:5173,https://biharfast.in
-```
-
-Frontend example:
-
-```env
-VITE_API_BASE_URL=http://localhost:8000
-```
-
----
-
-## 10. Local development
-
-### Frontend
-
-```bash
-cd frontend
-npm install
-npm run dev
-```
-
-Usually runs at:
-
-```text
-http://localhost:5173
-```
-
-### Backend
-
-```bash
-cd backend
-python -m venv venv
-venv\Scripts\activate
-pip install -r requirements.txt
-uvicorn main:app --reload --host 0.0.0.0 --port 8000
-```
-
----
-
-## 11. Production build and deployment
-
-### Frontend build
-
-```bash
-cd frontend
-npm run build
-```
-
-This is used for production deployment and supports Vercel-style hosting.
-
-### Backend deployment
-The backend is designed for deployment on hosting platforms such as:
-
-- Render
-- VPS / Ubuntu server
-- Dockerized deployment environment
-
-It expects:
-
-- valid environment variables
-- Supabase connection
-- Redis connection
-- secure internal sync secret
-- working CORS origins
-
----
-
-## 12. Data flow
-
-The real system flow is simple but effective:
-
-1. The scraper fetches data from official government portals.
-2. Data is normalized and stored in Supabase tables.
-3. The FastAPI app reads and aggregates those records.
-4. Redis caches the most requested feed data for faster responses.
-5. The frontend displays updated notices and category pages.
-6. Users click through to official PDFs or application portals.
-
-### 12.1 Quiz data flow
-
-1. An admin creates a quiz slot and adds questions from the Quiz Control Hub.
-2. The public quiz page requests the active quiz from `/api/quiz/today`.
-3. The backend selects today's active quiz in IST, or the latest active quiz when today's slot is unavailable.
-4. The student completes the timed quiz and submits answers to `/api/quiz/submit`.
-5. The backend loads the answer key, calculates the result, applies the daily IP limit, and stores a leaderboard entry.
-6. The result page displays the score and detailed answers, then loads rankings from `/api/quiz/leaderboard/{quiz_id}`.
-
----
-
-## 13. Current project strengths
-
-BiharFast already has several strong foundations:
-
-- live data-driven notice feed
-- direct official portal access
-- category-based browsing
-- dedicated hubs for major Bihar schemes and result pages
-- good frontend UX for mobile and desktop
-- strong admin/internal sync capability
-- caching design for better speed
-- service-worker/PWA readiness
-
-This gives the project a real product feel rather than a simple static website.
-
----
-
-## 14. Maintenance notes
-
-A few important practices for long-term reliability:
-
-- keep official domain whitelist updated regularly
-- validate scraped URLs before publishing
-- update scraper logic when government portals change layouts
-- monitor Redis hit rate and API latency
-- keep Supabase credentials and sync secret secure
-- make sure homepage feed remains concise and fast
-- monitor quiz submission limits and leaderboard data quality
-- keep the admin token out of frontend source and deployment logs
-- add automated tests for quiz scoring, IST date fallback, and rate limiting
-
----
-
-## 15. Suggested next improvements
-
-To move from a solid startup product to a strong public portal, these improvements are recommended:
-
-- add automated API testing
-- add admin content moderation dashboard
-- add notification email system
-- improve scraper retry and fallback logic
-- add analytics dashboard for most visited categories
-- improve SEO metadata and structured data
-- create a content publishing workflow for updates
-- add sitemap and RSS feed support
-
----
-
-## 16. Summary
-
-BiharFast is not just a basic frontend page set; it is a working public information platform that brings together government opportunities, official notices, and citizen services in one place.
-
-It is built with a practical architecture, strong integration patterns, and a public-facing design that can scale as more categories and services are added.
-
-This project already demonstrates a real-world product mindset: it is useful for end users, easier to maintain, and suitable for expansion into a larger Bihar public services ecosystem.
-
----
-
-## 17. Final statement
-
-The project has moved beyond a prototype and is now shaped like a real digital public service product. It combines government data, user experience, direct links, category organization, and fast content delivery in a way that gives it genuine value for Bihar citizens and aspirants.
-
-If needed, the next phase can focus on scaling reliability, adding analytics, improving backend speed, and expanding the content ecosystem further.
-
+- [Product requirements](./docs/prd.md)
+- [Technical requirements and architecture](./docs/trd.md)
+- [Application and user flows](./docs/app_flow.md)
+- [UI/UX design brief](./docs/ui_ux_design_brief.md)
+- [Database/schema reference](./docs/backend_schema.md)
+- [Implementation roadmap](./docs/implementation_plan.md)

@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import { Link } from "react-router-dom";
 import { ChevronDown, LogOut, ShieldCheck, Sparkles, UserRound } from "lucide-react";
-import { useAuth } from "../context/authContext";
+import { useAuth } from "../context/AuthContext.jsx";
 
 export default function Navbar() {
   const { user, loading, openLoginModal, signOut } = useAuth();
@@ -33,32 +33,36 @@ export default function Navbar() {
         {/* Subtle Ambient Light Glow */}
         <div className="absolute top-0 left-1/4 w-96 h-20 bg-sky-400/10 blur-3xl pointer-events-none" />
 
-        <div className="max-w-[1550px] mx-auto px-4 sm:px-8 py-2.5 flex items-center justify-between gap-4 relative z-10">
+        <div className="w-full max-w-[1550px] mx-auto px-3 sm:px-8 py-2 sm:py-2.5 flex items-center justify-between gap-2 sm:gap-4 relative z-10">
           
           {/* Logo Brand Plate */}
           <Link to="/" className="flex items-center gap-3 group shrink-0">
             <div className="bg-white p-1 rounded-xl shadow-md border border-sky-200/50 flex items-center justify-center transition group-hover:scale-105 w-11 h-11 sm:w-12 sm:h-12 shrink-0">
-              <img 
-                src="/logo.png" 
-                alt="BiharFast Logo" 
-                width="40" 
-                height="40" 
-                loading="eager" 
-                decoding="async" 
-                className="h-9 sm:h-10 w-9 sm:w-10 object-contain aspect-square" 
-              />
+              <picture>
+                <source srcSet="/logo-192.webp" type="image/webp" />
+                <img
+                  src="/logo-192.png"
+                  alt="BiharFast"
+                  width="192"
+                  height="192"
+                  loading="eager"
+                  fetchPriority="high"
+                  decoding="async"
+                  className="h-9 sm:h-10 w-9 sm:w-10 object-contain aspect-square"
+                />
+              </picture>
             </div>
             
-            <div className="flex flex-col">
+            <div className="flex min-w-0 flex-col">
               <div className="flex items-center gap-1.5">
                 <span className="text-lg sm:text-xl font-black tracking-tight text-white font-sans drop-shadow-xs">
                   BIHAR<span className="text-[#FF9933]">FAST</span>
                 </span>
-                <span className="text-[9.5px] font-black uppercase tracking-wider bg-amber-400 text-slate-950 px-2 py-0.5 rounded-full font-mono shadow-xs">
+                <span className="hidden sm:inline text-[9.5px] font-black uppercase tracking-wider bg-amber-400 text-slate-950 px-2 py-0.5 rounded-full font-mono shadow-xs">
                   OFFICIAL
                 </span>
               </div>
-              <span className="text-[10.5px] text-sky-200 font-semibold tracking-wide -mt-0.5">
+              <span className="hidden sm:block text-[10.5px] text-sky-200 font-semibold tracking-wide -mt-0.5">
                 Govt Jobs & Public Services • Bihar
               </span>
             </div>
@@ -79,16 +83,16 @@ export default function Navbar() {
           </div>
 
           {/* Right Action Buttons */}
-          <div className="flex items-center gap-2.5 shrink-0">
+          <div className="flex items-center gap-2 sm:gap-2.5 shrink-0">
             {!loading && !user && (
               <button
                 type="button"
                 onClick={openLoginModal}
-                className="inline-flex items-center gap-1.5 rounded-xl border border-amber-300/70 bg-amber-400 px-2.5 py-2 text-xs font-black text-slate-950 shadow transition hover:bg-amber-300 cursor-pointer sm:px-3.5"
+                aria-label="Student login"
+                className="inline-flex items-center justify-center gap-1.5 rounded-xl border border-amber-300/70 bg-amber-400 p-2 text-xs font-black text-slate-950 shadow transition hover:bg-amber-300 cursor-pointer sm:px-3.5 sm:py-2"
               >
                 <UserRound size={15} />
                 <span className="hidden sm:inline">Student Login</span>
-                <span className="sm:hidden">Login</span>
               </button>
             )}
 
@@ -137,12 +141,12 @@ export default function Navbar() {
                       ⚡ मेरी तैयारी (My Prep & Rank)
                     </Link>
                     <Link
-                      to="/class-10-quiz"
+                      to="/mock-test"
                       role="menuitem"
                       onClick={() => setProfileMenuOpen(false)}
                       className="block px-4 py-2.5 text-xs font-bold text-slate-700 transition hover:bg-sky-50 hover:text-sky-800"
                     >
-                      🏆 स्टेट मॉक टेस्ट
+                      🏆 स्टेट लाइव मॉक टेस्ट
                     </Link>
                     <button
                       type="button"
@@ -184,6 +188,7 @@ export default function Navbar() {
               href="https://whatsapp.com/channel/0029VbDwc7KLNSa91goX3m1B"
               target="_blank"
               rel="noopener noreferrer"
+              aria-label="Join official WhatsApp channel"
               className="flex items-center gap-1.5 bg-[#25D366] hover:bg-[#20ba59] text-slate-950 font-black text-xs sm:text-sm px-2.5 sm:px-4 py-2 rounded-xl transition shadow-md hover:shadow-emerald-500/30 cursor-pointer group active:scale-95"
             >
               <svg 

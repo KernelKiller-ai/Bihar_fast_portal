@@ -48,7 +48,7 @@ export default function DownloadApp() {
                 <a
                   href="/biharfast.apk"
                   download="BiharFast.apk"
-                  className="inline-flex items-center gap-2 rounded-xl bg-emerald-600 px-5 py-3 text-sm font-black text-white shadow-md transition hover:bg-emerald-700 active:scale-95"
+                  className="inline-flex items-center gap-2 rounded-xl bg-emerald-700 px-5 py-3 text-sm font-black text-white shadow-md transition hover:bg-emerald-800 active:scale-95"
                 >
                   <Download size={18} aria-hidden="true" />
                   Download BiharFast.apk
@@ -88,7 +88,7 @@ export default function DownloadApp() {
               </p>
             </article>
             <article className="rounded-2xl border border-amber-100 bg-amber-50/60 p-5">
-              <span className="flex h-9 w-9 items-center justify-center rounded-full bg-amber-500 text-sm font-black text-white">2</span>
+              <span className="flex h-9 w-9 items-center justify-center rounded-full bg-amber-500 text-sm font-black text-slate-950">2</span>
               <h3 className="mt-4 text-base font-black text-slate-900">Allow and install</h3>
               <p className="mt-2 text-sm leading-relaxed text-slate-600">
                 Tap the downloaded file. If Chrome or your browser asks about unknown apps, tap Settings, enable “Allow from this source”, return to the installer, and tap Install.
