@@ -1,5 +1,4 @@
 import { useState } from "react";
-import PropTypes from "prop-types";
 import { Link } from "react-router-dom";
 import { 
   ShieldCheck, 
@@ -24,7 +23,7 @@ import {
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "http://localhost:5000";
 
-export default function Footer({ onOpenTool }) {
+export default function Footer() {
   const [email, setEmail] = useState("");
   const [loading, setLoading] = useState(false);
   const [status, setStatus] = useState({ message: "", type: "" });
@@ -227,12 +226,12 @@ export default function Footer({ onOpenTool }) {
                 </Link>
               </li>
               <li>
-                <Link to="/sitemap" className="hover:text-blue-700 flex items-center gap-2 transition">
+                <Link to="/category/welfare-schemes" className="hover:text-blue-700 flex items-center gap-2 transition">
                   <Users size={13} className="text-slate-400" /> Welfare Schemes
                 </Link>
               </li>
               <li>
-                <Link to="/upcoming-2026" className="hover:text-blue-700 flex items-center gap-2 transition">
+                <Link to="/category/scholarships" className="hover:text-blue-700 flex items-center gap-2 transition">
                   <GraduationCap size={13} className="text-slate-400" /> Scholarships
                 </Link>
               </li>
@@ -242,16 +241,12 @@ export default function Footer({ onOpenTool }) {
                 </Link>
               </li>
               <li>
-                <Link 
-                  to="/age-calculator"
-                  onClick={() => onOpenTool?.("resizer")}
-                  className="hover:text-blue-700 flex items-center gap-2 transition text-left cursor-pointer"
-                >
+                <Link to="/useful-tools" className="hover:text-blue-700 flex items-center gap-2 transition">
                   <Wrench size={13} className="text-slate-400" /> Useful Tools
                 </Link>
               </li>
               <li>
-                <Link to="/sitemap" className="hover:text-blue-700 flex items-center gap-2 transition">
+                <Link to="/all-updates" className="hover:text-blue-700 flex items-center gap-2 transition">
                   <Bell size={13} className="text-slate-400" /> Alerts & Updates
                 </Link>
               </li>
@@ -329,39 +324,39 @@ export default function Footer({ onOpenTool }) {
             </h2>
             <ul className="space-y-2.5 text-xs text-slate-600 font-medium">
               <li>
-                <a href="https://bpsc.bihar.gov.in" target="_blank" rel="noreferrer" className="hover:text-blue-700 flex items-center gap-2 transition">
+                <Link to="/category/bpsc-jobs" className="hover:text-blue-700 flex items-center gap-2 transition">
                   <Folder size={13} className="text-slate-400 shrink-0" /> BPSC Jobs
-                </a>
+                </Link>
               </li>
               <li>
-                <a href="https://csbc.bihar.gov.in" target="_blank" rel="noreferrer" className="hover:text-blue-700 flex items-center gap-2 transition">
+                <Link to="/category/bihar-police" className="hover:text-blue-700 flex items-center gap-2 transition">
                   <Folder size={13} className="text-slate-400 shrink-0" /> Bihar Police
-                </a>
+                </Link>
               </li>
               <li>
-                <a href="https://bssc.bihar.gov.in" target="_blank" rel="noreferrer" className="hover:text-blue-700 flex items-center gap-2 transition">
+                <Link to="/category/teacher-recruitment" className="hover:text-blue-700 flex items-center gap-2 transition">
                   <Folder size={13} className="text-slate-400 shrink-0" /> Teacher Recruitment
-                </a>
+                </Link>
               </li>
               <li>
-                <a href="https://btsc.bihar.gov.in" target="_blank" rel="noreferrer" className="hover:text-blue-700 flex items-center gap-2 transition">
+                <Link to="/category/health-department" className="hover:text-blue-700 flex items-center gap-2 transition">
                   <Folder size={13} className="text-slate-400 shrink-0" /> Health Department
-                </a>
+                </Link>
               </li>
               <li>
-                <a href="https://serviceonline.bihar.gov.in" target="_blank" rel="noreferrer" className="hover:text-blue-700 flex items-center gap-2 transition">
+                <Link to="/category/panchayati-raj" className="hover:text-blue-700 flex items-center gap-2 transition">
                   <Folder size={13} className="text-slate-400 shrink-0" /> Panchayati Raj
-                </a>
+                </Link>
               </li>
               <li>
-                <a href="https://serviceonline.bihar.gov.in" target="_blank" rel="noreferrer" className="hover:text-blue-700 flex items-center gap-2 transition">
+                <Link to="/category/student-schemes" className="hover:text-blue-700 flex items-center gap-2 transition">
                   <Folder size={13} className="text-slate-400 shrink-0" /> Student Schemes
-                </a>
+                </Link>
               </li>
               <li>
-                <a href="https://serviceonline.bihar.gov.in" target="_blank" rel="noreferrer" className="hover:text-blue-700 flex items-center gap-2 transition">
+                <Link to="/category/social-welfare" className="hover:text-blue-700 flex items-center gap-2 transition">
                   <Folder size={13} className="text-slate-400 shrink-0" /> Social Welfare
-                </a>
+                </Link>
               </li>
               <li>
                 <Link to="/sitemap" className="hover:text-blue-700 flex items-center gap-2 font-bold text-slate-800 transition">
@@ -379,7 +374,7 @@ export default function Footer({ onOpenTool }) {
             <ul className="space-y-2.5 text-xs text-slate-600 font-medium">
               <li><Link to="/about" className="hover:text-blue-700 transition">About Us</Link></li>
               <li><Link to="/contact" className="hover:text-blue-700 transition">Contact Us</Link></li>
-              <li><Link to="/privacy" className="hover:text-blue-700 transition">Privacy Policy</Link></li>
+              <li><Link to="/privacy-policy" className="hover:text-blue-700 transition">Privacy Policy</Link></li>
               <li><Link to="/terms" className="hover:text-blue-700 transition">Terms &amp; Conditions</Link></li>
               <li><Link to="/disclaimer" className="hover:text-blue-700 transition">Disclaimer</Link></li>
               <li><Link to="/download" className="hover:text-blue-700 transition">Download App</Link></li>
@@ -503,7 +498,7 @@ export default function Footer({ onOpenTool }) {
             <nav className="mt-2 flex flex-wrap justify-center gap-x-3 gap-y-1 font-bold text-blue-200" aria-label="Legal and app links">
               <Link to="/about" className="hover:text-white hover:underline">About</Link>
               <Link to="/contact" className="hover:text-white hover:underline">Contact</Link>
-              <Link to="/privacy" className="hover:text-white hover:underline">Privacy</Link>
+              <Link to="/privacy-policy" className="hover:text-white hover:underline">Privacy</Link>
               <Link to="/terms" className="hover:text-white hover:underline">Terms</Link>
               <Link to="/disclaimer" className="hover:text-white hover:underline">Disclaimer</Link>
               <Link to="/download" className="hover:text-white hover:underline">Download App</Link>
@@ -530,7 +525,3 @@ export default function Footer({ onOpenTool }) {
     </footer>
   );
 }
-
-Footer.propTypes = {
-  onOpenTool: PropTypes.func
-};

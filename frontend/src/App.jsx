@@ -33,6 +33,8 @@ const MockTestPage = lazy(() => import("./pages/MockTestPage"));
 const Upcoming2026 = lazy(() => import("./pages/upcoming"));
 const DownloadApp = lazy(() => import("./pages/DownloadApp"));
 const StudentDashboard = lazy(() => import("./pages/StudentDashboard"));
+const CategoryPage = lazy(() => import("./pages/CategoryPage"));
+const UsefulToolsPage = lazy(() => import("./pages/UsefulToolsPage"));
 
 // Policy Pages (Lazy Loaded)
 const About = lazy(() => import("./pages/about"));
@@ -168,14 +170,6 @@ export default function App() {
     return matchesTab && matchesSearch;
   });
 
-  const handleOpenTool = (toolName) => {
-    setActiveTool(toolName);
-    const element = document.getElementById("cyber-tools-section");
-    if (element) {
-      element.scrollIntoView({ behavior: "smooth" });
-    }
-  };
-
   const liveScrapedItems = portalItems.filter(
     (i) => i.department === "BPSC" || i.department === "CSBC" || i.department?.includes("BPSSC") || i.department === "BCECEB" || i.department === "BSSC"
   );
@@ -310,8 +304,7 @@ export default function App() {
                             </Link>
 
                             <Link
-                              to="/age-calculator"
-                              onClick={() => handleOpenTool("resizer")}
+                              to="/useful-tools"
                               className="flex flex-col items-center justify-center p-1.5 rounded-xl hover:bg-rose-50/80 transition group cursor-pointer text-center"
                             >
                               <div className="w-10 h-10 sm:w-11 sm:h-11 rounded-full bg-[#DC2626] text-white flex items-center justify-center shadow-xs group-hover:scale-105 transition">
@@ -773,6 +766,8 @@ export default function App() {
             <Route path="/jobs" element={<SiteMapPage notices={portalItems} category="jobs" />} />
             <Route path="/admit-card" element={<SiteMapPage notices={portalItems} category="admit_card" />} />
             <Route path="/results" element={<SiteMapPage notices={portalItems} category="results" />} />
+            <Route path="/category/:slug" element={<CategoryPage notices={portalItems} loading={loading} />} />
+            <Route path="/useful-tools" element={<UsefulToolsPage />} />
             
             {/* Policy & Compliance Dual Routing */}
             <Route path="/about" element={<About />} />
@@ -810,7 +805,7 @@ export default function App() {
         </Suspense>
       </div>
 
-      <Footer onOpenTool={handleOpenTool} />
+      <Footer />
     </div>
   );
 }
