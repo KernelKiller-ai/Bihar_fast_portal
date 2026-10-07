@@ -1,8 +1,10 @@
 import PropTypes from "prop-types";
+import DOMPurify from "dompurify";
 import { 
   Calendar, 
   AlertTriangle, 
   Download, 
+  ExternalLink,
   FileCheck, 
   ArrowLeft, 
   ShieldCheck, 
@@ -12,15 +14,21 @@ import {
   CheckCircle2
 } from "lucide-react";
 import { Link } from "react-router-dom";
+import { addExternalLinkSafety } from "../../utils/sanitizeHtml";
 
 export default function AdmitCardLayout({ post }) {
-  const downloadUrl = post.applyUrl || post.pdfUrl || post.pdf_url || "#";
+  const downloadUrl = post.apply_url || post.applyUrl || null;
+  const noticeUrl = post.pdf_url || post.pdfUrl || null;
   const title = post.title || "प्रवेश पत्र डाउनलोड";
   const dept = post.department || "बिहार परीक्षा बोर्ड";
   const examDate = post.lastDate || post.last_date || "आधिकारिक सूचना देखें";
+  const loginRequirements = post.eligibility || null;
 
   // Dynamic AI content with fallbacks
   const shortDesc = post.short_desc || null;
+  const sanitizedContent = post.content
+    ? addExternalLinkSafety(DOMPurify.sanitize(post.content, { USE_PROFILES: { html: true }, ADD_ATTR: ["target", "rel"] }))
+    : null;
   const downloadSteps = Array.isArray(post.how_to_apply) && post.how_to_apply.length > 0 
     ? post.how_to_apply 
     : null;
@@ -53,20 +61,36 @@ export default function AdmitCardLayout({ post }) {
       {/* Main Content Body Container */}
       <div className="p-5 sm:p-6 space-y-6">
         {/* Direct Download Callout */}
-        <div className="bg-emerald-50 border-2 border-emerald-500 rounded-2xl p-5 text-center space-y-2">
-          <p className="text-xs font-bold text-emerald-950">आधिकारिक सर्वर से सीधा प्रवेश पत्र डाउनलोड करें</p>
-          <a
-            href={downloadUrl}
-            target="_blank"
-            rel="noreferrer"
-            className="inline-flex items-center gap-2 bg-emerald-700 hover:bg-emerald-800 text-white font-black text-sm px-6 py-2.5 rounded-xl shadow transition active:scale-95 cursor-pointer"
-          >
-            <Download size={16} /> डाउनलोड एडमिट कार्ड (Official Direct Server)
-          </a>
-          <p className="text-[10.5px] text-emerald-700 font-semibold flex items-center justify-center gap-1">
-            <ShieldCheck size={13} className="text-emerald-600" /> आधिकारिक लिंक • नो थर्ड-पार्टी रीडायरेक्ट
-          </p>
-        </div>
+        {(downloadUrl || noticeUrl) && (
+          <div className="bg-emerald-50 border-2 border-emerald-500 rounded-2xl p-5 text-center space-y-3">
+            <p className="text-xs font-bold text-emerald-950">आधिकारिक सर्वर से प्रवेश पत्र और परीक्षा सूचना खोलें</p>
+            <div className="flex flex-wrap justify-center gap-3">
+              {downloadUrl && (
+                <a
+                  href={downloadUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-2 bg-emerald-700 hover:bg-emerald-800 text-white font-black text-sm px-6 py-2.5 rounded-xl shadow transition active:scale-95 cursor-pointer"
+                >
+                  <Download size={16} /> डाउनलोड एडमिट कार्ड (Server 1)
+                </a>
+              )}
+              {noticeUrl && (
+                <a
+                  href={noticeUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-2 bg-white hover:bg-emerald-100 text-emerald-900 border border-emerald-300 font-bold text-sm px-6 py-2.5 rounded-xl shadow-xs transition"
+                >
+                  <ExternalLink size={16} /> परीक्षा सूचना / दिशा-निर्देश
+                </a>
+              )}
+            </div>
+            <p className="text-[10.5px] text-emerald-700 font-semibold flex items-center justify-center gap-1">
+              <ShieldCheck size={13} className="text-emerald-600" /> आधिकारिक लिंक • नो थर्ड-पार्टी रीडायरेक्ट
+            </p>
+          </div>
+        )}
 
         {/* Overview Section */}
         <section className="space-y-2 text-xs sm:text-sm text-slate-700">
@@ -103,6 +127,12 @@ export default function AdmitCardLayout({ post }) {
                 <span className="text-slate-500 font-medium">परीक्षा केंद्र:</span>
                 <strong className="text-slate-900">आवंटित जिला व केंद्र</strong>
               </li>
+              {loginRequirements && (
+                <li className="flex justify-between gap-3 pt-2">
+                  <span className="text-slate-500 font-medium">लॉगिन हेतु आवश्यक विवरण:</span>
+                  <strong className="text-right text-slate-900">{loginRequirements}</strong>
+                </li>
+              )}
             </ul>
           </div>
 
@@ -169,6 +199,29 @@ export default function AdmitCardLayout({ post }) {
           </p>
         </div>
 
+        {/* Full Rich Article Body */}
+        {sanitizedContent && (
+          <section className="border-t border-slate-200 pt-7">
+            <div
+              className="
+                text-slate-800 text-xs sm:text-sm leading-relaxed space-y-5
+                [&_h2]:text-base [&_h2]:sm:text-lg [&_h2]:font-black [&_h2]:text-[#0B3B66] [&_h2]:border-l-4 [&_h2]:border-amber-500 [&_h2]:pl-3 [&_h2]:mt-6 [&_h2]:mb-2
+                [&_h3]:text-sm [&_h3]:sm:text-base [&_h3]:font-black [&_h3]:text-slate-900 [&_h3]:mt-5 [&_h3]:mb-2
+                [&_p]:text-slate-700 [&_p]:leading-relaxed [&_p]:my-2.5
+                [&_ul]:list-disc [&_ul]:list-inside [&_ul]:space-y-2 [&_ul]:my-3 [&_ul]:pl-2 [&_ul]:bg-slate-50 [&_ul]:p-4 [&_ul]:rounded-xl [&_ul]:border [&_ul]:border-slate-200
+                [&_ol]:list-decimal [&_ol]:list-inside [&_ol]:space-y-2.5 [&_ol]:my-3 [&_ol]:pl-2 [&_ol]:bg-slate-50 [&_ol]:p-4 [&_ol]:rounded-xl [&_ol]:border [&_ol]:border-slate-200
+                [&_li]:text-slate-800 [&_li]:leading-relaxed
+                [&_strong]:text-slate-950 [&_strong]:font-bold
+                [&_table]:w-full [&_table]:border-collapse [&_table]:my-4
+                [&_th]:border [&_th]:border-slate-300 [&_th]:bg-slate-100 [&_th]:p-2 [&_th]:text-left [&_th]:font-bold
+                [&_td]:border [&_td]:border-slate-300 [&_td]:p-2 [&_td]:align-top
+                [&_a]:text-blue-700 [&_a]:underline [&_img]:max-w-full [&_img]:h-auto
+              "
+              dangerouslySetInnerHTML={{ __html: sanitizedContent }}
+            />
+          </section>
+        )}
+
         {/* Frequently Asked Questions (FAQ Section) */}
         {faqs && (
           <section className="border border-slate-200 rounded-xl p-4 sm:p-5 bg-slate-50 text-xs sm:text-sm space-y-3">
@@ -201,6 +254,9 @@ AdmitCardLayout.propTypes = {
     department: PropTypes.string,
     lastDate: PropTypes.string,
     last_date: PropTypes.string,
+    eligibility: PropTypes.string,
+    content: PropTypes.string,
+    apply_url: PropTypes.string,
     applyUrl: PropTypes.string,
     pdfUrl: PropTypes.string,
     pdf_url: PropTypes.string,
