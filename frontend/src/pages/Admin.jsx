@@ -51,6 +51,37 @@ const categoryFieldConfig = {
     applyUrlLabel: "आधिकारिक ऑनलाइन आवेदन लिंक",
     pdfUrlLabel: "सरकारी दिशा-निर्देश / दिशा-निर्देश PDF",
   },
+  scholarship: {
+    showTotalPosts: true,
+    totalPostsLabel: "Scholarship Amount / Benefit",
+    totalPostsPlaceholder: "उदा. ₹10,000 वार्षिक छात्रवृत्ति",
+    lastDateLabel: "Application Last Date",
+    lastDatePlaceholder: "उदा. 31 दिसम्बर 2026",
+    eligibilityLabel: "Student Eligibility",
+    eligibilityPlaceholder: "उदा. बिहार निवासी, कक्षा/आय सीमा",
+    applyUrlLabel: "Official Scholarship Application URL",
+    pdfUrlLabel: "Official Scholarship Guidelines PDF",
+  },
+  syllabus: {
+    showTotalPosts: false,
+    totalPostsFallback: "Syllabus Available",
+    lastDateLabel: "Exam Date / Schedule",
+    lastDatePlaceholder: "उदा. आधिकारिक परीक्षा कार्यक्रम देखें",
+    eligibilityLabel: "Applicable Exam / Qualification",
+    eligibilityPlaceholder: "उदा. BPSC प्रारंभिक परीक्षा",
+    applyUrlLabel: "Official Exam / Syllabus URL",
+    pdfUrlLabel: "Official Syllabus PDF Link",
+  },
+  answer_key: {
+    showTotalPosts: false,
+    totalPostsFallback: "Answer Key Released",
+    lastDateLabel: "Objection Last Date / Release Date",
+    lastDatePlaceholder: "उदा. आपत्ति की अंतिम तिथि 31 अक्टूबर 2026",
+    eligibilityLabel: "Login Requirements",
+    eligibilityPlaceholder: "उदा. Roll Number & Date of Birth",
+    applyUrlLabel: "Official Answer Key / Objection URL",
+    pdfUrlLabel: "Official Answer Key PDF Link",
+  },
 };
 
 export default function Admin() {
@@ -582,6 +613,9 @@ export default function Admin() {
                     <option value="admit_card">Admit Card</option>
                     <option value="results">Exam Results</option>
                     <option value="schemes">Government Schemes</option>
+                    <option value="scholarship">Scholarship</option>
+                    <option value="syllabus">Syllabus</option>
+                    <option value="answer_key">Answer Key</option>
                   </select>
                 </div>
 
@@ -804,7 +838,61 @@ export default function Admin() {
                       <option value="admit_card">admit_card</option>
                       <option value="results">results</option>
                       <option value="schemes">schemes</option>
+                      <option value="scholarship">scholarship</option>
+                      <option value="syllabus">syllabus</option>
+                      <option value="answer_key">answer_key</option>
                     </select>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div>
+                    <label className="block text-xs font-black text-slate-700 mb-1">Last Date / Exam Date</label>
+                    <input
+                      type="text"
+                      value={editingPost.last_date || editingPost.lastDate || editingPost.exam_date || ""}
+                      onChange={(e) => setEditingPost({ ...editingPost, last_date: e.target.value })}
+                      placeholder="उदा. 31 अक्टूबर 2026 / परीक्षा कार्यक्रम देखें"
+                      className="w-full border border-slate-300 rounded-xl p-2.5 text-xs font-semibold focus:outline-[#0B4F8A]"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-black text-slate-700 mb-1">Eligibility / Login Requirements</label>
+                    <input
+                      type="text"
+                      value={editingPost.eligibility || ""}
+                      onChange={(e) => setEditingPost({ ...editingPost, eligibility: e.target.value })}
+                      className="w-full border border-slate-300 rounded-xl p-2.5 text-xs font-semibold focus:outline-[#0B4F8A]"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-black text-slate-700 mb-1">Official Apply / Download URL</label>
+                    <input
+                      type="url"
+                      value={editingPost.apply_url || editingPost.applyUrl || ""}
+                      onChange={(e) => setEditingPost({ ...editingPost, apply_url: e.target.value })}
+                      placeholder="https://..."
+                      className="w-full border border-slate-300 rounded-xl p-2.5 text-xs font-semibold focus:outline-[#0B4F8A]"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-black text-slate-700 mb-1">Official PDF URL</label>
+                    <input
+                      type="url"
+                      value={editingPost.pdf_url || editingPost.pdfUrl || ""}
+                      onChange={(e) => setEditingPost({ ...editingPost, pdf_url: e.target.value })}
+                      placeholder="https://..."
+                      className="w-full border border-slate-300 rounded-xl p-2.5 text-xs font-semibold focus:outline-[#0B4F8A]"
+                    />
+                  </div>
+                  <div className="sm:col-span-2">
+                    <label className="block text-xs font-black text-slate-700 mb-1">Short Summary</label>
+                    <textarea
+                      rows="3"
+                      value={editingPost.short_desc || ""}
+                      onChange={(e) => setEditingPost({ ...editingPost, short_desc: e.target.value })}
+                      className="w-full border border-slate-300 rounded-xl p-2.5 text-xs font-semibold focus:outline-[#0B4F8A]"
+                    />
                   </div>
                 </div>
 

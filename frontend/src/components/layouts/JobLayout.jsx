@@ -168,6 +168,10 @@ export default function JobLayout({ post }) {
                 [&_ol]:list-decimal [&_ol]:list-inside [&_ol]:space-y-2.5 [&_ol]:my-3 [&_ol]:pl-2 [&_ol]:bg-slate-50 [&_ol]:p-4 [&_ol]:rounded-xl [&_ol]:border [&_ol]:border-slate-200
                 [&_li]:text-slate-800 [&_li]:leading-relaxed
                 [&_strong]:text-slate-950 [&_strong]:font-bold
+                [&_table]:block [&_table]:w-full [&_table]:max-w-full [&_table]:overflow-x-auto [&_table]:border-collapse [&_table]:my-4
+                [&_th]:border [&_th]:border-slate-300 [&_th]:bg-slate-100 [&_th]:p-2 [&_th]:text-left [&_th]:font-bold
+                [&_td]:border [&_td]:border-slate-300 [&_td]:p-2 [&_td]:align-top
+                [&_a]:text-blue-700 [&_a]:underline [&_img]:max-w-full [&_img]:h-auto
               "
               dangerouslySetInnerHTML={{ __html: sanitizedContent }}
             />

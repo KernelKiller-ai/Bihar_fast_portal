@@ -5,7 +5,7 @@ import hmac
 import logging
 from datetime import datetime, timezone
 from urllib.parse import urlparse
-from typing import Optional, Any, List, Dict
+from typing import Optional, Any, List, Dict, Literal
 import urllib.request
 import urllib.parse
 
@@ -98,11 +98,30 @@ async def global_exception_handler(request: Request, exc: Exception):
 app.include_router(quiz_router)
 
 # ----------------- PYDANTIC SCHEMAS -----------------
+PostCategory = Literal["jobs", "admit_card", "results", "schemes", "scholarship", "syllabus", "answer_key"]
+
+
+def normalize_post_category(category: str) -> str:
+    normalized = category.strip().lower().replace("-", "_").replace(" ", "_")
+    normalized = {
+        "job": "jobs",
+        "latest_jobs": "jobs",
+        "admitcard": "admit_card",
+        "result": "results",
+        "scheme": "schemes",
+        "scholarships": "scholarship",
+        "answerkey": "answer_key",
+    }.get(normalized, normalized)
+    if normalized not in db.POST_CATEGORIES:
+        raise HTTPException(status_code=422, detail=f"Unsupported post category: {category}")
+    return normalized
+
+
 class PostCreateRequest(BaseModel):
     title: str
     slug: Optional[str] = None
     department: str = "BPSC"
-    category: str = "jobs"
+    category: PostCategory = "jobs"
     total_posts: Optional[str] = "अधिसूचना देखें"
     last_date: Optional[str] = "सक्रिय सूचना"
     eligibility: Optional[str] = "विज्ञापन देखें"
@@ -118,7 +137,7 @@ class PostCreateRequest(BaseModel):
 
 class PostUpdateRequest(BaseModel):
     title: Optional[str] = None
-    category: Optional[str] = None
+    category: Optional[PostCategory] = None
     department: Optional[str] = None
     total_posts: Optional[str] = None
     last_date: Optional[str] = None
@@ -374,8 +393,7 @@ def get_admin_posts(status: Optional[str] = Query(None), _: None = Depends(requi
 def create_manual_post(payload: PostCreateRequest, bg: BackgroundTasks, _: None = Depends(require_admin)):
     """Creates an in-depth, human-verified post and broadcasts it to Telegram."""
     slug = payload.slug.strip() if payload.slug else slugify(payload.title, payload.department)
-    cat = payload.category.lower().strip()
-    normalized_cat = "results" if "result" in cat else ("admit_card" if "admit" in cat else ("schemes" if "scheme" in cat else "jobs"))
+    normalized_cat = normalize_post_category(payload.category)
 
     record = {
         "slug": slug,
@@ -428,8 +446,7 @@ def update_existing_post(post_id: str, payload: PostUpdateRequest, bg: Backgroun
     update_dict = {k: v for k, v in payload.model_dump().items() if v is not None}
     
     if "category" in update_dict:
-        cat = update_dict["category"].lower().strip()
-        update_dict["category"] = "results" if "result" in cat else ("admit_card" if "admit" in cat else "jobs")
+        update_dict["category"] = normalize_post_category(update_dict["category"])
 
     updated_post = db.update_notice_by_id(post_id, update_dict)
     bg.add_task(flush_cache, slug=existing.get("slug"))

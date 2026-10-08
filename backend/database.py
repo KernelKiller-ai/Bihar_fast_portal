@@ -65,6 +65,8 @@ HOME_FEED_COLUMNS = (
     "eligibility, fees, apply_url, pdf_url, created_at, status"
 )
 
+POST_CATEGORIES = ("jobs", "admit_card", "results", "schemes", "scholarship", "syllabus", "answer_key")
+
 OFFICIAL_ALLOWED_DOMAINS = {
     "bceceboard.bihar.gov.in", "bpsc.bih.nic.in", "bpsc.bihar.gov.in",
     "onlinebpsc.bihar.gov.in", "csbc.bih.nic.in", "csbc.bihar.gov.in",
@@ -108,7 +110,7 @@ def fetch_feed_notices(category: Optional[str] = None, limit: int = 50) -> List[
     if category:
         query = query.eq("category", category)
     else:
-        query = query.in_("category", ["jobs", "admit_card", "results", "schemes"])
+        query = query.in_("category", POST_CATEGORIES)
 
     res = query.order("created_at", desc=True).limit(limit).execute()
     return res.data or []
