@@ -84,6 +84,24 @@ const categoryFieldConfig = {
   },
 };
 
+const standardDepartments = [
+  ["BPSC", "BPSC Bihar"],
+  ["CSBC Bihar", "CSBC Police"],
+  ["BPSSC (Bihar Police SI)", "BPSSC Daroga"],
+  ["BSSC Bihar", "BSSC Staff Selection"],
+  ["BTSC Bihar", "BTSC Technical"],
+  ["SSC (All India)", "SSC Central"],
+  ["Railway RRB (Central)", "Railway RRB"],
+  ["UPSC (All India)", "UPSC All India"],
+];
+
+const schemeDepartments = [
+  ["Social Welfare Department, Bihar", "Social Welfare Department, Bihar"],
+  ["Education Department, Bihar", "Education Department, Bihar"],
+  ["Industries Department, Bihar", "Industries Department, Bihar"],
+  ["Bihar Government (General)", "Bihar Government (General)"],
+];
+
 export default function Admin() {
   const [authPin, setAuthPin] = useState("");
   const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -702,14 +720,10 @@ export default function Admin() {
                     onChange={(e) => setFormData({ ...formData, department: e.target.value })}
                     className="w-full border border-slate-300 rounded-xl p-3 text-xs font-semibold focus:outline-[#0B4F8A]"
                   >
-                    <option value="BPSC">BPSC Bihar</option>
-                    <option value="CSBC Bihar">CSBC Police</option>
-                    <option value="BPSSC (Bihar Police SI)">BPSSC Daroga</option>
-                    <option value="BSSC Bihar">BSSC Staff Selection</option>
-                    <option value="BTSC Bihar">BTSC Technical</option>
-                    <option value="SSC (All India)">SSC Central</option>
-                    <option value="Railway RRB (Central)">Railway RRB</option>
-                    <option value="UPSC (All India)">UPSC All India</option>
+                    {(formData.category === "schemes" ? schemeDepartments : standardDepartments)
+                      .map(([value, label]) => (
+                        <option key={value} value={value}>{label}</option>
+                      ))}
                   </select>
                 </div>
 
@@ -720,6 +734,13 @@ export default function Admin() {
                     onChange={(e) => setFormData({
                       ...formData,
                       category: e.target.value,
+                      department: e.target.value === "schemes"
+                        ? (schemeDepartments.some(([value]) => value === formData.department)
+                          ? formData.department
+                          : "Bihar Government (General)")
+                        : (standardDepartments.some(([value]) => value === formData.department)
+                          ? formData.department
+                          : "BPSC"),
                       total_posts: "",
                       last_date: "",
                       eligibility: "",
