@@ -76,11 +76,16 @@ ALLOWED_ORIGINS = [
     "https://www.biharfast.in",
     "https://bihar-fast-portal.onrender.com"
 ]
+ALLOWED_ORIGIN_REGEX = (
+    r"^https?://(?:localhost|127\.0\.0\.1|"
+    r"(?:(?:[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?)\.)*biharfast\.in)"
+    r"(?::[0-9]+)?$"
+)
 
 app.add_middleware(
     CORSMiddleware,
     allow_origins=ALLOWED_ORIGINS,
-    allow_origin_regex=r"^https?://(localhost|127\.0\.0\.1)(:[0-9]+)?$|^https?://.*biharfast\.in.*$",
+    allow_origin_regex=ALLOWED_ORIGIN_REGEX,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -89,16 +94,21 @@ app.add_middleware(
 @app.exception_handler(Exception)
 async def global_exception_handler(request: Request, exc: Exception):
     logger.error(f"Unhandled Exception on {request.url.path}: {exc}", exc_info=True)
-    req_origin = request.headers.get("origin", "*")
+    request_origin = request.headers.get("origin")
+    error_headers = {}
+    if request_origin and (
+        request_origin in ALLOWED_ORIGINS
+        or re.fullmatch(ALLOWED_ORIGIN_REGEX[1:-1], request_origin)
+    ):
+        error_headers = {
+            "Access-Control-Allow-Origin": request_origin,
+            "Access-Control-Allow-Credentials": "true",
+            "Vary": "Origin",
+        }
     return JSONResponse(
         status_code=500,
         content={"success": False, "detail": str(exc), "path": request.url.path},
-        headers={
-            "Access-Control-Allow-Origin": req_origin,
-            "Access-Control-Allow-Credentials": "true",
-            "Access-Control-Allow-Methods": "*",
-            "Access-Control-Allow-Headers": "*",
-        }
+        headers=error_headers,
     )
 
 app.include_router(quiz_router)
@@ -402,39 +412,47 @@ async def extract_admin_notification(
     raw_text: Optional[str] = Form(None),
     _: None = Depends(require_admin),
 ):
-    has_raw_text = raw_text is not None and bool(raw_text.strip())
-    if file is not None and has_raw_text:
-        raise HTTPException(status_code=422, detail="Provide a PDF file or raw text, not both.")
-
-    if file is not None:
-        if not file.filename or not file.filename.lower().endswith(".pdf"):
-            raise HTTPException(status_code=415, detail="Upload a PDF file.")
-        try:
-            pdf_bytes = await file.read(MAX_AI_PDF_BYTES + 1)
-        finally:
-            await file.close()
-        if len(pdf_bytes) > MAX_AI_PDF_BYTES:
-            raise HTTPException(status_code=413, detail="PDF size cannot exceed 10 MB.")
-        extraction_args = {"pdf_bytes": pdf_bytes}
-    elif has_raw_text:
-        extraction_args = {"raw_text": raw_text}
-    else:
-        raise HTTPException(status_code=422, detail="Upload a PDF or enter notification text.")
-
     try:
-        post = await asyncio.to_thread(extract_notification, **extraction_args)
+        has_raw_text = raw_text is not None and bool(raw_text.strip())
+        if file is not None and has_raw_text:
+            raise HTTPException(status_code=422, detail="Provide a PDF file or raw text, not both.")
+
+        if file is not None:
+            if not file.filename or not file.filename.lower().endswith(".pdf"):
+                raise HTTPException(status_code=415, detail="Upload a PDF file.")
+            try:
+                pdf_bytes = await file.read(MAX_AI_PDF_BYTES + 1)
+            finally:
+                await file.close()
+            if len(pdf_bytes) > MAX_AI_PDF_BYTES:
+                raise HTTPException(status_code=413, detail="PDF size cannot exceed 10 MB.")
+            extraction_args = {"pdf_bytes": pdf_bytes}
+        elif has_raw_text:
+            extraction_args = {"raw_text": raw_text}
+        else:
+            raise HTTPException(status_code=422, detail="Upload a PDF or enter notification text.")
+
+        try:
+            post = await asyncio.to_thread(extract_notification, **extraction_args)
+        except ValueError as exc:
+            raise HTTPException(status_code=422, detail=str(exc)) from exc
+        except ExtractorConfigurationError as exc:
+            raise HTTPException(status_code=503, detail=str(exc)) from exc
+        except Exception as exc:
+            logger.exception("AI notification extraction failed")
+            raise HTTPException(
+                status_code=502,
+                detail="AI extraction failed. Check the notification and try again.",
+            ) from exc
+
+        return {"success": True, "data": post.model_dump()}
+    except HTTPException:
+        raise
     except ValueError as exc:
         raise HTTPException(status_code=422, detail=str(exc)) from exc
-    except ExtractorConfigurationError as exc:
-        raise HTTPException(status_code=503, detail=str(exc)) from exc
     except Exception as exc:
-        logger.exception("AI notification extraction failed")
-        raise HTTPException(
-            status_code=502,
-            detail="AI extraction failed. Check the notification and try again.",
-        ) from exc
-
-    return {"success": True, "data": post.model_dump()}
+        logger.exception("Notification extraction request failed")
+        raise HTTPException(status_code=500, detail=str(exc)) from exc
 
 
 @app.post("/api/admin/posts")
