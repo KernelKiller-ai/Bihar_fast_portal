@@ -1,8 +1,8 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useRef } from "react";
 import { 
   PlusCircle, KeyRound, CheckCircle, AlertCircle, Loader2, 
   FileText, Edit3, Check, RefreshCw,
-  Search, Eye, Clock, ShieldCheck, X, Trophy, Layers, Trash2
+  Search, Eye, Clock, ShieldCheck, X, Trophy, Layers, Trash2, Sparkles
 } from "lucide-react";
 import AdminQuizManager from "../components/AdminQuizManager";
 
@@ -90,6 +90,10 @@ export default function Admin() {
   const [loading, setLoading] = useState(false);
   const [actionLoading, setActionLoading] = useState(null);
   const [feedback, setFeedback] = useState({ type: "", message: "" });
+  const [extracting, setExtracting] = useState(false);
+  const [extractorFile, setExtractorFile] = useState(null);
+  const [extractorText, setExtractorText] = useState("");
+  const extractorFileInput = useRef(null);
 
   // Navigation Tabs: 'all' | 'new' | 'quiz'
   const [activeTab, setActiveTab] = useState("all");
@@ -293,6 +297,61 @@ export default function Admin() {
       setFeedback({ type: "error", message: `Publish error: ${err.message}` });
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleExtractNotification = async () => {
+    if (!extractorFile && !extractorText.trim()) {
+      setFeedback({ type: "error", message: "एक PDF अपलोड करें या नोटिफिकेशन टेक्स्ट पेस्ट करें।" });
+      return;
+    }
+
+    setExtracting(true);
+    setFeedback({ type: "", message: "" });
+    try {
+      const body = new FormData();
+      if (extractorFile) body.append("file", extractorFile);
+      else body.append("text", extractorText);
+
+      const response = await fetch(`${API_BASE_URL}/api/admin/ai/extract`, {
+        method: "POST",
+        headers: authHeaders(),
+        body,
+      });
+      const result = await response.json().catch(() => ({}));
+      if (!response.ok) {
+        throw new Error(result.detail || `HTTP ${response.status}`);
+      }
+
+      const extracted = result.data;
+      if (!extracted || typeof extracted !== "object") {
+        throw new Error("AI response did not contain extracted post fields.");
+      }
+
+      setFormData((current) => ({
+        ...current,
+        title: extracted.title || current.title,
+        slug: extracted.slug || current.slug,
+        category: extracted.category || current.category,
+        department: extracted.department || current.department,
+        total_posts: extracted.total_vacancies || extracted.total_posts || "",
+        last_date: extracted.last_date || extracted.exam_date || "",
+        eligibility: extracted.eligibility || "",
+        apply_url: extracted.apply_url || "",
+        pdf_url: extracted.pdf_url || "",
+        short_desc: extracted.short_desc || "",
+        meta_title: extracted.title || current.meta_title,
+        meta_desc: extracted.short_desc || current.meta_desc,
+        content: extracted.content || "",
+      }));
+      setExtractorFile(null);
+      setExtractorText("");
+      if (extractorFileInput.current) extractorFileInput.current.value = "";
+      setFeedback({ type: "success", message: "AI extraction complete. Fields are ready for your review." });
+    } catch (err) {
+      setFeedback({ type: "error", message: `AI extraction error: ${err.message}` });
+    } finally {
+      setExtracting(false);
     }
   };
 
@@ -549,6 +608,66 @@ export default function Admin() {
             <h2 className="text-lg font-black text-slate-900 border-b border-slate-100 pb-3 mb-6">
               Create In-Depth High-Value Article (800+ Words Guide)
             </h2>
+
+            <details className="mb-6 rounded-xl border border-indigo-200 bg-indigo-50/60 p-4">
+              <summary className="cursor-pointer text-sm font-black text-indigo-950">
+                AI Auto-Fill from Notification
+              </summary>
+              <div className="mt-4 space-y-4">
+                <p className="text-xs text-slate-600">
+                  Upload a text-based PDF or paste notification text. Extracted fields will populate the form for review before publishing.
+                </p>
+                <div>
+                  <label className="mb-1 block text-xs font-bold text-slate-700" htmlFor="ai-notification-pdf">
+                    Notification PDF
+                  </label>
+                  <input
+                    ref={extractorFileInput}
+                    id="ai-notification-pdf"
+                    type="file"
+                    accept="application/pdf,.pdf"
+                    disabled={extracting}
+                    onChange={(event) => {
+                      const file = event.target.files?.[0] || null;
+                      setExtractorFile(file);
+                      if (file) setExtractorText("");
+                    }}
+                    className="block w-full text-xs text-slate-700 file:mr-3 file:rounded-lg file:border-0 file:bg-white file:px-3 file:py-2 file:font-bold file:text-indigo-800"
+                  />
+                </div>
+                <div>
+                  <label className="mb-1 block text-xs font-bold text-slate-700" htmlFor="ai-notification-text">
+                    Or paste notification text
+                  </label>
+                  <textarea
+                    id="ai-notification-text"
+                    rows="5"
+                    value={extractorText}
+                    disabled={extracting}
+                    onChange={(event) => {
+                      const text = event.target.value;
+                      setExtractorText(text);
+                      if (text.trim()) {
+                        setExtractorFile(null);
+                        if (extractorFileInput.current) extractorFileInput.current.value = "";
+                      }
+                    }}
+                    placeholder="यहाँ पूरी सरकारी अधिसूचना का टेक्स्ट पेस्ट करें..."
+                    className="w-full rounded-xl border border-slate-300 bg-white p-3 text-xs font-medium focus:outline-[#0B4F8A] disabled:opacity-60"
+                  />
+                </div>
+                <button
+                  type="button"
+                  onClick={handleExtractNotification}
+                  disabled={extracting || loading}
+                  className="inline-flex items-center justify-center gap-2 rounded-xl bg-indigo-700 px-4 py-2.5 text-xs font-black text-white transition hover:bg-indigo-800 disabled:cursor-not-allowed disabled:opacity-60"
+                >
+                  {extracting ? <Loader2 size={15} className="animate-spin" /> : <Sparkles size={15} />}
+                  {extracting ? "Extracting notification..." : "Extract & Auto-Fill"}
+                </button>
+              </div>
+            </details>
+
             <form onSubmit={handleNewSubmit} className="space-y-6">
               
               {/* Basic Details Grid */}

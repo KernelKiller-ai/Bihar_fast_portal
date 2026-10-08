@@ -3,13 +3,14 @@ import re
 import json
 import hmac
 import logging
+import asyncio
 from datetime import datetime, timezone
 from urllib.parse import urlparse
 from typing import Optional, Any, List, Dict, Literal
 import urllib.request
 import urllib.parse
 
-from fastapi import Depends, FastAPI, HTTPException, BackgroundTasks, Query, Request, Response, status
+from fastapi import Depends, FastAPI, HTTPException, BackgroundTasks, Query, Request, Response, UploadFile, File, Form, status
 from fastapi.responses import JSONResponse, PlainTextResponse
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.middleware.gzip import GZipMiddleware
@@ -22,9 +23,14 @@ import orjson
 import database as db
 from quiz_router import quiz_router
 from rate_limiter import enforce_rate_limit
+from services.ai_extractor import (
+    ExtractorConfigurationError,
+    extract_notification,
+)
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
 logger = logging.getLogger("biharfast")
+MAX_AI_PDF_BYTES = 10 * 1024 * 1024
 
 load_dotenv(override=False)
 
@@ -388,6 +394,45 @@ def get_admin_posts(status: Optional[str] = Query(None), _: None = Depends(requi
         content=orjson.dumps({"success": True, "count": len(posts), "data": posts}),
         media_type="application/json"
     )
+
+
+@app.post("/api/admin/ai/extract")
+async def extract_admin_notification(
+    file: Optional[UploadFile] = File(None),
+    text: Optional[str] = Form(None),
+    _: None = Depends(require_admin),
+):
+    if file is not None and text and text.strip():
+        raise HTTPException(status_code=422, detail="Provide a PDF file or raw text, not both.")
+
+    if file is not None:
+        if not file.filename or not file.filename.lower().endswith(".pdf"):
+            raise HTTPException(status_code=415, detail="Upload a PDF file.")
+        pdf_bytes = await file.read(MAX_AI_PDF_BYTES + 1)
+        await file.close()
+        if len(pdf_bytes) > MAX_AI_PDF_BYTES:
+            raise HTTPException(status_code=413, detail="PDF size cannot exceed 10 MB.")
+        extraction_args = {"pdf_bytes": pdf_bytes}
+    elif text and text.strip():
+        extraction_args = {"raw_text": text}
+    else:
+        raise HTTPException(status_code=422, detail="Upload a PDF or enter notification text.")
+
+    try:
+        post = await asyncio.to_thread(extract_notification, **extraction_args)
+    except ValueError as exc:
+        raise HTTPException(status_code=422, detail=str(exc)) from exc
+    except ExtractorConfigurationError as exc:
+        raise HTTPException(status_code=503, detail=str(exc)) from exc
+    except Exception as exc:
+        logger.exception("AI notification extraction failed")
+        raise HTTPException(
+            status_code=502,
+            detail="AI extraction failed. Check the notification and try again.",
+        ) from exc
+
+    return {"success": True, "data": post.model_dump()}
+
 
 @app.post("/api/admin/posts")
 def create_manual_post(payload: PostCreateRequest, bg: BackgroundTasks, _: None = Depends(require_admin)):
