@@ -399,22 +399,25 @@ def get_admin_posts(status: Optional[str] = Query(None), _: None = Depends(requi
 @app.post("/api/admin/ai/extract")
 async def extract_admin_notification(
     file: Optional[UploadFile] = File(None),
-    text: Optional[str] = Form(None),
+    raw_text: Optional[str] = Form(None),
     _: None = Depends(require_admin),
 ):
-    if file is not None and text and text.strip():
+    has_raw_text = raw_text is not None and bool(raw_text.strip())
+    if file is not None and has_raw_text:
         raise HTTPException(status_code=422, detail="Provide a PDF file or raw text, not both.")
 
     if file is not None:
         if not file.filename or not file.filename.lower().endswith(".pdf"):
             raise HTTPException(status_code=415, detail="Upload a PDF file.")
-        pdf_bytes = await file.read(MAX_AI_PDF_BYTES + 1)
-        await file.close()
+        try:
+            pdf_bytes = await file.read(MAX_AI_PDF_BYTES + 1)
+        finally:
+            await file.close()
         if len(pdf_bytes) > MAX_AI_PDF_BYTES:
             raise HTTPException(status_code=413, detail="PDF size cannot exceed 10 MB.")
         extraction_args = {"pdf_bytes": pdf_bytes}
-    elif text and text.strip():
-        extraction_args = {"raw_text": text}
+    elif has_raw_text:
+        extraction_args = {"raw_text": raw_text}
     else:
         raise HTTPException(status_code=422, detail="Upload a PDF or enter notification text.")
 

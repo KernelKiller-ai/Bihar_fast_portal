@@ -1,10 +1,10 @@
+import base64
 import os
 import re
 from io import BytesIO
-from typing import Literal, Optional
+from typing import Dict, List, Literal, Optional, Union
 
 from google import genai
-from google.genai import types
 from pydantic import BaseModel, Field
 from pypdf import PdfReader
 
@@ -52,7 +52,7 @@ class ExtractorConfigurationError(RuntimeError):
     """Raised when the GenAI service is not configured."""
 
 
-def _extract_pdf_text(pdf_bytes: bytes) -> str:
+def _validate_pdf(pdf_bytes: bytes) -> None:
     if not pdf_bytes.startswith(b"%PDF-"):
         raise ValueError("The uploaded file is not a valid PDF.")
 
@@ -62,25 +62,10 @@ def _extract_pdf_text(pdf_bytes: bytes) -> str:
             raise ValueError("Password-protected PDFs are not supported.")
         if len(reader.pages) > MAX_PDF_PAGES:
             raise ValueError(f"PDFs are limited to {MAX_PDF_PAGES} pages.")
-
-        page_text = []
-        total_length = 0
-        for page in reader.pages:
-            remaining = MAX_TEXT_LENGTH - total_length
-            if remaining <= 0:
-                break
-            extracted = page.extract_text() or ""
-            page_text.append(extracted[:remaining])
-            total_length += min(len(extracted), remaining)
     except ValueError:
         raise
     except Exception as exc:
-        raise ValueError("Unable to read text from this PDF.") from exc
-
-    text = "\n\n".join(page_text).strip()
-    if not text:
-        raise ValueError("No selectable text was found in the PDF. Scanned PDFs need OCR first.")
-    return text
+        raise ValueError("Unable to validate this PDF.") from exc
 
 
 def _slug_from_title(title: str) -> str:
@@ -96,10 +81,12 @@ def extract_notification(
     if (raw_text is None) == (pdf_bytes is None):
         raise ValueError("Provide either a PDF file or notification text.")
 
-    source_text = raw_text.strip() if raw_text is not None else _extract_pdf_text(pdf_bytes or b"")
-    if not source_text:
+    source_text = raw_text.strip() if raw_text is not None else None
+    if pdf_bytes is not None:
+        _validate_pdf(pdf_bytes)
+    elif not source_text:
         raise ValueError("Notification text cannot be empty.")
-    if len(source_text) > MAX_TEXT_LENGTH:
+    elif len(source_text) > MAX_TEXT_LENGTH:
         raise ValueError(f"Notification text cannot exceed {MAX_TEXT_LENGTH} characters.")
 
     api_key = os.getenv("GEMINI_API_KEY") or os.getenv("GOOGLE_API_KEY")
@@ -117,31 +104,37 @@ empty string for unknown text fields and null for unknown URLs. Choose the best
 category from jobs, admit_card, results, schemes, scholarship, syllabus, or
 answer_key. Return concise factual fields and detailed, valid HTML for content.
 Include useful headings and lists. Use an HTML table only when the source has
-tabular data. Preserve the source language where practical.
-
-Notification source:
-{source_text}
+tabular data. Preserve the source language where practical. Extract from the
+attached PDF document or the notification text supplied by the user.
 """.strip()
+    if source_text is not None:
+        prompt = f"{prompt}\n\nNotification source:\n{source_text}"
 
     client = genai.Client(api_key=api_key)
-    response = client.models.generate_content(
-        model="gemini-2.5-flash",
-        contents=prompt,
-        config=types.GenerateContentConfig(
-            response_mime_type="application/json",
-            response_schema=ExtractedPost,
-            temperature=0.1,
-        ),
+    interaction_input: Union[str, List[Dict[str, str]]] = prompt
+    if pdf_bytes is not None:
+        interaction_input = [
+            {
+                "type": "document",
+                "data": base64.b64encode(pdf_bytes).decode("ascii"),
+                "mime_type": "application/pdf",
+            },
+            {"type": "text", "text": prompt},
+        ]
+
+    response = client.interactions.create(
+        model="gemini-3.8-flash",
+        input=interaction_input,
+        response_format={
+            "type": "text",
+            "mime_type": "application/json",
+            "schema": ExtractedPost.model_json_schema(),
+        },
+        generation_config={"temperature": 0.1},
     )
-    parsed = response.parsed
-    if isinstance(parsed, ExtractedPost):
-        post = parsed
-    elif isinstance(parsed, dict):
-        post = ExtractedPost.model_validate(parsed)
-    elif response.text:
-        post = ExtractedPost.model_validate_json(response.text)
-    else:
+    if not response.output_text:
         raise RuntimeError("Gemini returned no structured extraction.")
+    post = ExtractedPost.model_validate_json(response.output_text)
 
     if not post.slug.strip():
         post.slug = _slug_from_title(post.title)

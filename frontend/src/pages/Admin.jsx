@@ -311,7 +311,7 @@ export default function Admin() {
     try {
       const body = new FormData();
       if (extractorFile) body.append("file", extractorFile);
-      else body.append("text", extractorText);
+      else body.append("raw_text", extractorText);
 
       const response = await fetch(`${API_BASE_URL}/api/admin/ai/extract`, {
         method: "POST",
