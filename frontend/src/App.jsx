@@ -123,20 +123,20 @@ export default function App() {
                 id: item.id || item.slug,
                 slug: item.slug || generateSlug(item),
                 title: item.title,
-                department: item.department || "BIHAR GOVT",
+                department: item.department,
                 category: cat,
-                total_posts: item.total_posts || item.totalPosts || "अधिसूचना देखें",
-                totalPosts: item.total_posts || item.totalPosts || "अधिसूचना देखें",
-                last_date: item.last_date || item.lastDate || "सक्रिय सूचना",
-                lastDate: item.last_date || item.lastDate || "सक्रिय सूचना",
-                eligibility: item.eligibility || "विज्ञापन देखें",
+                total_posts: item.total_posts ?? item.totalPosts,
+                totalPosts: item.total_posts ?? item.totalPosts,
+                last_date: item.last_date ?? item.lastDate,
+                lastDate: item.last_date ?? item.lastDate,
+                eligibility: item.eligibility ?? item.qualification_details,
                 qualification_details: item.qualification_details,
+                fees: item.fees ?? item.fee,
                 pdf_url: item.pdf_url || item.pdfUrl,
                 pdfUrl: item.pdf_url || item.pdfUrl,
                 apply_url: item.apply_url || item.applyUrl || item.download_url || item.pdf_url,
                 applyUrl: item.apply_url || item.applyUrl || item.download_url || item.pdf_url,
                 link: item.apply_url || item.applyUrl || item.download_url || item.pdf_url,
-                fees: item.fees || item.fee || "निःशुल्क (₹0)"
               };
             });
 
@@ -176,7 +176,7 @@ export default function App() {
   const topAlertItem = liveScrapedItems.length > 0 ? liveScrapedItems[0] : portalItems[0] || null;
 
   return (
-    <div className="min-h-screen w-full max-w-full min-w-0 overflow-x-hidden bg-slate-100/90 text-slate-800 font-sans antialiased flex flex-col justify-between">
+    <div className="flex min-h-screen w-full min-w-0 max-w-full flex-col justify-between overflow-x-hidden bg-[#F8FAFC] font-sans text-[#0F172A] antialiased">
       <ScrollToTop />
       <LoginModal />
       <div>
@@ -196,9 +196,9 @@ export default function App() {
               path="/"
               element={
                 <>
-                  <section className="relative w-full bg-white border-b border-slate-200 overflow-hidden select-none">
-                    <div className="w-full max-w-[1550px] mx-auto pt-4 sm:pt-6">
-                      <div className="px-4 sm:px-8 grid grid-cols-1 lg:grid-cols-12 gap-6 items-end">
+                  <section className="relative w-full select-none overflow-hidden border-b border-[#E2E8F0] bg-white">
+                    <div className="mx-auto w-full max-w-7xl pt-5 sm:pt-7">
+                      <div className="grid grid-cols-1 items-end gap-5 px-4 sm:px-6 lg:grid-cols-12">
                         <div className="lg:col-span-7 space-y-4 text-center lg:text-left z-10 pb-4">
                           <div className="flex flex-col items-center lg:items-start">
                             <img
@@ -214,30 +214,31 @@ export default function App() {
                           </div>
 
                           <div className="space-y-1">
-                            <h1 className="text-2xl sm:text-4xl lg:text-[38px] font-black text-[#0B3B66] tracking-tight leading-tight">
+                            <h1 className="text-2xl font-bold leading-tight tracking-tight text-[#0B2545] sm:text-4xl lg:text-[38px]">
                               Bihar’s Fastest Gateway to Jobs &amp; Public Services.
                             </h1>
-                            <p className="text-xs sm:text-sm text-slate-700 font-bold pt-1">
+                            <p className="pt-1 text-xs font-medium leading-relaxed text-[#475569] sm:text-sm">
                               – सटीक जानकारी, बेहतर बिहार – | State &amp; Central Vacancies, Board Results &amp; Useful Tools
                             </p>
                           </div>
 
                           <div className="w-full max-w-xl mx-auto lg:mx-0 pt-1">
-                            <div className="relative flex w-full items-center bg-white border-2 border-[#0B4F8A] rounded-2xl shadow-md overflow-hidden p-1 focus-within:ring-2 focus-within:ring-blue-400 transition-all">
-                              <Search className="text-slate-600 ml-2 sm:ml-3 shrink-0" size={19} />
+                            <div className="relative flex min-h-12 w-full items-center overflow-hidden rounded-lg border border-[#CBD5E1] bg-white p-1 shadow-sm transition focus-within:border-[#0B2545] focus-within:ring-2 focus-within:ring-[#0B2545]/15">
+                              <Search className="ml-2 shrink-0 text-[#64748B] sm:ml-3" size={19} />
                               <input
                                 type="text"
                                 placeholder="Search jobs, results, admit cards..."
                                 value={searchQuery}
                                 onChange={(e) => setSearchQuery(e.target.value)}
-                                className="min-w-0 flex-1 w-full py-2 px-2 sm:px-3 text-xs sm:text-sm text-slate-900 placeholder:text-slate-500 font-semibold focus:outline-none"
+                                aria-label="Search notices"
+                                className="min-w-0 w-full flex-1 px-2 py-2 text-xs font-medium text-[#0F172A] placeholder:text-[#64748B] focus:outline-none sm:px-3 sm:text-sm"
                               />
                               {searchQuery && (
                                 <button
                                   type="button"
                                   onClick={() => setSearchQuery("")}
                                   aria-label="Clear search"
-                                  className="text-xs text-slate-600 hover:text-slate-900 font-bold px-2 cursor-pointer"
+                                  className="min-h-10 px-2 text-xs font-bold text-[#64748B] hover:text-[#0F172A]"
                                 >
                                   ✕
                                 </button>
@@ -248,7 +249,7 @@ export default function App() {
                                   const el = document.getElementById("active-circulars-section");
                                   if (el) el.scrollIntoView({ behavior: "smooth" });
                                 }}
-                                className="bg-[#0B4F8A] hover:bg-[#073863] text-white font-black text-xs sm:text-sm px-3 sm:px-6 py-2.5 rounded-xl transition shrink-0 cursor-pointer shadow-xs"
+                                className="min-h-10 shrink-0 rounded-md bg-[#0B2545] px-4 text-xs font-semibold text-white transition hover:bg-[#091E3A] sm:px-6 sm:text-sm"
                               >
                                 Search
                               </button>
@@ -256,87 +257,93 @@ export default function App() {
                           </div>
 
                           {/* Quick Navigation Icons */}
-                          <div className="grid grid-cols-5 gap-2 pt-2 max-w-lg mx-auto lg:mx-0">
+                          <div className="mx-auto grid max-w-3xl grid-cols-2 gap-2 pt-2 sm:grid-cols-3 lg:mx-0 lg:grid-cols-6">
                             <Link
                               to="/jobs"
                               onClick={() => { setActiveTab("jobs"); setSearchQuery(""); }}
-                              className="flex flex-col items-center justify-center p-1.5 rounded-xl hover:bg-blue-50/80 transition group cursor-pointer text-center"
+                              className="group flex min-h-24 flex-col items-start justify-center rounded-lg border border-[#E2E8F0] bg-white p-3 text-left transition hover:border-[#CBD5E1] hover:bg-[#F8FAFC]"
                             >
-                              <div className="w-10 h-10 sm:w-11 sm:h-11 rounded-full bg-[#0B5C9E] text-white flex items-center justify-center shadow-xs group-hover:scale-105 transition">
-                                <Briefcase size={18} />
+                              <div className="flex h-9 w-9 items-center justify-center rounded-md bg-[#EFF4FF] text-[#0B2545] transition group-hover:bg-[#DCE9FF]">
+                                <Briefcase size={17} />
                               </div>
-                              <span className="text-[10px] sm:text-[11px] font-bold text-slate-900 mt-1 leading-tight">Government<br />Jobs</span>
+                              <span className="mt-2 text-xs font-semibold leading-relaxed text-[#0F172A]">Government Jobs</span>
                             </Link>
 
-                            {/* Live Mock Test Quick Icon */}
+                            <Link
+                              to="/admit-card"
+                              className="group flex min-h-24 flex-col items-start justify-center rounded-lg border border-[#E2E8F0] bg-white p-3 text-left transition hover:border-[#CBD5E1] hover:bg-[#F8FAFC]"
+                            >
+                              <div className="flex h-9 w-9 items-center justify-center rounded-md bg-[#FEF3C7] text-[#92400E] transition group-hover:bg-[#FDE68A]">
+                                <IdCard size={17} />
+                              </div>
+                              <span className="mt-2 text-xs font-semibold leading-relaxed text-[#0F172A]">Admit Cards</span>
+                            </Link>
+
                             <Link
                               to="/mock-test"
-                              className="flex flex-col items-center justify-center p-1.5 rounded-xl hover:bg-amber-50/80 transition group cursor-pointer text-center relative"
+                              className="group flex min-h-24 flex-col items-start justify-center rounded-lg border border-[#E2E8F0] bg-white p-3 text-left transition hover:border-[#CBD5E1] hover:bg-[#F8FAFC]"
                             >
-                              <span className="absolute -top-1 -right-1 bg-red-600 text-white text-[9px] font-black px-1.5 py-0.5 rounded-full animate-pulse shadow-xs">
-                                LIVE
-                              </span>
-                              <div className="w-10 h-10 sm:w-11 sm:h-11 rounded-full bg-linear-to-tr from-amber-600 to-yellow-500 text-white flex items-center justify-center shadow-xs group-hover:scale-105 transition">
-                                <Trophy size={18} />
+                              <div className="flex h-9 w-9 items-center justify-center rounded-md bg-[#FFF7ED] text-[#C2410C] transition group-hover:bg-[#FFEDD5]">
+                                <Trophy size={17} />
                               </div>
-                              <span className="text-[10px] sm:text-[11px] font-black text-amber-900 mt-1 leading-tight">All Exam<br />Mock Test</span>
+                              <span className="mt-2 text-xs font-semibold leading-relaxed text-[#0F172A]">Mock Tests</span>
                             </Link>
 
                             <Link
                               to="/rtps-bihar"
-                              className="flex flex-col items-center justify-center p-1.5 rounded-xl hover:bg-emerald-50/80 transition group cursor-pointer text-center"
+                              className="group flex min-h-24 flex-col items-start justify-center rounded-lg border border-[#E2E8F0] bg-white p-3 text-left transition hover:border-[#CBD5E1] hover:bg-[#F8FAFC]"
                             >
-                              <div className="w-10 h-10 sm:w-11 sm:h-11 rounded-full bg-[#10B981] text-white flex items-center justify-center shadow-xs group-hover:scale-105 transition">
-                                <ShieldCheck size={18} />
+                              <div className="flex h-9 w-9 items-center justify-center rounded-md bg-[#ECFDF5] text-[#15803D] transition group-hover:bg-[#D1FAE5]">
+                                <ShieldCheck size={17} />
                               </div>
-                              <span className="text-[10px] sm:text-[11px] font-bold text-slate-900 mt-1 leading-tight">RTPS<br />Services</span>
+                              <span className="mt-2 text-xs font-semibold leading-relaxed text-[#0F172A]">RTPS Services</span>
                             </Link>
 
                             <Link
                               to="/results"
                               onClick={() => { setActiveTab("results"); setSearchQuery(""); }}
-                              className="flex flex-col items-center justify-center p-1.5 rounded-xl hover:bg-purple-50/80 transition group cursor-pointer text-center"
+                              className="group flex min-h-24 flex-col items-start justify-center rounded-lg border border-[#E2E8F0] bg-white p-3 text-left transition hover:border-[#CBD5E1] hover:bg-[#F8FAFC]"
                             >
-                              <div className="w-10 h-10 sm:w-11 sm:h-11 rounded-full bg-[#7C3AED] text-white flex items-center justify-center shadow-xs group-hover:scale-105 transition">
-                                <Award size={18} />
+                              <div className="flex h-9 w-9 items-center justify-center rounded-md bg-[#EDE9FE] text-[#6D28D9] transition group-hover:bg-[#DDD6FE]">
+                                <Award size={17} />
                               </div>
-                              <span className="text-[10px] sm:text-[11px] font-bold text-slate-900 mt-1 leading-tight">Exam<br />Results</span>
+                              <span className="mt-2 text-xs font-semibold leading-relaxed text-[#0F172A]">Exam Results</span>
                             </Link>
 
                             <Link
                               to="/useful-tools"
-                              className="flex flex-col items-center justify-center p-1.5 rounded-xl hover:bg-rose-50/80 transition group cursor-pointer text-center"
+                              className="group flex min-h-24 flex-col items-start justify-center rounded-lg border border-[#E2E8F0] bg-white p-3 text-left transition hover:border-[#CBD5E1] hover:bg-[#F8FAFC]"
                             >
-                              <div className="w-10 h-10 sm:w-11 sm:h-11 rounded-full bg-[#DC2626] text-white flex items-center justify-center shadow-xs group-hover:scale-105 transition">
-                                <Wrench size={18} />
+                              <div className="flex h-9 w-9 items-center justify-center rounded-md bg-[#F1F5F9] text-[#475569] transition group-hover:bg-[#E2E8F0]">
+                                <Wrench size={17} />
                               </div>
-                              <span className="text-[10px] sm:text-[11px] font-bold text-slate-900 mt-1 leading-tight">Useful<br />Tools</span>
+                              <span className="mt-2 text-xs font-semibold leading-relaxed text-[#0F172A]">Useful Tools</span>
                             </Link>
                           </div>
                         </div>
 
                         {/* Hero Right Banner Card */}
                         <div className="lg:col-span-5 flex flex-col items-center lg:items-end justify-end relative h-full pb-4">
-                          <div className="text-center lg:text-right mb-2 w-full pr-2">
-                            <span className="text-xl sm:text-2xl font-serif italic font-extrabold text-[#0B4F8A] block">
-                              बढ़ता बिहार, <span className="text-[#C2410C]">बनता भविष्य</span>
+                          <div className="mb-2 w-full pr-2 text-center lg:text-right">
+                            <span className="block text-xl font-bold leading-relaxed text-[#0B2545] sm:text-2xl">
+                              बढ़ता बिहार, <span className="text-[#E65100]">बनता भविष्य</span>
                             </span>
                           </div>
 
-                          <div className="w-full max-w-md relative rounded-3xl overflow-hidden bg-linear-to-br from-[#0a2540] via-[#0e3b64] to-[#1e1b4b] p-6 text-white shadow-xl border border-sky-400/20 flex flex-col justify-between min-h-55">
+                          <div className="relative flex min-h-55 w-full max-w-md flex-col justify-between overflow-hidden rounded-lg border border-[#0B2545] bg-[#0B2545] p-5 text-white shadow-sm">
                             <div>
-                              <span className="bg-amber-400/20 text-amber-300 border border-amber-400/30 text-[10px] font-black px-2.5 py-1 rounded-full uppercase tracking-wider inline-block">
+                              <span className="inline-block rounded border border-white/20 bg-white/10 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wider text-amber-200">
                                 Independent information portal
                               </span>
                               <h2 className="text-lg font-black text-white mt-3">
                                 सभी सरकारी भर्तियों और सेवाओं की सीधी जानकारी
                               </h2>
-                              <p className="text-xs text-slate-300 mt-1.5 font-medium leading-relaxed">
-                                बिना किसी देरी के BPSC, BSSC, CSBC, RTPS और रिजल्ट्स से जुड़े सभी नोटिफिकेशन्स तुरंत पाएं।
+                              <p className="mt-1.5 text-xs font-medium leading-relaxed text-slate-200">
+                                BPSC, BSSC, CSBC और सार्वजनिक सेवाओं से जुड़ी जानकारी व आधिकारिक स्रोतों के लिंक एक जगह देखें।
                               </p>
                             </div>
-                            <div className="flex items-center justify-between pt-4 border-t border-white/10 text-xs font-bold text-cyan-300">
-                              <span>आधिकारिक स्रोतों के लिंक</span>
+                            <div className="flex flex-wrap items-center justify-between gap-2 border-t border-white/15 pt-4 text-xs font-semibold text-slate-200">
+                              <span>Official source links</span>
                               <Link to="/sitemap" className="text-white hover:underline flex items-center gap-1">
                                 सभी लिंक्स देखें <ArrowRight size={13} />
                               </Link>
@@ -346,57 +353,57 @@ export default function App() {
                       </div>
 
                       {/* Direct Fast Hubs Navigation Strip */}
-                      <div className="w-full bg-slate-900 border-t border-slate-800 py-2.5 px-4 sm:px-8">
-                        <div className="max-w-7xl mx-auto flex items-center gap-2 overflow-x-auto scrollbar-none text-xs font-bold text-white">
-                          <span className="text-amber-400 flex items-center gap-1 shrink-0 font-extrabold text-[11px] uppercase tracking-wider mr-1">
+                      <div className="w-full border-t border-[#E2E8F0] bg-[#F8FAFC] px-4 py-2.5 sm:px-6">
+                        <div className="mx-auto flex max-w-7xl items-center gap-2 overflow-x-auto text-xs font-semibold text-[#475569]">
+                          <span className="mr-1 flex shrink-0 items-center gap-1 text-[11px] font-bold uppercase tracking-wider text-[#0B2545]">
                             <Sparkles size={13} /> Fast Hubs:
                           </span>
                           <Link 
                             to="/mock-test" 
-                            className="px-3 py-1 rounded-lg bg-linear-to-r from-amber-500 to-orange-600 hover:from-amber-600 hover:to-orange-700 text-white font-extrabold transition shrink-0 shadow-xs flex items-center gap-1.5"
+                            className="flex min-h-9 shrink-0 items-center gap-1.5 rounded-md bg-[#0B2545] px-3 py-1 font-semibold text-white transition hover:bg-[#091E3A]"
                           >
                             <Trophy size={13} className="text-yellow-200" />
                             🎯 All Exam Live Mock Test & Rank
                           </Link>
                           <Link 
                             to="/bseb-matric-10th" 
-                            className="px-3 py-1 rounded-lg bg-blue-600/30 hover:bg-blue-600 border border-blue-500/40 transition shrink-0"
+                            className="min-h-9 shrink-0 rounded-md border border-[#E2E8F0] bg-white px-3 py-1 transition hover:border-[#CBD5E1] hover:bg-[#F1F5F9]"
                           >
                             BSEB 10th Result
                           </Link>
                           <Link 
                             to="/bseb-inter-12th" 
-                            className="px-3 py-1 rounded-lg bg-emerald-600/30 hover:bg-emerald-600 border border-emerald-500/40 transition shrink-0"
+                            className="min-h-9 shrink-0 rounded-md border border-[#E2E8F0] bg-white px-3 py-1 transition hover:border-[#CBD5E1] hover:bg-[#F1F5F9]"
                           >
                             BSEB 12th Inter
                           </Link>
                           <Link 
                             to="/cuet-ug-admission" 
-                            className="px-3 py-1 rounded-lg bg-purple-600/30 hover:bg-purple-600 border border-purple-500/40 transition shrink-0"
+                            className="min-h-9 shrink-0 rounded-md border border-[#E2E8F0] bg-white px-3 py-1 transition hover:border-[#CBD5E1] hover:bg-[#F1F5F9]"
                           >
                             CUET UG 2026
                           </Link>
                           <Link 
                             to="/rtps-bihar" 
-                            className="px-3 py-1 rounded-lg bg-teal-600/30 hover:bg-teal-600 border border-teal-500/40 transition shrink-0"
+                            className="min-h-9 shrink-0 rounded-md border border-[#E2E8F0] bg-white px-3 py-1 transition hover:border-[#CBD5E1] hover:bg-[#F1F5F9]"
                           >
                             RTPS जाति/आय/निवास
                           </Link>
                           <Link 
                             to="/udyami-yojana" 
-                            className="px-3 py-1 rounded-lg bg-amber-600/30 hover:bg-amber-600 border border-amber-500/40 transition shrink-0"
+                            className="min-h-9 shrink-0 rounded-md border border-[#E2E8F0] bg-white px-3 py-1 transition hover:border-[#CBD5E1] hover:bg-[#F1F5F9]"
                           >
                             उद्यमी योजना ₹10L
                           </Link>
                           <Link 
                             to="/kyp-bihar" 
-                            className="px-3 py-1 rounded-lg bg-sky-600/30 hover:bg-sky-600 border border-sky-500/40 transition shrink-0"
+                            className="min-h-9 shrink-0 rounded-md border border-[#E2E8F0] bg-white px-3 py-1 transition hover:border-[#CBD5E1] hover:bg-[#F1F5F9]"
                           >
                             कुशल युवा (KYP)
                           </Link>
                           <Link 
                             to="/student-credit-card" 
-                            className="px-3 py-1 rounded-lg bg-indigo-600/30 hover:bg-indigo-600 border border-indigo-500/40 transition shrink-0"
+                            className="min-h-9 shrink-0 rounded-md border border-[#E2E8F0] bg-white px-3 py-1 transition hover:border-[#CBD5E1] hover:bg-[#F1F5F9]"
                           >
                             स्टूडेंट क्रेडिट कार्ड ₹4L
                           </Link>
@@ -404,27 +411,27 @@ export default function App() {
                       </div>
 
                       {/* Benefits & Trust Strip */}
-                      <div className="w-full bg-linear-to-r from-[#073663] via-[#0A4B8A] to-[#138808] text-white py-3 px-4 sm:px-8 shadow-inner">
+                      <div className="w-full border-y border-[#E2E8F0] bg-white px-4 py-3 text-[#475569] sm:px-6">
                         <div className="max-w-7xl mx-auto flex flex-wrap items-center justify-between gap-4 text-xs">
-                          <div className="flex items-center gap-6 sm:gap-8 flex-wrap font-bold text-[11px] text-white">
+                          <div className="flex flex-wrap items-center gap-4 text-[11px] font-semibold text-[#475569] sm:gap-8">
                             <span className="flex items-center gap-2">
-                              <ShieldCheck size={16} className="text-cyan-300" />
-                              <span>Verified Sources <span className="font-medium opacity-90 block text-[9.5px]">Direct Official Portals</span></span>
+                              <ShieldCheck size={16} className="text-[#15803D]" />
+                              <span>Official source links <span className="block text-[9.5px] font-medium text-[#64748B]">Check the issuing department</span></span>
                             </span>
                             <span className="flex items-center gap-2">
-                              <Zap size={16} className="text-amber-300 fill-amber-300" />
-                              <span>Fast & Lightweight <span className="font-medium opacity-90 block text-[9.5px]">Works on 2G/3G too</span></span>
+                              <Zap size={16} className="text-[#E65100]" />
+                              <span>Quick access <span className="block text-[9.5px] font-medium text-[#64748B]">Jobs, services and tools</span></span>
                             </span>
                             <span className="flex items-center gap-2">
-                              <Sparkles size={16} className="text-rose-200" />
-                              <span>Empowering Bihar <span className="font-medium opacity-90 block text-[9.5px]">Real-Time Vacancy Alerts</span></span>
+                              <Sparkles size={16} className="text-[#0B2545]" />
+                              <span>Independent portal <span className="block text-[9.5px] font-medium text-[#64748B]">Public information, clearly labeled</span></span>
                             </span>
                           </div>
                         </div>
                       </div>
                     </div>
 
-                    <div className="bg-slate-50 border-t border-slate-200/80 py-2 px-4 flex items-center justify-center gap-1.5 flex-wrap text-xs text-slate-700 font-medium">
+                    <div className="flex flex-wrap items-center justify-center gap-1.5 border-t border-[#E2E8F0] bg-white px-4 py-2 text-xs font-medium text-[#475569]">
                       <span className="font-bold text-slate-700 text-[11px]">Trending:</span>
                       {["Live Mock Test", "BPSC", "BPSSC", "CSBC पुलिस", "BCECEB", "BTSC", "BSSC Inter"].map((tag) => (
                         tag === "Live Mock Test" ? (
@@ -484,27 +491,28 @@ export default function App() {
                     </div>
 
                     {topAlertItem && (
-                      <div className="mb-6 bg-linear-to-r from-red-600 via-rose-600 to-amber-600 text-white rounded-2xl p-3.5 sm:p-4 shadow-lg flex items-center justify-between gap-3 border border-red-300/40">
-                        <div className="flex items-center gap-3 text-xs sm:text-sm font-bold truncate">
-                          <span className="bg-white/20 p-2 rounded-xl flex items-center justify-center shrink-0">
-                            <Flame size={18} className="text-amber-200 fill-amber-200 animate-bounce" />
+                      <div className="mb-6 flex flex-col items-stretch justify-between gap-3 rounded-lg border border-[#FED7AA] bg-[#FFF7ED] p-3.5 text-[#7C2D12] sm:flex-row sm:items-center sm:p-4">
+                        <div className="flex min-w-0 items-center gap-3 text-xs font-medium leading-relaxed sm:text-sm">
+                          <span className="flex shrink-0 items-center justify-center rounded-md bg-[#FFEDD5] p-2">
+                            <Flame size={18} className="text-[#C2410C]" />
                           </span>
-                          <span className="truncate">
-                            Latest Alert: <strong className="text-amber-200 font-black">{topAlertItem.department}</strong> - {topAlertItem.title}
+                          <span className="min-w-0 break-words">
+                            Notice: {topAlertItem.department && <strong className="font-black">{topAlertItem.department} - </strong>}
+                            {topAlertItem.title}
                           </span>
                         </div>
                         <Link 
                           to={`/post/${generateSlug(topAlertItem)}`}
-                          className="bg-white text-red-700 font-black text-xs px-4 py-2 rounded-xl shadow-md hover:bg-amber-50 transition shrink-0 flex items-center gap-1.5 cursor-pointer"
+                          className="inline-flex min-h-11 shrink-0 items-center justify-center gap-1.5 rounded-md border border-[#FDBA74] bg-white px-4 text-xs font-semibold text-[#9A3412] transition hover:bg-[#FFEDD5]"
                         >
                           View Notice <ArrowRight size={14} />
                         </Link>
                       </div>
                     )}
 
-                    <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+                    <div className="grid grid-cols-1 gap-6 lg:grid-cols-12">
                       <div className="lg:col-span-8 space-y-6">
-                        <div id="cyber-tools-section" className="bg-white rounded-2xl p-5 shadow-sm border border-slate-200">
+                        <div id="cyber-tools-section" className="rounded-lg border border-[#E2E8F0] bg-white p-5 shadow-sm">
                           <div className="flex items-center justify-between mb-4">
                             <div>
                               <span className="text-[10px] font-black uppercase tracking-wider bg-emerald-100 text-emerald-900 border border-emerald-300 px-2.5 py-0.5 rounded-full">
@@ -578,26 +586,26 @@ export default function App() {
                                 onClick={() => setActiveTab(tab.id)}
                                 className={`text-xs font-black px-4 py-2.5 rounded-xl whitespace-nowrap shrink-0 transition-all flex items-center gap-2 border cursor-pointer ${
                                   isActive
-                                    ? "bg-slate-900 text-white border-slate-900 shadow-md scale-[1.02]"
-                                    : "bg-white text-slate-800 border-slate-300 hover:bg-slate-50"
+                                    ? "bg-[#0B2545] text-white border-[#0B2545] shadow-sm"
+                                    : "bg-white text-[#475569] border-[#E2E8F0] hover:bg-[#F8FAFC]"
                                 }`}
                               >
-                                <Icon size={15} className={isActive ? "text-amber-400" : "text-slate-600"} />
+                                <Icon size={15} className={isActive ? "text-[#FDBA74]" : "text-[#64748B]"} />
                                 {tab.label}
                               </Link>
                             );
                           })}
                         </div>
 
-                        <div id="active-circulars-section" className="space-y-4">
-                          <div className="flex items-center justify-between text-xs font-black text-slate-800 px-1">
-                            <h2 className="flex items-center gap-1.5 text-slate-900 text-sm font-extrabold">
-                              <TrendingUp size={18} className="text-blue-700" />
-                              Active Official Circulars
+                        <div id="active-circulars-section" className="space-y-4 scroll-mt-36">
+                          <div className="flex flex-wrap items-center justify-between gap-2 px-1 text-xs font-black text-[#334155]">
+                            <h2 className="flex items-center gap-1.5 text-sm font-bold text-[#0B2545]">
+                              <TrendingUp size={18} className="text-[#E65100]" />
+                              Notices &amp; Updates
                             </h2>
-                            <span className="bg-white border border-slate-300 text-slate-900 px-3 py-1 rounded-full font-black flex items-center gap-1.5 shadow-xs">
-                              {loading && <Loader2 size={13} className="animate-spin text-blue-700" />}
-                              {filteredData.length} Live Notices
+                            <span className="flex items-center gap-1.5 rounded-md border border-[#E2E8F0] bg-white px-3 py-1 font-semibold text-[#475569]">
+                              {loading && <Loader2 size={13} className="animate-spin text-[#0B2545]" />}
+                              {filteredData.length} Notices
                             </span>
                           </div>
 
@@ -611,7 +619,7 @@ export default function App() {
                           </div>
 
                           {!loading && filteredData.length === 0 && (
-                            <div className="bg-white border border-slate-200 rounded-2xl p-10 text-center text-slate-600 text-sm font-bold shadow-xs">
+                            <div className="rounded-lg border border-[#E2E8F0] bg-white p-10 text-center text-sm font-medium text-[#475569] shadow-sm">
                               No notifications matched your search query. Try another keyword.
                             </div>
                           )}
@@ -619,7 +627,7 @@ export default function App() {
                       </div>
 
                       <aside className="lg:col-span-4 space-y-6">
-                        <div className="bg-white rounded-2xl p-5 border border-slate-200 shadow-sm">
+                        <div className="rounded-lg border border-[#E2E8F0] bg-white p-5 shadow-sm">
                           <div className="flex items-center justify-between border-b border-slate-100 pb-3 mb-3">
                             <div className="flex items-center gap-1.5">
                               <CheckCircle2 className="text-blue-700" size={18} />
@@ -641,7 +649,7 @@ export default function App() {
                             <Link to="/bseb-matric-10th" className="p-2.5 rounded-xl border border-slate-100 hover:border-blue-500 hover:bg-blue-50/40 flex items-center justify-between transition group">
                               <div>
                                 <p className="font-bold text-slate-900 group-hover:text-blue-700">बिहार बोर्ड 10वीं रिजल्ट 2026</p>
-                                <span className="text-[10px] text-slate-500">Multi-Server Direct NIC Link</span>
+                                <span className="text-[10px] text-slate-500">Board result information</span>
                               </div>
                               <ArrowRight size={13} className="text-slate-400 group-hover:text-blue-700 transition" />
                             </Link>

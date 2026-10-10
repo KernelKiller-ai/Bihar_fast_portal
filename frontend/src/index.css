@@ -1,9 +1,33 @@
 @import "tailwindcss";
 
+@theme {
+  --color-civic-navy: #0b2545;
+  --color-civic-navy-dark: #091e3a;
+  --color-civic-orange: #e65100;
+  --color-civic-green: #15803d;
+  --color-civic-canvas: #f8fafc;
+  --color-civic-border: #e2e8f0;
+}
+
 @layer base {
+  html {
+    scroll-padding-top: 8rem;
+  }
+
+  body {
+    color: #0f172a;
+    background: #f8fafc;
+    font-family: Inter, "Noto Sans Devanagari", ui-sans-serif, system-ui, sans-serif;
+    line-height: 1.6;
+  }
+
   :where(a, button, [role="button"]):focus-visible {
-    outline: 3px solid #fbbf24;
+    outline: 3px solid #e65100;
     outline-offset: 3px;
+  }
+
+  :where(p, h1, h2, h3, label) {
+    overflow-wrap: anywhere;
   }
 }
 
@@ -27,4 +51,18 @@
   .category-fields-enter {
     animation: none;
   }
+}
+
+@media (max-width: 767px) {
+  html {
+    scroll-padding-top: 9rem;
+  }
+}
+
+footer.site-footer h2 {
+  color: #0b2545;
+}
+
+footer.site-footer ul a:hover {
+  color: #0b2545;
 }

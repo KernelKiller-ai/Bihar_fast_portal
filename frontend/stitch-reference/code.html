@@ -1,0 +1,1124 @@
+<!DOCTYPE html>
+
+<html lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<meta content="web_standard" name="shell-type"/>
+<title>BiharFast.in — Bihar Government Jobs, Results &amp; Public Services</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;family=Plus+Jakarta+Sans:wght@600;700;800&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<style>
+    @layer base {
+      html, body { margin: 0; padding: 0; }
+      body { overscroll-behavior: none; }
+      main > :first-child { margin-top: 0 !important; }
+      main > :last-child { margin-bottom: 0 !important; }
+    }
+    ::-webkit-scrollbar { display: none; }
+  </style>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          colors: {
+            "status-result-bg": "#EDE9FE",
+            "on-tertiary": "#ffffff",
+            "text-muted": "#64748B",
+            "on-error-container": "#93000a",
+            "surface-container-highest": "#d5e3fc",
+            "alert-urgent-border": "#E65100",
+            "on-background": "#0d1c2e",
+            "official-link": "#16A34A",
+            "error": "#ba1a1a",
+            "on-tertiary-fixed-variant": "#005323",
+            "surface-container-lowest": "#ffffff",
+            "text-slate": "#475569",
+            "surface-container": "#e6eeff",
+            "border-delicate": "#E2E8F0",
+            "tertiary": "#001404",
+            "tertiary-fixed": "#95f8a7",
+            "surface-variant": "#d5e3fc",
+            "on-secondary-container": "#531800",
+            "surface-canvas": "#F8FAFC",
+            "primary-container": "#0b2545",
+            "surface-bright": "#f8f9ff",
+            "alert-urgent-bg": "#FFF7ED",
+            "surface-subtle": "#F1F5F9",
+            "outline-variant": "#c4c6cf",
+            "on-surface-variant": "#44474e",
+            "secondary-fixed": "#ffdbcf",
+            "on-tertiary-fixed": "#00210a",
+            "on-primary-container": "#778db2",
+            "brand-accent-navy": "#091E3A",
+            "secondary-fixed-dim": "#ffb59a",
+            "tertiary-container": "#002c0f",
+            "border-strong": "#CBD5E1",
+            "primary-fixed-dim": "#b1c7f0",
+            "on-secondary-fixed": "#380d00",
+            "surface-container-high": "#dce9ff",
+            "surface-dim": "#ccdbf3",
+            "on-primary-fixed": "#001c3b",
+            "text-ink": "#0F172A",
+            "secondary": "#a83900",
+            "background": "#f8f9ff",
+            "on-surface": "#0d1c2e",
+            "primary-fixed": "#d5e3ff",
+            "surface": "#f8f9ff",
+            "status-active-text": "#15803D",
+            "on-error": "#ffffff",
+            "on-secondary": "#ffffff",
+            "surface-container-low": "#eff4ff",
+            "on-tertiary-container": "#3c9e57",
+            "on-secondary-fixed-variant": "#802a00",
+            "inverse-surface": "#233144",
+            "brand-accent-orange": "#D9480F",
+            "surface-tint": "#495f82",
+            "outline": "#74777f",
+            "primary": "#001026",
+            "inverse-primary": "#b1c7f0",
+            "on-primary": "#ffffff",
+            "secondary-container": "#fc6018",
+            "status-result-text": "#6D28D9",
+            "on-primary-fixed-variant": "#314769",
+            "status-active-bg": "#ECFDF5",
+            "surface-card": "#FFFFFF",
+            "error-container": "#ffdad6",
+            "status-admit-text": "#B45309",
+            "tertiary-fixed-dim": "#79db8d",
+            "inverse-on-surface": "#eaf1ff",
+            "status-admit-bg": "#FEF3C7"
+          },
+          fontFamily: {
+            "body-sm": ["Inter", "sans-serif"],
+            "label-sm": ["Inter", "sans-serif"],
+            "label-md": ["Inter", "sans-serif"],
+            "headline-sm": ["Plus Jakarta Sans", "sans-serif"],
+            "body-lg": ["Inter", "sans-serif"],
+            "headline-lg": ["Plus Jakarta Sans", "sans-serif"],
+            "display-hero": ["Plus Jakarta Sans", "sans-serif"],
+            "tagline-brand": ["Plus Jakarta Sans", "sans-serif"],
+            "label-xs": ["Inter", "sans-serif"],
+            "body-md": ["Inter", "sans-serif"],
+            "headline-md": ["Plus Jakarta Sans", "sans-serif"]
+          }
+        }
+      }
+    };
+  </script>
+</head>
+<body class="bg-surface font-body-md text-on-surface antialiased">
+<!-- ==================== 1. HEADER & TOP BANNER ==================== -->
+<header class="w-full z-40 bg-surface-card border-b border-border-delicate">
+<!-- Top Utility Bar: Civic Disclaimer & Quick Access -->
+<div class="bg-primary-container text-inverse-on-surface text-[12px] py-1.5 px-4 md:px-8">
+<div class="max-w-7xl mx-auto flex flex-col md:flex-row items-center justify-between gap-1.5">
+<div class="flex items-center gap-2 text-center md:text-left">
+<span class="inline-block w-2 h-2 rounded-full bg-amber-400"></span>
+<span class="font-medium text-slate-200">
+            BiharFast is an independent public-interest information portal — Not affiliated with any government agency
+          </span>
+</div>
+<div class="flex items-center gap-4 text-slate-300">
+<button class="hover:text-white transition-colors flex items-center gap-1 font-semibold text-xs" id="lang-toggle-btn" type="button">
+<span class="material-symbols-outlined text-[14px]">language</span> हिन्दी / English
+          </button>
+<span class="opacity-30">|</span>
+<a class="text-emerald-400 hover:text-emerald-300 font-semibold flex items-center gap-1 text-xs" href="#whatsapp-alerts">
+<span class="material-symbols-outlined text-[14px]">chat</span> WhatsApp Channel Alerts
+          </a>
+</div>
+</div>
+</div>
+<!-- Main Header Bar -->
+<div class="max-w-7xl mx-auto px-4 md:px-8 py-3 flex items-center justify-between gap-4">
+<!-- Logo + Tagline -->
+<a class="flex items-center gap-3 flex-shrink-0" href="#">
+<img alt="BiharFast.in Logo" class="h-10 w-10 object-contain rounded-md" src="https://lh3.googleusercontent.com/aida/AEtjO1UtjovPU_NWqY-UgiSrF4YlWkJWyLWGT7n4sUXKDdN3zBZ3Yig0IYEr1a3G-Kmsu0f0UDjTtp99V5Tl4AWfb3_E3mM256XrFbIGlHdeDHqPQKqGKMFhP3NNGW_BVOp871umfmHFy4hFnoQMvQUDTVUPKkDNqWkdx_QWF87dEaWY8xLxQ8aapZM7Adt9HU1nDZ8TDCIYlCACxKdsIVb9ZgCw6jfTSmO5NyBhvQJYCZGOcAQhn57r005J9A1e"/>
+<div class="flex flex-col">
+<span class="font-headline-md text-brand-accent-navy font-bold leading-tight">BiharFast.in</span>
+<span class="text-xs font-semibold text-brand-accent-orange leading-none mt-0.5">बढ़ता बिहार, बनता भविष्य</span>
+</div>
+</a>
+<!-- Compact Quick Search Input -->
+<div class="hidden md:flex flex-1 max-w-md mx-4">
+<div class="relative w-full">
+<span class="absolute left-3 top-2.5 text-text-muted material-symbols-outlined text-[18px]">search</span>
+<input class="w-full bg-surface-subtle text-xs text-on-surface pl-9 pr-8 py-2 rounded-lg border border-border-delicate focus:outline-none focus:border-brand-accent-navy focus:bg-white transition-all" id="header-quick-search" placeholder="Quick search recruitments, admit cards, RTPS..." type="text"/>
+<kbd class="absolute right-2.5 top-2 text-[10px] bg-white border border-border-delicate text-text-muted px-1.5 py-0.5 rounded shadow-xs">/</kbd>
+</div>
+</div>
+<!-- Verified Independence Pill Badge -->
+<div class="flex items-center gap-3">
+<span class="hidden sm:inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-emerald-50 text-emerald-800 text-xs font-semibold border border-emerald-200">
+<span class="material-symbols-outlined text-[14px] text-emerald-600">verified</span> Verified Sources
+        </span>
+<a class="text-xs font-semibold bg-brand-accent-navy hover:bg-slate-900 text-white px-3 py-1.5 rounded-lg transition-colors flex items-center gap-1" href="#circulars">
+<span>Active Notices</span>
+<span class="material-symbols-outlined text-[14px]">south</span>
+</a>
+</div>
+</div>
+<!-- Clean Navigation Bar -->
+<div class="border-t border-border-delicate bg-white">
+<div class="max-w-7xl mx-auto px-4 md:px-8 overflow-x-auto">
+<nav class="flex items-center gap-1 py-1.5 text-xs font-semibold whitespace-nowrap">
+<a class="px-3 py-1.5 rounded-md bg-brand-accent-navy text-white" href="#circulars">Latest Jobs</a>
+<a class="px-3 py-1.5 rounded-md text-text-slate hover:text-brand-accent-navy hover:bg-surface-subtle transition-colors" href="#admit-cards">Admit Cards</a>
+<a class="px-3 py-1.5 rounded-md text-text-slate hover:text-brand-accent-navy hover:bg-surface-subtle transition-colors" href="#results">Results</a>
+<a class="px-3 py-1.5 rounded-md text-text-slate hover:text-brand-accent-navy hover:bg-surface-subtle transition-colors" href="#answer-keys">Answer Keys</a>
+<a class="px-3 py-1.5 rounded-md text-text-slate hover:text-brand-accent-navy hover:bg-surface-subtle transition-colors" href="#rtps">RTPS Services</a>
+<a class="px-3 py-1.5 rounded-md text-text-slate hover:text-brand-accent-navy hover:bg-surface-subtle transition-colors" href="#syllabus">Syllabus &amp; PYQ</a>
+<a class="px-3 py-1.5 rounded-md text-text-slate hover:text-brand-accent-navy hover:bg-surface-subtle transition-colors" href="#cyber-tools">Cyber Tools</a>
+</nav>
+</div>
+</div>
+</header>
+<!-- ==================== 3. CONCISE LATEST-NOTICE ALERT ==================== -->
+<aside class="w-full bg-alert-urgent-bg border-y border-amber-300 px-4 md:px-8 py-2">
+<div class="max-w-7xl mx-auto flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 text-xs">
+<div class="flex items-center gap-2 text-amber-900 font-medium">
+<span class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded bg-brand-accent-orange text-white font-bold text-[10px] uppercase tracking-wide">
+<span class="material-symbols-outlined text-[12px]">campaign</span> NOTICE
+        </span>
+<span>
+<strong>Important:</strong> BPSC School Teacher TRE-4 Recruitment Notification published • Official Source Document available below
+        </span>
+</div>
+<a class="text-brand-accent-orange font-semibold hover:underline inline-flex items-center gap-0.5 whitespace-nowrap" href="#circulars">
+        View Gazette Link <span class="material-symbols-outlined text-[13px]">arrow_forward</span>
+</a>
+</div>
+</aside>
+<main class="w-full bg-surface pb-16">
+<!-- ==================== 2. HERO & COMPACT SEARCH ==================== -->
+<section class="w-full bg-white border-b border-border-delicate py-8 px-4 md:px-8">
+<div class="max-w-5xl mx-auto text-center flex flex-col items-center">
+<!-- Authoritative Headline -->
+<h1 class="font-headline-lg text-2xl md:text-3xl text-brand-accent-navy font-bold tracking-tight">
+          Bihar Government Jobs, Results &amp; Public Services
+        </h1>
+<p class="text-sm md:text-base text-text-slate mt-1.5 font-medium">
+          – सटीक जानकारी, बेहतर बिहार – <span class="text-brand-accent-orange font-semibold">बढ़ता बिहार, बनता भविष्य</span>
+</p>
+<!-- Practical Search Box with Category Selector -->
+<div class="w-full max-w-3xl mt-5 bg-surface-subtle p-1.5 rounded-xl border border-border-delicate shadow-sm">
+<div class="flex flex-col sm:flex-row items-center gap-1.5 bg-white p-1 rounded-lg">
+<div class="flex items-center gap-2 pl-3 flex-1 w-full">
+<span class="material-symbols-outlined text-text-muted text-[20px]">search</span>
+<input class="w-full bg-transparent text-sm text-on-surface focus:outline-none placeholder:text-text-muted py-2" id="main-notice-search" placeholder="Search by exam name, post, department, or roll number..." type="text"/>
+</div>
+<div class="flex items-center gap-1.5 w-full sm:w-auto pr-1">
+<select class="bg-surface-subtle text-xs text-on-surface px-3 py-2 rounded-md border border-border-delicate focus:outline-none font-medium" id="main-category-filter">
+<option value="all">All Categories</option>
+<option value="bpsc">BPSC</option>
+<option value="police">Police / CSBC</option>
+<option value="railway">Railways</option>
+<option value="teacher">Teacher TRE</option>
+<option value="rtps">RTPS Services</option>
+</select>
+<button class="bg-brand-accent-navy hover:bg-slate-900 text-white text-xs font-semibold px-4 py-2 rounded-md transition-colors flex items-center gap-1 flex-shrink-0" id="search-notices-btn">
+<span>Search Notices</span>
+<span class="material-symbols-outlined text-[15px]">arrow_forward</span>
+</button>
+</div>
+</div>
+</div>
+<!-- Verified Sample Search Tags -->
+<div class="flex flex-wrap items-center justify-center gap-1.5 mt-3 text-xs text-text-muted">
+<span class="font-medium">Verified Tags:</span>
+<button class="sample-tag px-2 py-0.5 rounded bg-surface-subtle hover:bg-slate-200 text-text-slate transition-colors" data-tag="BPSC">#BPSC</button>
+<button class="sample-tag px-2 py-0.5 rounded bg-surface-subtle hover:bg-slate-200 text-text-slate transition-colors" data-tag="BiharPolice">#BiharPolice</button>
+<button class="sample-tag px-2 py-0.5 rounded bg-surface-subtle hover:bg-slate-200 text-text-slate transition-colors" data-tag="RailwayRRB">#RailwayRRB</button>
+<button class="sample-tag px-2 py-0.5 rounded bg-surface-subtle hover:bg-slate-200 text-text-slate transition-colors" data-tag="RTPS">#RTPS_Services</button>
+<button class="sample-tag px-2 py-0.5 rounded bg-surface-subtle hover:bg-slate-200 text-text-slate transition-colors" data-tag="BSSC">#BSSC</button>
+</div>
+</div>
+</section>
+<!-- ==================== 4. QUICK-ACCESS 6-ITEM GRID ==================== -->
+<section class="max-w-7xl mx-auto px-4 md:px-8 pt-6 pb-2">
+<div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
+<!-- 1. Sarkari Vacancies -->
+<a class="bg-white hover:bg-slate-50 border border-border-delicate hover:border-slate-300 p-3.5 rounded-lg shadow-xs transition-all flex flex-col justify-between group" href="#circulars">
+<div class="w-9 h-9 rounded-md bg-blue-50 text-blue-800 flex items-center justify-center mb-2">
+<span class="material-symbols-outlined text-[20px]">work</span>
+</div>
+<div>
+<span class="text-xs font-bold text-brand-accent-navy group-hover:text-blue-700 block">Sarkari Vacancies</span>
+<span class="text-[11px] text-text-muted">BPSC, CSBC, RRB</span>
+</div>
+</a>
+<!-- 2. Admit Cards -->
+<a class="bg-white hover:bg-slate-50 border border-border-delicate hover:border-slate-300 p-3.5 rounded-lg shadow-xs transition-all flex flex-col justify-between group" href="#admit-cards">
+<div class="w-9 h-9 rounded-md bg-amber-50 text-amber-800 flex items-center justify-center mb-2">
+<span class="material-symbols-outlined text-[20px]">badge</span>
+</div>
+<div>
+<span class="text-xs font-bold text-brand-accent-navy group-hover:text-amber-700 block">Admit Cards</span>
+<span class="text-[11px] text-text-muted">Hall tickets &amp; dates</span>
+</div>
+</a>
+<!-- 3. Exam Results -->
+<a class="bg-white hover:bg-slate-50 border border-border-delicate hover:border-slate-300 p-3.5 rounded-lg shadow-xs transition-all flex flex-col justify-between group" href="#results">
+<div class="w-9 h-9 rounded-md bg-purple-50 text-purple-800 flex items-center justify-center mb-2">
+<span class="material-symbols-outlined text-[20px]">military_tech</span>
+</div>
+<div>
+<span class="text-xs font-bold text-brand-accent-navy group-hover:text-purple-700 block">Exam Results</span>
+<span class="text-[11px] text-text-muted">Merit lists &amp; marks</span>
+</div>
+</a>
+<!-- 4. RTPS Services -->
+<a class="bg-white hover:bg-slate-50 border border-border-delicate hover:border-slate-300 p-3.5 rounded-lg shadow-xs transition-all flex flex-col justify-between group" href="#rtps">
+<div class="w-9 h-9 rounded-md bg-emerald-50 text-emerald-800 flex items-center justify-center mb-2">
+<span class="material-symbols-outlined text-[20px]">description</span>
+</div>
+<div>
+<span class="text-xs font-bold text-brand-accent-navy group-hover:text-emerald-700 block">RTPS Services</span>
+<span class="text-[11px] text-text-muted">जाति, आय, निवास</span>
+</div>
+</a>
+<!-- 5. Syllabus & PYQ -->
+<a class="bg-white hover:bg-slate-50 border border-border-delicate hover:border-slate-300 p-3.5 rounded-lg shadow-xs transition-all flex flex-col justify-between group" href="#syllabus">
+<div class="w-9 h-9 rounded-md bg-slate-100 text-slate-800 flex items-center justify-center mb-2">
+<span class="material-symbols-outlined text-[20px]">menu_book</span>
+</div>
+<div>
+<span class="text-xs font-bold text-brand-accent-navy group-hover:text-slate-900 block">Syllabus &amp; PYQ</span>
+<span class="text-[11px] text-text-muted">Previous papers</span>
+</div>
+</a>
+<!-- 6. Cyber Cafe Tools -->
+<a class="bg-white hover:bg-slate-50 border border-border-delicate hover:border-slate-300 p-3.5 rounded-lg shadow-xs transition-all flex flex-col justify-between group" href="#cyber-tools">
+<div class="w-9 h-9 rounded-md bg-orange-50 text-orange-800 flex items-center justify-center mb-2">
+<span class="material-symbols-outlined text-[20px]">aspect_ratio</span>
+</div>
+<div>
+<span class="text-xs font-bold text-brand-accent-navy group-hover:text-orange-700 block">Cyber Cafe Tools</span>
+<span class="text-[11px] text-text-muted">Photo &amp; age resizer</span>
+</div>
+</a>
+</div>
+</section>
+<!-- ==================== MAIN CONTENT: PRIMARY FEED + SIDEBAR ==================== -->
+<section class="max-w-7xl mx-auto px-4 md:px-8 pt-6">
+<div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+<!-- ==================== LEFT MAIN CONTENT (8 COLS) ==================== -->
+<div class="lg:col-span-8 flex flex-col gap-6">
+<!-- 4.1 PRIMARY SECTION - Latest Recruitment Notifications -->
+<div class="bg-white p-5 rounded-xl border border-border-delicate shadow-xs" id="circulars">
+<!-- Header & Filter Tabs -->
+<div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 border-b border-border-delicate">
+<div>
+<div class="flex items-center gap-2">
+<span class="w-2.5 h-2.5 rounded-full bg-emerald-600"></span>
+<h2 class="font-headline-md text-lg text-brand-accent-navy font-bold">Latest Recruitment Notifications</h2>
+</div>
+<p class="text-xs text-text-muted mt-0.5">Verified state &amp; national public employment circulars</p>
+</div>
+<!-- Filter Tabs -->
+<div class="flex items-center gap-1 overflow-x-auto" id="recruitment-filters">
+<button class="rec-filter active px-2.5 py-1 rounded text-xs font-semibold bg-brand-accent-navy text-white whitespace-nowrap" data-filter="all">All</button>
+<button class="rec-filter px-2.5 py-1 rounded text-xs font-medium text-text-slate hover:bg-surface-subtle whitespace-nowrap" data-filter="bpsc">BPSC</button>
+<button class="rec-filter px-2.5 py-1 rounded text-xs font-medium text-text-slate hover:bg-surface-subtle whitespace-nowrap" data-filter="police">Police / CSBC</button>
+<button class="rec-filter px-2.5 py-1 rounded text-xs font-medium text-text-slate hover:bg-surface-subtle whitespace-nowrap" data-filter="ssc">State SSC</button>
+<button class="rec-filter px-2.5 py-1 rounded text-xs font-medium text-text-slate hover:bg-surface-subtle whitespace-nowrap" data-filter="railway">Railways</button>
+<button class="rec-filter px-2.5 py-1 rounded text-xs font-medium text-text-slate hover:bg-surface-subtle whitespace-nowrap" data-filter="central">Central</button>
+</div>
+</div>
+<!-- Standardized Recruitment Cards Container -->
+<div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4" id="recruitment-list"><!-- Card 1: BPSC TRE-4 -->
+<div class="rec-card bg-surface-subtle hover:bg-white p-4 rounded-xl border border-border-delicate hover:border-slate-300 transition-all flex flex-col justify-between shadow-xs" data-board="bpsc" data-eligibility="B.Ed / D.El.Ed + STET Paper I / II" data-lastdate="18 May 2026" data-pdf="BPSC_TRE_4_Advt_Official.pdf" data-title="BPSC School Teacher TRE-4 Recruitment 2026 (बिहार विद्यालय अध्यापक)" data-vacancies="46,595">
+<div>
+<div class="flex items-center justify-between gap-2">
+<span class="px-2 py-0.5 rounded text-[11px] font-bold bg-blue-50 text-brand-accent-navy border border-border-delicate uppercase tracking-wide">BPSC (Bihar)</span>
+<span class="px-2 py-0.5 rounded text-[11px] font-semibold bg-emerald-50 text-emerald-800 border border-emerald-200 flex items-center gap-1">
+<span class="w-1.5 h-1.5 rounded-full bg-emerald-600"></span> Application Open
+      </span>
+</div>
+<h3 class="font-headline-sm text-sm text-brand-accent-navy font-bold mt-2.5 leading-snug">
+      BPSC School Teacher TRE-4 Recruitment 2026: प्राथमिक, माध्यमिक एवं उच्च माध्यमिक अध्यापक पद
+    </h3>
+<div class="mt-3 bg-white p-3 rounded-lg border border-border-delicate grid grid-cols-2 gap-2 text-xs">
+<div>
+<span class="text-text-muted block text-[11px]">Confirmed Vacancies</span>
+<span class="font-bold text-on-surface text-sm">46,595 Posts</span>
+</div>
+<div>
+<span class="text-text-muted block text-[11px]">Last Date to Apply</span>
+<span class="font-bold text-brand-accent-orange text-sm">18 May 2026</span>
+</div>
+<div class="col-span-2 pt-1 border-t border-border-delicate flex items-center justify-between">
+<span class="text-text-muted text-[11px]">Eligibility:</span>
+<span class="font-medium text-slate-700 text-[11px]">B.Ed / D.El.Ed + STET Qualified</span>
+</div>
+</div>
+</div>
+<div class="flex items-center gap-2 mt-4 pt-3 border-t border-border-delicate">
+<button class="pdf-btn flex-1 py-2 px-2.5 rounded-lg text-xs font-semibold bg-white border border-border-delicate hover:bg-surface-subtle text-text-slate flex items-center justify-center gap-1 transition-colors" type="button">
+<span class="material-symbols-outlined text-[16px] text-text-muted">picture_as_pdf</span> PDF Circular
+    </button>
+<button class="details-btn flex-1 py-2 px-2.5 rounded-lg text-xs font-semibold bg-brand-accent-navy hover:bg-slate-900 text-white flex items-center justify-center gap-1 transition-colors" type="button">
+<span>View Details</span> <span class="material-symbols-outlined text-[15px]">arrow_forward</span>
+</button>
+</div>
+</div>
+<!-- Card 2: CSBC Police -->
+<div class="rec-card bg-surface-subtle hover:bg-white p-4 rounded-xl border border-border-delicate hover:border-slate-300 transition-all flex flex-col justify-between shadow-xs" data-board="police" data-eligibility="10+2 Intermediate (Any Stream)" data-lastdate="PET: 25 May 2026" data-pdf="CSBC_Constable_PET_Notice.pdf" data-title="Bihar Police Constable Recruitment (21,391 Posts) Physical Test Schedule" data-vacancies="21,391">
+<div>
+<div class="flex items-center justify-between gap-2">
+<span class="px-2 py-0.5 rounded text-[11px] font-bold bg-amber-50 text-amber-900 border border-amber-200 uppercase tracking-wide">CSBC Bihar Police</span>
+<span class="px-2 py-0.5 rounded text-[11px] font-semibold bg-amber-100 text-amber-800 border border-amber-300 flex items-center gap-1">
+<span class="w-1.5 h-1.5 rounded-full bg-amber-700"></span> Admit Card Live
+      </span>
+</div>
+<h3 class="font-headline-sm text-sm text-brand-accent-navy font-bold mt-2.5 leading-snug">
+      Bihar Police Constable (21,391 Posts): Physical Efficiency Test (PET) &amp; Venue Schedule
+    </h3>
+<div class="mt-3 bg-white p-3 rounded-lg border border-border-delicate grid grid-cols-2 gap-2 text-xs">
+<div>
+<span class="text-text-muted block text-[11px]">Total Vacancies</span>
+<span class="font-bold text-on-surface text-sm">21,391 Posts</span>
+</div>
+<div>
+<span class="text-text-muted block text-[11px]">PET Commencement</span>
+<span class="font-bold text-brand-accent-navy text-sm">25 May 2026</span>
+</div>
+<div class="col-span-2 pt-1 border-t border-border-delicate flex items-center justify-between">
+<span class="text-text-muted text-[11px]">Eligibility:</span>
+<span class="font-medium text-slate-700 text-[11px]">10+2 Intermediate Pass</span>
+</div>
+</div>
+</div>
+<div class="flex items-center gap-2 mt-4 pt-3 border-t border-border-delicate">
+<button class="pdf-btn flex-1 py-2 px-2.5 rounded-lg text-xs font-semibold bg-white border border-border-delicate hover:bg-surface-subtle text-text-slate flex items-center justify-center gap-1 transition-colors" type="button">
+<span class="material-symbols-outlined text-[16px] text-text-muted">picture_as_pdf</span> PET Notice PDF
+    </button>
+<button class="details-btn flex-1 py-2 px-2.5 rounded-lg text-xs font-semibold bg-brand-accent-navy hover:bg-slate-900 text-white flex items-center justify-center gap-1 transition-colors" type="button">
+<span>View Details</span> <span class="material-symbols-outlined text-[15px]">arrow_forward</span>
+</button>
+</div>
+</div>
+<!-- Card 3: RRB NTPC -->
+<div class="rec-card bg-surface-subtle hover:bg-white p-4 rounded-xl border border-border-delicate hover:border-slate-300 transition-all flex flex-col justify-between shadow-xs" data-board="railway" data-eligibility="Bachelor's Degree (Any Recognized Board)" data-lastdate="29 April 2026" data-pdf="RRB_CEN_03_2026_NTPC.pdf" data-title="Railway RRB NTPC Graduate Level: Station Master &amp; Commercial Apprentice" data-vacancies="3,548">
+<div>
+<div class="flex items-center justify-between gap-2">
+<span class="px-2 py-0.5 rounded text-[11px] font-bold bg-blue-50 text-brand-accent-navy border border-border-delicate uppercase tracking-wide">RRB Central</span>
+<span class="px-2 py-0.5 rounded text-[11px] font-semibold bg-emerald-50 text-emerald-800 border border-emerald-200 flex items-center gap-1">
+<span class="w-1.5 h-1.5 rounded-full bg-emerald-600"></span> Application Open
+      </span>
+</div>
+<h3 class="font-headline-sm text-sm text-brand-accent-navy font-bold mt-2.5 leading-snug">
+      Railway RRB NTPC Graduate Level: Station Master, Goods Train Manager &amp; Apprentice
+    </h3>
+<div class="mt-3 bg-white p-3 rounded-lg border border-border-delicate grid grid-cols-2 gap-2 text-xs">
+<div>
+<span class="text-text-muted block text-[11px]">Confirmed Vacancies</span>
+<span class="font-bold text-on-surface text-sm">3,548 Posts</span>
+</div>
+<div>
+<span class="text-text-muted block text-[11px]">Closing Date</span>
+<span class="font-bold text-brand-accent-orange text-sm">29 April 2026</span>
+</div>
+<div class="col-span-2 pt-1 border-t border-border-delicate flex items-center justify-between">
+<span class="text-text-muted text-[11px]">Eligibility:</span>
+<span class="font-medium text-slate-700 text-[11px]">Graduate Degree in Any Stream</span>
+</div>
+</div>
+</div>
+<div class="flex items-center gap-2 mt-4 pt-3 border-t border-border-delicate">
+<button class="pdf-btn flex-1 py-2 px-2.5 rounded-lg text-xs font-semibold bg-white border border-border-delicate hover:bg-surface-subtle text-text-slate flex items-center justify-center gap-1 transition-colors" type="button">
+<span class="material-symbols-outlined text-[16px] text-text-muted">picture_as_pdf</span> PDF Circular
+    </button>
+<button class="details-btn flex-1 py-2 px-2.5 rounded-lg text-xs font-semibold bg-brand-accent-navy hover:bg-slate-900 text-white flex items-center justify-center gap-1 transition-colors" type="button">
+<span>View Details</span> <span class="material-symbols-outlined text-[15px]">arrow_forward</span>
+</button>
+</div>
+</div>
+<!-- Card 4: BSSC CGL-4 -->
+<div class="rec-card bg-surface-subtle hover:bg-white p-4 rounded-xl border border-border-delicate hover:border-slate-300 transition-all flex flex-col justify-between shadow-xs" data-board="ssc" data-eligibility="Bachelor's Degree in Any Discipline" data-lastdate="Date To Be Announced" data-pdf="BSSC_CGL4_Requisition_Notice.pdf" data-title="BSSC 4th Graduate Level (CGL-4): Secretariat Assistant &amp; Revenue Officer" data-vacancies="~2,400 (Expected)">
+<div>
+<div class="flex items-center justify-between gap-2">
+<span class="px-2 py-0.5 rounded text-[11px] font-bold bg-slate-100 text-slate-800 border border-border-delicate uppercase tracking-wide">BSSC Bihar</span>
+<span class="px-2 py-0.5 rounded text-[11px] font-semibold bg-slate-100 text-slate-700 border border-slate-300 flex items-center gap-1">
+<span class="w-1.5 h-1.5 rounded-full bg-slate-500"></span> Requisition Stage
+      </span>
+</div>
+<h3 class="font-headline-sm text-sm text-brand-accent-navy font-bold mt-2.5 leading-snug">
+      BSSC 4th Graduate Level (CGL-4): प्रशाखा पदाधिकारी, सचिवालय सहायक एवं राजस्व कर्मचारी
+    </h3>
+<div class="mt-3 bg-white p-3 rounded-lg border border-border-delicate grid grid-cols-2 gap-2 text-xs">
+<div>
+<span class="text-text-muted block text-[11px]">Notified Vacancies</span>
+<span class="font-bold text-text-muted text-sm">~2,400 (Expected)</span>
+</div>
+<div>
+<span class="text-text-muted block text-[11px]">Application Window</span>
+<span class="font-medium text-slate-600 text-sm">Date To Be Announced</span>
+</div>
+<div class="col-span-2 pt-1 border-t border-border-delicate flex items-center justify-between">
+<span class="text-text-muted text-[11px]">Eligibility:</span>
+<span class="font-medium text-slate-700 text-[11px]">Graduation from Recognized Univ.</span>
+</div>
+</div>
+</div>
+<div class="flex items-center gap-2 mt-4 pt-3 border-t border-border-delicate">
+<button class="pdf-btn flex-1 py-2 px-2.5 rounded-lg text-xs font-semibold bg-white border border-border-delicate hover:bg-surface-subtle text-text-slate flex items-center justify-center gap-1 transition-colors" type="button">
+<span class="material-symbols-outlined text-[16px] text-text-muted">picture_as_pdf</span> Requisition PDF
+    </button>
+<button class="details-btn flex-1 py-2 px-2.5 rounded-lg text-xs font-semibold bg-brand-accent-navy hover:bg-slate-900 text-white flex items-center justify-center gap-1 transition-colors" type="button">
+<span>View Details</span> <span class="material-symbols-outlined text-[15px]">arrow_forward</span>
+</button>
+</div>
+</div>
+<!-- Card 5: SSC JE 2026 -->
+<div class="rec-card bg-surface-subtle hover:bg-white p-4 rounded-xl border border-border-delicate hover:border-slate-300 transition-all flex flex-col justify-between shadow-xs" data-board="central" data-eligibility="Diploma / B.E. / B.Tech in Engineering" data-lastdate="12 May 2026" data-pdf="SSC_JE_2026_Notice.pdf" data-title="SSC Junior Engineer (JE) 2026: Civil, Electrical &amp; Mechanical Recruitment" data-vacancies="1,699 Posts">
+<div>
+<div class="flex items-center justify-between gap-2">
+<span class="px-2 py-0.5 rounded text-[11px] font-bold bg-blue-50 text-brand-accent-navy border border-border-delicate uppercase tracking-wide">SSC Central</span>
+<span class="px-2 py-0.5 rounded text-[11px] font-semibold bg-emerald-50 text-emerald-800 border border-emerald-200 flex items-center gap-1">
+<span class="w-1.5 h-1.5 rounded-full bg-emerald-600"></span> Application Open
+      </span>
+</div>
+<h3 class="font-headline-sm text-sm text-brand-accent-navy font-bold mt-2.5 leading-snug">
+      SSC Junior Engineer (JE) 2026: Civil, Mechanical &amp; Electrical Central Departments
+    </h3>
+<div class="mt-3 bg-white p-3 rounded-lg border border-border-delicate grid grid-cols-2 gap-2 text-xs">
+<div>
+<span class="text-text-muted block text-[11px]">Total Vacancies</span>
+<span class="font-bold text-on-surface text-sm">1,699 Posts</span>
+</div>
+<div>
+<span class="text-text-muted block text-[11px]">Last Date to Apply</span>
+<span class="font-bold text-brand-accent-orange text-sm">12 May 2026</span>
+</div>
+<div class="col-span-2 pt-1 border-t border-border-delicate flex items-center justify-between">
+<span class="text-text-muted text-[11px]">Eligibility:</span>
+<span class="font-medium text-slate-700 text-[11px]">Diploma / B.E. / B.Tech</span>
+</div>
+</div>
+</div>
+<div class="flex items-center gap-2 mt-4 pt-3 border-t border-border-delicate">
+<button class="pdf-btn flex-1 py-2 px-2.5 rounded-lg text-xs font-semibold bg-white border border-border-delicate hover:bg-surface-subtle text-text-slate flex items-center justify-center gap-1 transition-colors" type="button">
+<span class="material-symbols-outlined text-[16px] text-text-muted">picture_as_pdf</span> Official Notice
+    </button>
+<button class="details-btn flex-1 py-2 px-2.5 rounded-lg text-xs font-semibold bg-brand-accent-navy hover:bg-slate-900 text-white flex items-center justify-center gap-1 transition-colors" type="button">
+<span>View Details</span> <span class="material-symbols-outlined text-[15px]">arrow_forward</span>
+</button>
+</div>
+</div>
+<!-- Card 6: BTSC Specialist -->
+<div class="rec-card bg-surface-subtle hover:bg-white p-4 rounded-xl border border-border-delicate hover:border-slate-300 transition-all flex flex-col justify-between shadow-xs" data-board="bpsc" data-eligibility="B.V.Sc &amp; AH / B.Tech Food Tech / BioTech" data-lastdate="05 June 2026" data-pdf="BTSC_Specialist_Notice_2026.pdf" data-title="BTSC Bihar Food Safety Officer &amp; Veterinary Officer Recruitment 2026" data-vacancies="787 Posts">
+<div>
+<div class="flex items-center justify-between gap-2">
+<span class="px-2 py-0.5 rounded text-[11px] font-bold bg-blue-50 text-brand-accent-navy border border-border-delicate uppercase tracking-wide">BTSC Bihar</span>
+<span class="px-2 py-0.5 rounded text-[11px] font-semibold bg-emerald-50 text-emerald-800 border border-emerald-200 flex items-center gap-1">
+<span class="w-1.5 h-1.5 rounded-full bg-emerald-600"></span> Application Open
+      </span>
+</div>
+<h3 class="font-headline-sm text-sm text-brand-accent-navy font-bold mt-2.5 leading-snug">
+      BTSC Bihar Food Safety Officer &amp; Touring Veterinary Officer (TVO) Recruitment
+    </h3>
+<div class="mt-3 bg-white p-3 rounded-lg border border-border-delicate grid grid-cols-2 gap-2 text-xs">
+<div>
+<span class="text-text-muted block text-[11px]">Confirmed Vacancies</span>
+<span class="font-bold text-on-surface text-sm">787 Posts</span>
+</div>
+<div>
+<span class="text-text-muted block text-[11px]">Last Date to Apply</span>
+<span class="font-bold text-brand-accent-orange text-sm">05 June 2026</span>
+</div>
+<div class="col-span-2 pt-1 border-t border-border-delicate flex items-center justify-between">
+<span class="text-text-muted text-[11px]">Eligibility:</span>
+<span class="font-medium text-slate-700 text-[11px]">B.V.Sc &amp; AH / Degree in Food Tech</span>
+</div>
+</div>
+</div>
+<div class="flex items-center gap-2 mt-4 pt-3 border-t border-border-delicate">
+<button class="pdf-btn flex-1 py-2 px-2.5 rounded-lg text-xs font-semibold bg-white border border-border-delicate hover:bg-surface-subtle text-text-slate flex items-center justify-center gap-1 transition-colors" type="button">
+<span class="material-symbols-outlined text-[16px] text-text-muted">picture_as_pdf</span> Official Notice
+    </button>
+<button class="details-btn flex-1 py-2 px-2.5 rounded-lg text-xs font-semibold bg-brand-accent-navy hover:bg-slate-900 text-white flex items-center justify-center gap-1 transition-colors" type="button">
+<span>View Details</span> <span class="material-symbols-outlined text-[15px]">arrow_forward</span>
+</button>
+</div>
+</div></div>
+<!-- Notice Footer -->
+<div class="mt-4 pt-3 border-t border-border-delicate flex items-center justify-between text-xs text-text-muted">
+<span>All circulars cross-referenced against respective commission gazettes</span>
+<a class="text-brand-accent-navy font-semibold hover:underline" href="#">View Full Circular Archive →</a>
+</div>
+</div>
+<!-- 4.2 RESULTS & ADMIT CARDS BALANCED 2-COLUMN SECTION -->
+<div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+<!-- Col 1: Exam Results -->
+<div class="bg-white p-4 rounded-xl border border-border-delicate shadow-xs" id="results">
+<div class="flex items-center justify-between pb-3 border-b border-border-delicate">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-purple-700 text-[20px]">military_tech</span>
+<h3 class="font-headline-sm text-sm font-bold text-brand-accent-navy">Recent Exam Results</h3>
+</div>
+<a class="text-xs text-brand-accent-orange font-semibold hover:underline" href="#">All Results</a>
+</div>
+<ul class="flex flex-col gap-2 mt-3 text-xs">
+<li class="p-2.5 rounded bg-surface-subtle hover:bg-slate-100 transition-colors">
+<div class="flex items-center justify-between">
+<span class="font-bold text-purple-700">RRB ALP CBT-2</span>
+<span class="text-text-muted text-[11px]">Today</span>
+</div>
+<a class="font-semibold text-on-surface hover:text-brand-accent-navy mt-1 block" href="#">
+                    RRB ALP CBT-2 Result: Patna &amp; Muzaffarpur Regional Merit List PDF
+                  </a>
+</li>
+<li class="p-2.5 rounded bg-surface-subtle hover:bg-slate-100 transition-colors">
+<div class="flex items-center justify-between">
+<span class="font-bold text-purple-700">BSEB PATNA</span>
+<span class="text-text-muted text-[11px]">Yesterday</span>
+</div>
+<a class="font-semibold text-on-surface hover:text-brand-accent-navy mt-1 block" href="#">
+                    Bihar Board 10th &amp; 12th Scrutiny Results Link &amp; Marksheet Correction
+                  </a>
+</li>
+<li class="p-2.5 rounded bg-surface-subtle hover:bg-slate-100 transition-colors">
+<div class="flex items-center justify-between">
+<span class="font-bold text-purple-700">BPSC 69TH CCE</span>
+<span class="text-text-muted text-[11px]">3 days ago</span>
+</div>
+<a class="font-semibold text-on-surface hover:text-brand-accent-navy mt-1 block" href="#">
+                    BPSC 69th Final Recommendation List &amp; Category-Wise Cut-Off
+                  </a>
+</li>
+</ul>
+<a class="mt-3 block text-center py-1.5 rounded bg-purple-50 text-purple-800 text-xs font-semibold hover:bg-purple-100 transition-colors" href="#">
+                Open Result Portals
+              </a>
+</div>
+<!-- Col 2: Admit Cards -->
+<div class="bg-white p-4 rounded-xl border border-border-delicate shadow-xs" id="admit-cards">
+<div class="flex items-center justify-between pb-3 border-b border-border-delicate">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-amber-700 text-[20px]">badge</span>
+<h3 class="font-headline-sm text-sm font-bold text-brand-accent-navy">Admit Cards &amp; Slips</h3>
+</div>
+<a class="text-xs text-brand-accent-orange font-semibold hover:underline" href="#">All Cards</a>
+</div>
+<ul class="flex flex-col gap-2 mt-3 text-xs">
+<li class="p-2.5 rounded bg-surface-subtle hover:bg-slate-100 transition-colors">
+<div class="flex items-center justify-between">
+<span class="font-bold text-amber-800">RRB TECHNICIAN</span>
+<span class="text-text-muted text-[11px]">Active</span>
+</div>
+<a class="font-semibold text-on-surface hover:text-brand-accent-navy mt-1 block" href="#">
+                    RRB Technician CEN 02/2026 City Intimation Slip &amp; Mock Test Link
+                  </a>
+</li>
+<li class="p-2.5 rounded bg-surface-subtle hover:bg-slate-100 transition-colors">
+<div class="flex items-center justify-between">
+<span class="font-bold text-amber-800">SSC CHSL TIER 1</span>
+<span class="text-text-muted text-[11px]">CR Region</span>
+</div>
+<a class="font-semibold text-on-surface hover:text-brand-accent-navy mt-1 block" href="#">
+                    SSC CHSL (10+2) 2026 Status &amp; E-Admit Card Direct Server Link
+                  </a>
+</li>
+<li class="p-2.5 rounded bg-surface-subtle hover:bg-slate-100 transition-colors">
+<div class="flex items-center justify-between">
+<span class="font-bold text-amber-800">BCECEB BIHAR</span>
+<span class="text-text-muted text-[11px]">Engineering</span>
+</div>
+<a class="font-semibold text-on-surface hover:text-brand-accent-navy mt-1 block" href="#">
+                    BCECE Lateral Entry (LE) 2026 Hall Ticket Download Available
+                  </a>
+</li>
+</ul>
+<a class="mt-3 block text-center py-1.5 rounded bg-amber-50 text-amber-900 text-xs font-semibold hover:bg-amber-100 transition-colors" href="#">
+                Download Hall Tickets
+              </a>
+</div>
+</div>
+<!-- 4.3 SECONDARY CONTENT: Syllabus, Answer Keys & Practice (Restrained) -->
+<div class="grid grid-cols-1 md:grid-cols-2 gap-5" id="syllabus">
+<!-- Syllabus & PYQ Archive -->
+<div class="bg-white p-4 rounded-xl border border-border-delicate shadow-xs flex flex-col justify-between">
+<div>
+<div class="flex items-center gap-2 pb-2.5 border-b border-border-delicate">
+<span class="material-symbols-outlined text-text-slate text-[20px]">menu_book</span>
+<h3 class="font-headline-sm text-sm font-bold text-brand-accent-navy">Syllabus &amp; Previous Question Papers</h3>
+</div>
+<div class="flex flex-col gap-2 mt-3 text-xs">
+<a class="flex items-center justify-between p-2 rounded hover:bg-surface-subtle border border-border-delicate text-on-surface group" href="#">
+<span>BPSC TRE-4 General Studies &amp; Subject PDF Syllabus</span>
+<span class="material-symbols-outlined text-[16px] text-text-muted group-hover:text-brand-accent-navy">download</span>
+</a>
+<a class="flex items-center justify-between p-2 rounded hover:bg-surface-subtle border border-border-delicate text-on-surface group" href="#">
+<span>Bihar Police Constable Solved Papers (2018–2024)</span>
+<span class="material-symbols-outlined text-[16px] text-text-muted group-hover:text-brand-accent-navy">download</span>
+</a>
+<a class="flex items-center justify-between p-2 rounded hover:bg-surface-subtle border border-border-delicate text-on-surface group" href="#">
+<span>BSSC CGL Prelims &amp; Mains Official Exam Pattern</span>
+<span class="material-symbols-outlined text-[16px] text-text-muted group-hover:text-brand-accent-navy">download</span>
+</a>
+</div>
+</div>
+<a class="mt-3 text-xs text-brand-accent-navy font-semibold hover:underline block text-right" href="#">
+                Access Full Question Bank →
+              </a>
+</div>
+<!-- Answer Keys & Mock Test Practice -->
+<div class="bg-white p-4 rounded-xl border border-border-delicate shadow-xs flex flex-col justify-between" id="answer-keys">
+<div>
+<div class="flex items-center gap-2 pb-2.5 border-b border-border-delicate">
+<span class="material-symbols-outlined text-text-slate text-[20px]">fact_check</span>
+<h3 class="font-headline-sm text-sm font-bold text-brand-accent-navy">Answer Keys &amp; Practice Tests</h3>
+</div>
+<div class="flex flex-col gap-2 mt-3 text-xs">
+<div class="p-2 rounded bg-surface-subtle border border-border-delicate">
+<div class="flex items-center justify-between">
+<span class="font-bold text-on-surface">Bihar GK &amp; Current Affairs Mock #142</span>
+<span class="text-[10px] bg-slate-200 px-1.5 py-0.5 rounded font-semibold text-slate-700">15 Mins</span>
+</div>
+<p class="text-[11px] text-text-muted mt-1">30 questions for BPSC &amp; CSBC aspirants with instant solutions.</p>
+</div>
+<a class="flex items-center justify-between p-2 rounded hover:bg-surface-subtle border border-border-delicate text-on-surface group" href="#">
+<span>SSC CGL 2025 Tier 1 Final Answer Key &amp; Response Sheet</span>
+<span class="material-symbols-outlined text-[16px] text-text-muted group-hover:text-brand-accent-navy">open_in_new</span>
+</a>
+</div>
+</div>
+<a class="mt-3 text-xs text-brand-accent-orange font-semibold hover:underline block text-right" href="#">
+                Take Free Daily Mock Test →
+              </a>
+</div>
+</div>
+</div>
+<!-- ==================== RIGHT SIDEBAR (4 COLS) ==================== -->
+<aside class="lg:col-span-4 flex flex-col gap-5">
+<!-- 1. Bihar Public Service Hubs (RTPS, Udyami, BSCC) -->
+<div class="bg-white p-4 rounded-xl border border-border-delicate shadow-xs" id="rtps">
+<div class="flex items-center justify-between pb-3 border-b border-border-delicate">
+<div class="flex items-center gap-1.5">
+<span class="material-symbols-outlined text-emerald-700 text-[20px]">account_balance</span>
+<h3 class="font-headline-sm text-sm font-bold text-brand-accent-navy">Bihar Public Services</h3>
+</div>
+<span class="text-[10px] bg-emerald-50 text-emerald-800 font-bold px-2 py-0.5 rounded border border-emerald-200">RTPS Direct</span>
+</div>
+<div class="flex flex-col gap-1.5 mt-3 text-xs">
+<a class="p-2.5 rounded bg-surface-subtle hover:bg-slate-100 flex items-center justify-between group transition-colors" href="https://serviceonline.bihar.gov.in" rel="noopener noreferrer" target="_blank">
+<div>
+<p class="font-semibold text-on-surface group-hover:text-brand-accent-navy">RTPS आय, जाति, निवास प्रमाण पत्र</p>
+<p class="text-[11px] text-text-muted">Service Plus Bihar Official Portal</p>
+</div>
+<span class="material-symbols-outlined text-text-muted group-hover:text-brand-accent-navy text-[16px]">chevron_right</span>
+</a>
+<a class="p-2.5 rounded bg-surface-subtle hover:bg-slate-100 flex items-center justify-between group transition-colors" href="https://udyami.bihar.gov.in" rel="noopener noreferrer" target="_blank">
+<div>
+<p class="font-semibold text-on-surface group-hover:text-brand-accent-navy">मुख्यमंत्री उद्यमी योजना (₹10 लाख)</p>
+<p class="text-[11px] text-text-muted">पात्रता, दिशानिर्देश एवं चयन सूची</p>
+</div>
+<span class="material-symbols-outlined text-text-muted group-hover:text-brand-accent-navy text-[16px]">chevron_right</span>
+</a>
+<a class="p-2.5 rounded bg-surface-subtle hover:bg-slate-100 flex items-center justify-between group transition-colors" href="https://www.7nishchay-yuvaupmission.bihar.gov.in" rel="noopener noreferrer" target="_blank">
+<div>
+<p class="font-semibold text-on-surface group-hover:text-brand-accent-navy">स्टूडेंट क्रेडिट कार्ड (BSCC)</p>
+<p class="text-[11px] text-text-muted">उच्च शिक्षा हेतु ₹4 लाख का ऋण</p>
+</div>
+<span class="material-symbols-outlined text-text-muted group-hover:text-brand-accent-navy text-[16px]">chevron_right</span>
+</a>
+<a class="p-2.5 rounded bg-surface-subtle hover:bg-slate-100 flex items-center justify-between group transition-colors" href="https://biharbhumi.bihar.gov.in" rel="noopener noreferrer" target="_blank">
+<div>
+<p class="font-semibold text-on-surface group-hover:text-brand-accent-navy">जमीन दाखिल-खारिज व लगान</p>
+<p class="text-[11px] text-text-muted">राजस्व एवं भूमि सुधार विभाग</p>
+</div>
+<span class="material-symbols-outlined text-text-muted group-hover:text-brand-accent-navy text-[16px]">chevron_right</span>
+</a>
+</div>
+</div>
+<!-- 2. Official Commissions Verified Directory -->
+<div class="bg-white p-4 rounded-xl border border-border-delicate shadow-xs">
+<div class="flex items-center justify-between pb-3 border-b border-border-delicate">
+<div class="flex items-center gap-1.5">
+<span class="material-symbols-outlined text-text-slate text-[20px]">verified_user</span>
+<h3 class="font-headline-sm text-sm font-bold text-brand-accent-navy">Official Commissions</h3>
+</div>
+<span class="text-[10px] text-text-muted">Direct Links</span>
+</div>
+<div class="flex flex-col gap-1 mt-2 text-xs divide-y divide-border-delicate">
+<a class="py-2 flex items-center justify-between hover:text-brand-accent-navy group transition-colors" href="https://bpsc.bih.nic.in" rel="noopener noreferrer" target="_blank">
+<div>
+<p class="font-semibold text-on-surface group-hover:text-brand-accent-navy">BPSC (Public Service Commission)</p>
+<p class="text-[11px] text-text-muted">bpsc.bih.nic.in</p>
+</div>
+<span class="material-symbols-outlined text-text-muted text-[15px]">open_in_new</span>
+</a>
+<a class="py-2 flex items-center justify-between hover:text-brand-accent-navy group transition-colors" href="https://csbc.bih.nic.in" rel="noopener noreferrer" target="_blank">
+<div>
+<p class="font-semibold text-on-surface group-hover:text-brand-accent-navy">CSBC (Police Constable Board)</p>
+<p class="text-[11px] text-text-muted">csbc.bih.nic.in</p>
+</div>
+<span class="material-symbols-outlined text-text-muted text-[15px]">open_in_new</span>
+</a>
+<a class="py-2 flex items-center justify-between hover:text-brand-accent-navy group transition-colors" href="https://bssc.bihar.gov.in" rel="noopener noreferrer" target="_blank">
+<div>
+<p class="font-semibold text-on-surface group-hover:text-brand-accent-navy">BSSC (Staff Selection Commission)</p>
+<p class="text-[11px] text-text-muted">bssc.bihar.gov.in</p>
+</div>
+<span class="material-symbols-outlined text-text-muted text-[15px]">open_in_new</span>
+</a>
+<a class="py-2 flex items-center justify-between hover:text-brand-accent-navy group transition-colors" href="https://bceceboard.bihar.gov.in" rel="noopener noreferrer" target="_blank">
+<div>
+<p class="font-semibold text-on-surface group-hover:text-brand-accent-navy">BCECEB (Combined Entrance Board)</p>
+<p class="text-[11px] text-text-muted">bceceboard.bihar.gov.in</p>
+</div>
+<span class="material-symbols-outlined text-text-muted text-[15px]">open_in_new</span>
+</a>
+</div>
+</div>
+<!-- 3. Lightweight Cyber Cafe Helpers -->
+<div class="bg-white p-4 rounded-xl border border-border-delicate shadow-xs" id="cyber-tools">
+<div class="flex items-center justify-between pb-3 border-b border-border-delicate">
+<div class="flex items-center gap-1.5">
+<span class="material-symbols-outlined text-brand-accent-orange text-[20px]">build</span>
+<h3 class="font-headline-sm text-sm font-bold text-brand-accent-navy">Cyber Cafe Utilities</h3>
+</div>
+<span class="text-[10px] bg-slate-100 text-slate-700 px-1.5 py-0.5 rounded font-medium">Browser-based</span>
+</div>
+<div class="mt-3 flex flex-col gap-3 text-xs">
+<!-- Resizer Helper -->
+<div class="p-3 rounded-lg bg-surface-subtle border border-border-delicate">
+<div class="flex items-center gap-2 mb-1">
+<span class="material-symbols-outlined text-[16px] text-text-slate">photo_camera</span>
+<h4 class="font-semibold text-on-surface">Photo &amp; Signature Resizer</h4>
+</div>
+<p class="text-[11px] text-text-muted mb-2">Compress to 20–50 KB (3.5cm x 4.5cm, 200 DPI standard format).</p>
+<div class="flex items-center gap-2">
+<label class="flex-1 bg-white hover:bg-slate-50 text-center py-1 px-2 rounded border border-border-delicate text-[11px] font-medium cursor-pointer">
+<span>Select File</span>
+<input accept="image/*" class="hidden" id="photo-helper-input" type="file"/>
+</label>
+<button class="bg-brand-accent-navy hover:bg-slate-900 text-white py-1 px-3 rounded text-[11px] font-semibold transition-colors" id="resizer-action-btn" type="button">
+                    Resize
+                  </button>
+</div>
+</div>
+<!-- Age Calculator Helper -->
+<div class="p-3 rounded-lg bg-surface-subtle border border-border-delicate">
+<div class="flex items-center gap-2 mb-1">
+<span class="material-symbols-outlined text-[16px] text-text-slate">calendar_month</span>
+<h4 class="font-semibold text-on-surface">Age Eligibility Calculator</h4>
+</div>
+<p class="text-[11px] text-text-muted mb-2">Determine exact age at cut-off date for notifications.</p>
+<div class="grid grid-cols-2 gap-2 mb-2">
+<div>
+<label class="text-[10px] text-text-muted block">DOB</label>
+<input class="w-full bg-white p-1 rounded border border-border-delicate text-[11px]" type="date" value="2000-01-01"/>
+</div>
+<div>
+<label class="text-[10px] text-text-muted block">As on</label>
+<input class="w-full bg-white p-1 rounded border border-border-delicate text-[11px]" type="date" value="2026-08-01"/>
+</div>
+</div>
+<button class="w-full bg-white hover:bg-slate-50 text-brand-accent-navy border border-border-delicate py-1 rounded text-[11px] font-semibold transition-colors" id="age-calc-btn" type="button">
+                  Check Exact Age
+                </button>
+</div>
+</div>
+</div>
+<!-- 4. WhatsApp / Telegram Direct Alerts Community -->
+<div class="bg-brand-accent-navy text-white p-4 rounded-xl shadow-xs" id="whatsapp-alerts">
+<div class="flex items-center gap-1.5 text-amber-300 text-xs font-bold uppercase tracking-wider mb-1">
+<span class="material-symbols-outlined text-[16px]">notifications_active</span> Fast Notice Alerts
+            </div>
+<h4 class="font-headline-sm text-sm font-bold leading-tight">Get Notifications On WhatsApp</h4>
+<p class="text-xs text-slate-300 mt-1">Direct links to official PDFs and admit cards as soon as they are gazetted.</p>
+<div class="flex flex-col gap-2 mt-3">
+<a class="bg-emerald-600 hover:bg-emerald-700 text-white font-semibold text-xs py-2 px-3 rounded-lg flex items-center justify-center gap-1.5 transition-colors" href="#">
+<span class="material-symbols-outlined text-[16px]">chat</span> Join BiharFast WhatsApp Channel
+              </a>
+<a class="bg-slate-800 hover:bg-slate-700 text-white font-semibold text-xs py-2 px-3 rounded-lg flex items-center justify-center gap-1.5 transition-colors" href="#">
+<span class="material-symbols-outlined text-[16px]">send</span> Join Telegram Channel
+              </a>
+</div>
+</div>
+</aside>
+</div>
+</section>
+<!-- ==================== 5. EDITORIAL INDEPENDENCE BANNER ==================== -->
+<section class="max-w-7xl mx-auto px-4 md:px-8 mt-8">
+<div class="bg-white p-5 rounded-xl border border-border-delicate shadow-xs flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+<div class="flex items-start gap-3">
+<div class="w-10 h-10 rounded-lg bg-slate-100 text-slate-700 flex items-center justify-center flex-shrink-0 mt-0.5">
+<span class="material-symbols-outlined text-[22px]">policy</span>
+</div>
+<div>
+<h4 class="font-headline-sm text-sm font-bold text-brand-accent-navy">Editorial Transparency &amp; Verification Policy</h4>
+<p class="text-xs text-text-slate mt-0.5 max-w-4xl leading-relaxed">
+              BiharFast.in is an independent civic information platform created to assist students, candidates, and citizens in accessing public gazettes and online services. We are completely independent of any government department or recruitment commission. All data is verified from official commission websites before publishing.
+            </p>
+</div>
+</div>
+<div class="flex items-center gap-3 text-xs flex-shrink-0">
+<a class="font-semibold text-brand-accent-navy hover:underline" href="#">Editorial Guidelines</a>
+<span class="text-slate-300">•</span>
+<a class="font-semibold text-brand-accent-orange hover:underline flex items-center gap-0.5" href="#">
+<span class="material-symbols-outlined text-[14px]">flag</span> Report an Issue
+          </a>
+</div>
+</div>
+</section>
+</main>
+<!-- ==================== FOOTER ==================== -->
+<footer class="w-full bg-white border-t border-border-delicate">
+<div class="max-w-7xl mx-auto px-4 md:px-8 py-8">
+<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 text-xs">
+<div>
+<h5 class="font-bold text-brand-accent-navy mb-2.5">Bihar Public Exams</h5>
+<ul class="space-y-1.5 text-text-slate">
+<li><a class="hover:text-brand-accent-navy" href="#">BPSC (Public Service Commission)</a></li>
+<li><a class="hover:text-brand-accent-navy" href="#">CSBC (Police Constable Board)</a></li>
+<li><a class="hover:text-brand-accent-navy" href="#">BSSC (Staff Selection Commission)</a></li>
+<li><a class="hover:text-brand-accent-navy" href="#">BTSC (Technical Service Commission)</a></li>
+<li><a class="hover:text-brand-accent-navy" href="#">BCECEB (Combined Entrance Board)</a></li>
+</ul>
+</div>
+<div>
+<h5 class="font-bold text-brand-accent-navy mb-2.5">Public Citizen Services</h5>
+<ul class="space-y-1.5 text-text-slate">
+<li><a class="hover:text-brand-accent-navy" href="#">RTPS Bihar (Income, Caste, Residence)</a></li>
+<li><a class="hover:text-brand-accent-navy" href="#">Biharbhumi (Land Records &amp; Mutation)</a></li>
+<li><a class="hover:text-brand-accent-navy" href="#">Mukhyamantri Udyami Yojana</a></li>
+<li><a class="hover:text-brand-accent-navy" href="#">Bihar Student Credit Card Scheme</a></li>
+<li><a class="hover:text-brand-accent-navy" href="#">Kushal Yuva Program (KYP)</a></li>
+</ul>
+</div>
+<div>
+<h5 class="font-bold text-brand-accent-navy mb-2.5">Candidate Utilities</h5>
+<ul class="space-y-1.5 text-text-slate">
+<li><a class="hover:text-brand-accent-navy" href="#">Passport Photo / Signature Resizer</a></li>
+<li><a class="hover:text-brand-accent-navy" href="#">Government Age Limit Calculator</a></li>
+<li><a class="hover:text-brand-accent-navy" href="#">OMR Practice Sheet Generator</a></li>
+<li><a class="hover:text-brand-accent-navy" href="#">Typing Speed Test (Hindi &amp; English)</a></li>
+<li><a class="hover:text-brand-accent-navy" href="#">Previous Year Papers (PYQ)</a></li>
+</ul>
+</div>
+<div>
+<h5 class="font-bold text-brand-accent-navy mb-2.5">About BiharFast.in</h5>
+<ul class="space-y-1.5 text-text-slate">
+<li><a class="hover:text-brand-accent-navy" href="#">About the Portal</a></li>
+<li><a class="hover:text-brand-accent-navy" href="#">Disclaimer &amp; Independence</a></li>
+<li><a class="hover:text-brand-accent-navy" href="#">Privacy Policy</a></li>
+<li><a class="hover:text-brand-accent-navy" href="#">Contact Editorial Desk</a></li>
+</ul>
+<div class="mt-3 p-2 rounded bg-alert-urgent-bg border border-amber-200 text-[11px] text-amber-900">
+            Disclaimer: Candidates must verify all announcements with the respective official government portal gazette.
+          </div>
+</div>
+</div>
+<div class="mt-8 pt-4 border-t border-border-delicate flex flex-col md:flex-row items-center justify-between gap-3 text-xs text-text-muted">
+<p>© 2026 BiharFast.in — Independent public-interest portal. All rights reserved.</p>
+<div class="flex items-center gap-4">
+<a class="hover:text-on-surface" href="#">Terms of Use</a>
+<a class="hover:text-on-surface" href="#">Legal Disclaimer</a>
+<a class="hover:text-on-surface" href="#">Sitemap</a>
+</div>
+</div>
+</div>
+</footer>
+<!-- ==================== 6. DETAILS MODAL (INTERACTIVE PROTOTYPE) ==================== -->
+<div class="fixed inset-0 z-50 bg-slate-900/60 hidden items-center justify-center p-4" id="details-modal">
+<div class="bg-white rounded-xl max-w-xl w-full p-6 shadow-2xl relative max-h-[90vh] overflow-y-auto">
+<button class="absolute top-4 right-4 text-text-muted hover:text-on-surface" id="modal-close-btn" type="button">
+<span class="material-symbols-outlined text-[22px]">close</span>
+</button>
+<div class="flex items-center gap-2 text-xs font-bold text-brand-accent-orange uppercase tracking-wider mb-1">
+<span class="material-symbols-outlined text-[16px]">verified</span> Verified Recruitment Summary
+      </div>
+<h3 class="font-headline-md text-lg text-brand-accent-navy font-bold pr-6" id="modal-title"></h3>
+<div class="mt-4 space-y-2.5 text-xs">
+<div class="flex justify-between p-2 rounded bg-surface-subtle">
+<span class="text-text-muted font-medium">Vacancies:</span>
+<span class="font-bold text-on-surface" id="modal-vacancies"></span>
+</div>
+<div class="flex justify-between p-2 rounded bg-surface-subtle">
+<span class="text-text-muted font-medium">Last Date to Apply:</span>
+<span class="font-bold text-brand-accent-orange" id="modal-lastdate"></span>
+</div>
+<div class="flex justify-between p-2 rounded bg-surface-subtle">
+<span class="text-text-muted font-medium">Educational Eligibility:</span>
+<span class="font-bold text-on-surface" id="modal-eligibility"></span>
+</div>
+<div class="flex justify-between p-2 rounded bg-surface-subtle">
+<span class="text-text-muted font-medium">Source Document:</span>
+<span class="font-semibold text-blue-700" id="modal-pdf"></span>
+</div>
+</div>
+<div class="mt-4 p-3 bg-amber-50 border border-amber-200 rounded text-xs text-amber-900">
+<strong>Advisory:</strong> Cross-check eligibility conditions, fee waivers, and category reservations on the commission's official server before final submission.
+      </div>
+<div class="mt-6 flex items-center justify-end gap-2 text-xs">
+<button class="px-4 py-2 rounded font-semibold border border-border-delicate hover:bg-surface-subtle text-text-slate" id="modal-dismiss-btn" type="button">Close</button>
+<button class="px-4 py-2 rounded font-semibold bg-brand-accent-navy hover:bg-slate-900 text-white flex items-center gap-1" id="modal-download-btn" type="button">
+<span class="material-symbols-outlined text-[15px]">download</span> Download Official Notice PDF
+        </button>
+</div>
+</div>
+</div>
+<!-- ==================== CLIENT-SIDE JAVASCRIPT ==================== -->
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+      // 1. Recruitment Cards Tab Filter
+      const recTabs = document.querySelectorAll('#recruitment-filters .rec-filter');
+      const recCards = document.querySelectorAll('#recruitment-list .rec-card');
+
+      recTabs.forEach(tab => {
+        tab.addEventListener('click', function() {
+          recTabs.forEach(t => {
+            t.classList.remove('bg-brand-accent-navy', 'text-white', 'font-semibold');
+            t.classList.add('text-text-slate', 'font-medium');
+          });
+          this.classList.remove('text-text-slate', 'font-medium');
+          this.classList.add('bg-brand-accent-navy', 'text-white', 'font-semibold');
+
+          const filterVal = this.getAttribute('data-filter');
+          recCards.forEach(card => {
+            const board = card.getAttribute('data-board');
+            if (filterVal === 'all' || board === filterVal) {
+              card.style.display = 'flex';
+            } else {
+              card.style.display = 'none';
+            }
+          });
+        });
+      });
+
+      // 2. Main Search & Dropdown Filter
+      const searchInput = document.getElementById('main-notice-search');
+      const categorySelect = document.getElementById('main-category-filter');
+      const headerSearch = document.getElementById('header-quick-search');
+
+      function filterCards() {
+        const query = (searchInput.value || '').toLowerCase().trim();
+        const selectedCat = categorySelect ? categorySelect.value : 'all';
+
+        recCards.forEach(card => {
+          const cardText = card.textContent.toLowerCase();
+          const board = card.getAttribute('data-board');
+
+          const matchesQuery = query === '' || cardText.includes(query);
+          const matchesCat = selectedCat === 'all' || 
+            (selectedCat === 'bpsc' && board === 'bpsc') ||
+            (selectedCat === 'police' && board === 'police') ||
+            (selectedCat === 'railway' && board === 'railway') ||
+            (selectedCat === 'teacher' && (cardText.includes('teacher') || cardText.includes('tre'))) ||
+            (selectedCat === 'rtps' && board === 'rtps');
+
+          if (matchesQuery && matchesCat) {
+            card.style.display = 'flex';
+          } else {
+            card.style.display = 'none';
+          }
+        });
+      }
+
+      if (searchInput) searchInput.addEventListener('input', filterCards);
+      if (categorySelect) categorySelect.addEventListener('change', filterCards);
+
+      // Header Quick Search sync
+      if (headerSearch) {
+        headerSearch.addEventListener('input', function(e) {
+          if (searchInput) searchInput.value = e.target.value;
+          filterCards();
+        });
+      }
+
+      // Sample Tag buttons
+      const sampleTags = document.querySelectorAll('.sample-tag');
+      sampleTags.forEach(tagBtn => {
+        tagBtn.addEventListener('click', function() {
+          const val = this.getAttribute('data-tag');
+          if (searchInput) {
+            searchInput.value = val;
+            filterCards();
+          }
+        });
+      });
+
+      // 3. Details Modal Logic
+      const modal = document.getElementById('details-modal');
+      const modalClose = document.getElementById('modal-close-btn');
+      const modalDismiss = document.getElementById('modal-dismiss-btn');
+      const modalTitle = document.getElementById('modal-title');
+      const modalVacancies = document.getElementById('modal-vacancies');
+      const modalLastDate = document.getElementById('modal-lastdate');
+      const modalEligibility = document.getElementById('modal-eligibility');
+      const modalPdf = document.getElementById('modal-pdf');
+      const modalDownloadBtn = document.getElementById('modal-download-btn');
+
+      function openModal(card) {
+        modalTitle.textContent = card.getAttribute('data-title') || 'Recruitment Notice Details';
+        modalVacancies.textContent = card.getAttribute('data-vacancies') || 'Notified Posts';
+        modalLastDate.textContent = card.getAttribute('data-lastdate') || 'Refer to circular';
+        modalEligibility.textContent = card.getAttribute('data-eligibility') || 'Refer to circular';
+        const pdfFile = card.getAttribute('data-pdf') || 'Official_Notification.pdf';
+        modalPdf.textContent = pdfFile;
+        modal.classList.remove('hidden');
+        modal.classList.add('flex');
+      }
+
+      function closeModal() {
+        modal.classList.add('hidden');
+        modal.classList.remove('flex');
+      }
+
+      document.querySelectorAll('.details-btn').forEach(btn => {
+        btn.addEventListener('click', function() {
+          const card = this.closest('.rec-card');
+          if (card) openModal(card);
+        });
+      });
+
+      document.querySelectorAll('.pdf-btn').forEach(btn => {
+        btn.addEventListener('click', function() {
+          const card = this.closest('.rec-card');
+          const pdfName = card ? card.getAttribute('data-pdf') : 'Official_Notice.pdf';
+          alert('Downloading verified notice: ' + pdfName);
+        });
+      });
+
+      if (modalClose) modalClose.addEventListener('click', closeModal);
+      if (modalDismiss) modalDismiss.addEventListener('click', closeModal);
+      if (modalDownloadBtn) {
+        modalDownloadBtn.addEventListener('click', function() {
+          alert('Opening source notification PDF for: ' + modalTitle.textContent);
+        });
+      }
+
+      modal.addEventListener('click', function(e) {
+        if (e.target === modal) closeModal();
+      });
+
+      // 4. Cyber Utility Demo triggers
+      const resizerBtn = document.getElementById('resizer-action-btn');
+      if (resizerBtn) {
+        resizerBtn.addEventListener('click', function() {
+          alert('Image Resizer: Uploaded file will be scaled to 3.5cm x 4.5cm, 35 KB (200 DPI). Instant processing ready.');
+        });
+      }
+
+      const ageBtn = document.getElementById('age-calc-btn');
+      if (ageBtn) {
+        ageBtn.addEventListener('click', function() {
+          alert('Age Calculation Result: 26 Years, 7 Months, 0 Days as of 01-08-2026. Within standard BPSC/CSBC/SSC eligibility.');
+        });
+      }
+
+      // Language Toggle Micro-Interaction
+      const langToggle = document.getElementById('lang-toggle-btn');
+      if (langToggle) {
+        langToggle.addEventListener('click', function() {
+          alert('Language switched: Current interface is optimized for bilingual Hindi + English viewing.');
+        });
+      }
+    });
+  </script>
+</body></html>

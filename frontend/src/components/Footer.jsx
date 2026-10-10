@@ -60,7 +60,7 @@ export default function Footer() {
   };
 
   return (
-    <footer className="w-full bg-[#f8fafc] text-slate-700 pt-8 border-t border-slate-200 select-none relative">
+    <footer className="site-footer relative w-full select-none border-t border-[#E2E8F0] bg-[#F8FAFC] pt-8 text-[#475569]">
       
       {/* 1. Top Feature Highlights Pill Bar */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 mb-8">
@@ -68,52 +68,52 @@ export default function Footer() {
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
             
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-xl bg-[#0B5C9E] text-white flex items-center justify-center shrink-0 shadow-xs">
+              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-[#EFF4FF] text-[#0B2545]">
                 <ShieldCheck size={20} />
               </div>
               <div>
-                <p className="text-xs font-black text-slate-900 leading-tight">Verified Information</p>
-                <p className="text-[10px] text-slate-500 font-medium">From Official Sources</p>
+                <p className="text-xs font-bold leading-relaxed text-[#0F172A]">Official source links</p>
+                <p className="text-[10px] font-medium text-[#64748B]">Check the issuing department</p>
               </div>
             </div>
 
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-xl bg-[#F59E0B] text-white flex items-center justify-center shrink-0 shadow-xs">
-                <Zap size={20} className="fill-white" />
+              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-[#FFF7ED] text-[#C2410C]">
+                <Zap size={20} />
               </div>
               <div>
-                <p className="text-xs font-black text-slate-900 leading-tight">Fast & Lightweight</p>
-                <p className="text-[10px] text-slate-500 font-medium">Works on 2G/3G too</p>
+                <p className="text-xs font-bold leading-relaxed text-[#0F172A]">Quick access</p>
+                <p className="text-[10px] font-medium text-[#64748B]">Jobs, services and tools</p>
               </div>
             </div>
 
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-xl bg-[#10B981] text-white flex items-center justify-center shrink-0 shadow-xs">
+              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-[#ECFDF5] text-[#15803D]">
                 <Users size={20} />
               </div>
               <div>
-                <p className="text-xs font-black text-slate-900 leading-tight">For Every Aspirant</p>
-                <p className="text-[10px] text-slate-500 font-medium">Jobs • Welfare • Growth</p>
+                <p className="text-xs font-bold leading-relaxed text-[#0F172A]">For every aspirant</p>
+                <p className="text-[10px] font-medium text-[#64748B]">Jobs · Welfare · Information</p>
               </div>
             </div>
 
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-xl bg-[#6366F1] text-white flex items-center justify-center shrink-0 shadow-xs">
+              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-[#EDE9FE] text-[#6D28D9]">
                 <Globe size={20} />
               </div>
               <div>
-                <p className="text-xs font-black text-slate-900 leading-tight">Bilingual Support</p>
-                <p className="text-[10px] text-slate-500 font-medium">English | हिंदी</p>
+                <p className="text-xs font-bold leading-relaxed text-[#0F172A]">Bilingual support</p>
+                <p className="text-[10px] font-medium text-[#64748B]">English · हिंदी</p>
               </div>
             </div>
 
             <div className="col-span-2 md:col-span-1 flex items-center gap-3">
-              <div className="w-10 h-10 rounded-xl bg-[#EF4444] text-white flex items-center justify-center shrink-0 shadow-xs">
-                <Heart size={20} className="fill-white" />
+              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-[#FEF2F2] text-[#B91C1C]">
+                <Heart size={20} />
               </div>
               <div>
-                <p className="text-xs font-black text-slate-900 leading-tight">A Brighter Bihar</p>
-                <p className="text-[10px] text-slate-500 font-medium">Together We Grow</p>
+                <p className="text-xs font-bold leading-relaxed text-[#0F172A]">A brighter Bihar</p>
+                <p className="text-[10px] font-medium text-[#64748B]">Together we grow</p>
               </div>
             </div>
 
@@ -123,7 +123,7 @@ export default function Footer() {
 
       {/* 2. Main 5-Column Content Grid */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 pb-8 relative z-10">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-14 gap-8 items-start">
+        <div className="grid grid-cols-1 items-start gap-8 md:grid-cols-2 lg:grid-cols-14">
           
           {/* Column 1: Brand Info & Clean Slogan (Span 3) */}
           <div className="lg:col-span-3 flex flex-col items-start">
@@ -151,8 +151,8 @@ export default function Footer() {
             </p>
 
             <div className="mt-4 mb-3 inline-block">
-              <span className="font-extrabold text-base sm:text-lg text-[#0B4F8A] font-serif italic tracking-wide block">
-                बढ़ता बिहार, <span className="text-[#F97316]">बनता भविष्य</span>
+              <span className="block text-base font-bold tracking-wide text-[#0B2545] sm:text-lg">
+                बढ़ता बिहार, <span className="text-[#E65100]">बनता भविष्य</span>
               </span>
               <svg className="w-full h-2.5 text-[#F97316] mt-0.5" viewBox="0 0 200 9" fill="none" preserveAspectRatio="none">
                 <path d="M2.5 6.5C45 2.5 120 1.5 197.5 5.5" stroke="currentColor" strokeWidth="3" strokeLinecap="round" />
@@ -415,7 +415,7 @@ export default function Footer() {
               <button
                 type="submit"
                 disabled={loading}
-                className="w-full bg-[#0B4F8A] hover:bg-[#073663] text-white font-extrabold text-xs py-2 rounded-xl transition shadow-xs cursor-pointer flex items-center justify-center gap-1.5 disabled:opacity-60"
+                className="flex w-full items-center justify-center gap-1.5 rounded-md bg-[#0B2545] py-2 text-xs font-semibold text-white shadow-sm transition hover:bg-[#091E3A] disabled:opacity-60"
               >
                 {loading ? (
                   <>
@@ -463,19 +463,13 @@ export default function Footer() {
       </div>
 
       {/* 3. Bottom Royal Navy Strip: Sovereign Ashok Stambh & Tiranga Tagline */}
-      <div className="bg-[#052649] text-white py-4 px-4 sm:px-6 border-t-2 border-amber-400 relative z-20">
+      <div className="relative z-20 border-t-2 border-[#E65100] bg-[#091E3A] px-4 py-4 text-white sm:px-6">
         <div className="max-w-7xl mx-auto flex flex-col md:flex-row items-center justify-between gap-4 text-xs">
           
           <div className="flex items-center gap-3">
-            <svg viewBox="0 0 100 120" className="w-8 h-10 shrink-0 fill-slate-100 drop-shadow-xs">
-              <path d="M50,10 C42,10 38,18 38,25 C34,26 31,30 32,35 C32,40 36,43 40,45 C41,53 45,62 50,66 C55,62 59,53 60,45 C64,43 68,40 68,35 C69,30 66,26 62,25 C62,18 58,10 50,10 Z" />
-              <path d="M35,28 C26,28 20,35 22,44 C24,50 28,55 35,56 C33,48 34,38 35,28 Z" opacity="0.85" />
-              <path d="M65,28 C74,28 80,35 78,44 C76,50 72,55 65,56 C67,48 66,38 65,28 Z" opacity="0.85" />
-              <rect x="20" y="66" width="60" height="8" rx="2" />
-              <circle cx="50" cy="79" r="4" fill="none" stroke="#FFFFFF" strokeWidth="1.5" />
-              <rect x="15" y="85" width="70" height="5" rx="1.5" />
-              <text x="50" y="100" fontSize="7" fill="#CBD5E1" textAnchor="middle" fontWeight="bold">सत्यमेव जयते</text>
-            </svg>
+            <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border border-white/15 bg-white/10 text-sm font-black text-white" aria-hidden="true">
+              BF
+            </span>
 
             <div className="leading-tight text-center md:text-left">
               <p className="font-extrabold text-sm text-white tracking-wide">
@@ -487,13 +481,10 @@ export default function Footer() {
             </div>
           </div>
 
-          <div className="text-center text-slate-300 text-[11px] leading-relaxed max-w-md">
+          <div className="max-w-md text-center text-[11px] leading-relaxed text-slate-300">
             <p>© 2026 BiharFast. All rights reserved.</p>
             <p className="text-[10px] text-slate-400">
-              Not affiliated with any government department. Information sourced from official portals.
-            </p>
-            <p className="mt-1 text-[10px] text-slate-400">
-              BiharFast is an independent educational and job information portal registered under Ministry of MSME, Govt. of India.
+              Not affiliated with any government department.               We link to official portals where available; please confirm details with the issuing department.
             </p>
             <nav className="mt-2 flex flex-wrap justify-center gap-x-3 gap-y-1 font-bold text-blue-200" aria-label="Legal and app links">
               <Link to="/about" className="hover:text-white hover:underline">About</Link>

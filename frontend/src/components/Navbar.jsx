@@ -23,21 +23,21 @@ export default function Navbar() {
   }, []);
 
   return (
-    <nav className="w-full sticky top-0 z-50 select-none shadow-md">
+    <nav className="sticky top-0 z-50 w-full select-none border-b border-[#E2E8F0] bg-white">
+      <div className="bg-[#091E3A] px-4 py-1.5 text-center text-[10px] leading-relaxed text-slate-100 sm:text-xs">
+        BiharFast is an independent public-interest information portal — not affiliated with any government agency.
+      </div>
       {/* 1. Indian Tricolor Micro Top Border */}
-      <div className="w-full h-1 bg-linear-to-r from-[#FF9933] via-white to-[#138808]" />
+      <div className="h-0.5 w-full bg-linear-to-r from-[#FF9933] via-white to-[#138808]" />
 
-      {/* 2. Rich Deep Sapphire Glass Container (overflow-visible zaroori hai dropdown ke liye) */}
-      <div className="w-full bg-linear-to-r from-[#0a2540] via-[#0e3b64] to-[#0a2540] border-b border-cyan-500/20 shadow-inner relative overflow-visible">
+      <div className="relative w-full overflow-visible border-b border-[#E2E8F0] bg-white">
         
-        {/* Subtle Ambient Light Glow */}
-        <div className="absolute top-0 left-1/4 w-96 h-20 bg-sky-400/10 blur-3xl pointer-events-none" />
+        <div className="pointer-events-none absolute left-1/4 top-0 hidden h-20 w-96 bg-sky-400/10 blur-3xl" />
 
-        <div className="w-full max-w-[1550px] mx-auto px-3 sm:px-8 py-2 sm:py-2.5 flex items-center justify-between gap-2 sm:gap-4 relative z-10">
+        <div className="relative z-10 mx-auto flex w-full max-w-7xl items-center justify-between gap-2 px-4 py-2 sm:gap-4 sm:px-6">
           
-          {/* Logo Brand Plate */}
-          <Link to="/" className="flex items-center gap-3 group shrink-0">
-            <div className="bg-white p-1 rounded-xl shadow-md border border-sky-200/50 flex items-center justify-center transition group-hover:scale-105 w-11 h-11 sm:w-12 sm:h-12 shrink-0">
+          <Link to="/" className="group flex shrink-0 items-center gap-2 sm:gap-3">
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border border-[#E2E8F0] bg-white p-1 transition group-hover:border-[#CBD5E1] sm:h-11 sm:w-11">
               <picture>
                 <source srcSet="/logo-192.webp" type="image/webp" />
                 <img
@@ -48,36 +48,31 @@ export default function Navbar() {
                   loading="eager"
                   fetchPriority="high"
                   decoding="async"
-                  className="h-9 sm:h-10 w-9 sm:w-10 object-contain aspect-square"
+                  className="aspect-square h-8 w-8 object-contain sm:h-9 sm:w-9"
                 />
               </picture>
             </div>
             
             <div className="flex min-w-0 flex-col">
               <div className="flex items-center gap-1.5">
-                <span className="text-lg sm:text-xl font-black tracking-tight text-white font-sans drop-shadow-xs">
-                  BIHAR<span className="text-[#FF9933]">FAST</span>
+                <span className="font-sans text-lg font-black tracking-tight text-[#0B2545] sm:text-xl">
+                  BIHAR<span className="text-[#E65100]">FAST</span>
                 </span>
-                <span className="hidden sm:inline text-[9.5px] font-black uppercase tracking-wider bg-amber-400 text-slate-950 px-2 py-0.5 rounded-full font-mono shadow-xs">
+                <span className="hidden rounded border border-[#E2E8F0] bg-[#F8FAFC] px-1.5 py-0.5 font-mono text-[9px] font-bold uppercase tracking-wider text-[#475569] sm:inline">
                   INDEPENDENT
                 </span>
               </div>
-              <span className="hidden sm:block text-[10.5px] text-sky-200 font-semibold tracking-wide -mt-0.5">
+              <span className="hidden text-[10px] font-medium tracking-wide text-[#64748B] sm:block">
                 Bihar information portal • links to official sources
               </span>
             </div>
           </Link>
 
           {/* Center: Live Feed Pill */}
-          <div className="hidden lg:flex items-center gap-2.5 bg-black/25 border border-sky-400/30 backdrop-blur-md rounded-full px-4 py-1.5 text-xs text-sky-100 shadow-sm">
-            <span className="relative flex h-2 w-2">
-              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-              <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-400"></span>
-            </span>
-            <span className="font-extrabold text-white text-[11px] tracking-wide">Updates:</span>
-            <span className="text-sky-200 font-medium text-[11px]">Bihar jobs & public services</span>
-            <span className="text-sky-400/50">•</span>
-            <span className="text-emerald-300 font-bold text-[11px]">Independent information portal</span>
+          <div className="hidden items-center gap-2 rounded-full border border-[#E2E8F0] bg-[#F8FAFC] px-4 py-1.5 text-xs text-[#475569] lg:flex">
+            <span className="font-semibold text-[#0B2545]">Bihar jobs &amp; public services</span>
+            <span aria-hidden="true">·</span>
+            <span className="font-medium">Independent information portal</span>
           </div>
 
           {/* Right Action Buttons */}
@@ -87,7 +82,7 @@ export default function Navbar() {
                 type="button"
                 onClick={openLoginModal}
                 aria-label="Student login"
-                className="inline-flex items-center justify-center gap-1.5 rounded-xl border border-amber-300/70 bg-amber-400 p-2 text-xs font-black text-slate-950 shadow transition hover:bg-amber-300 cursor-pointer sm:px-3.5 sm:py-2"
+                className="inline-flex min-h-10 items-center justify-center gap-1.5 rounded-md border border-[#0B2545] bg-[#0B2545] p-2 text-xs font-semibold text-white transition hover:bg-[#091E3A] sm:px-3.5 sm:py-2"
               >
                 <UserRound size={15} />
                 <span className="hidden sm:inline">Student Login</span>
@@ -101,7 +96,7 @@ export default function Navbar() {
                   onClick={() => setProfileMenuOpen((prev) => !prev)}
                   aria-expanded={profileMenuOpen}
                   aria-haspopup="menu"
-                  className="inline-flex max-w-48 items-center gap-2 rounded-xl border border-white/25 bg-white/10 p-1.5 pr-2.5 text-left text-white transition hover:bg-white/20 cursor-pointer sm:px-2.5"
+                  className="inline-flex min-h-10 max-w-48 items-center gap-2 rounded-md border border-[#E2E8F0] bg-white p-1.5 pr-2.5 text-left text-[#0F172A] transition hover:bg-[#F8FAFC] sm:px-2.5"
                 >
                   {user.user_metadata?.avatar_url || user.user_metadata?.picture ? (
                     <img
@@ -111,13 +106,13 @@ export default function Navbar() {
                       className="h-8 w-8 rounded-full border border-white/40 object-cover shrink-0"
                     />
                   ) : (
-                    <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-amber-400 text-xs font-black text-slate-950">
+                    <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[#F1F5F9] text-xs font-black text-[#0B2545]">
                       {initials || <UserRound size={15} />}
                     </span>
                   )}
                   <span className="hidden min-w-0 sm:block">
                     <span className="block max-w-28 truncate text-xs font-extrabold">{displayName}</span>
-                    <span className="block text-[10px] text-sky-200">Student</span>
+                    <span className="block text-[10px] text-[#64748B]">Student</span>
                   </span>
                   <ChevronDown 
                     size={14} 
@@ -165,7 +160,7 @@ export default function Navbar() {
             {/* Quick Hubs Badge */}
             <Link
               to="/upcoming-2026"
-              className="hidden sm:inline-flex items-center gap-1.5 bg-white/10 hover:bg-white/20 border border-white/20 text-sky-100 px-3 py-2 rounded-xl text-xs font-bold transition active:scale-95"
+              className="hidden min-h-10 items-center gap-1.5 rounded-md border border-[#E2E8F0] bg-white px-3 py-2 text-xs font-semibold text-[#475569] transition hover:bg-[#F8FAFC] active:scale-95 sm:inline-flex"
             >
               <Sparkles size={13} className="text-amber-400" />
               <span>सभी पोर्टल्स (2026)</span>
@@ -175,7 +170,7 @@ export default function Navbar() {
             <a
               href="/biharfast.apk"
               download="BiharFast.apk"
-              className="hidden md:inline-flex items-center gap-1.5 bg-emerald-500 hover:bg-emerald-400 border border-emerald-300/60 text-slate-950 px-3 py-2 rounded-xl text-xs font-black transition shadow-md hover:shadow-emerald-400/30 active:scale-95"
+              className="hidden min-h-10 items-center gap-1.5 rounded-md border border-[#E2E8F0] bg-[#F8FAFC] px-3 py-2 text-xs font-semibold text-[#0B2545] transition hover:bg-[#EFF4FF] active:scale-95 md:inline-flex"
             >
               <span aria-hidden="true">📲</span>
               <span>Download App (3 MB)</span>
@@ -187,7 +182,7 @@ export default function Navbar() {
               target="_blank"
               rel="noopener noreferrer"
               aria-label="Join official WhatsApp channel"
-              className="flex items-center gap-1.5 bg-[#25D366] hover:bg-[#20ba59] text-slate-950 font-black text-xs sm:text-sm px-2.5 sm:px-4 py-2 rounded-xl transition shadow-md hover:shadow-emerald-500/30 cursor-pointer group active:scale-95"
+              className="flex min-h-10 items-center gap-1.5 rounded-md bg-[#15803D] px-2.5 py-2 text-xs font-semibold text-white transition hover:bg-[#166534] active:scale-95 sm:px-3"
             >
               <svg 
                 className="w-4 h-4 fill-slate-950 group-hover:scale-110 transition-transform shrink-0" 
@@ -199,6 +194,18 @@ export default function Navbar() {
             </a>
           </div>
 
+        </div>
+      </div>
+      <div className="border-t border-[#E2E8F0] bg-white">
+        <div className="mx-auto max-w-7xl overflow-x-auto px-3 sm:px-6">
+          <div className="flex min-w-max items-center gap-1 py-1.5 text-xs font-semibold">
+            <Link to="/jobs" className="min-h-9 rounded-md bg-[#0B2545] px-3 py-2 text-white">Latest Jobs</Link>
+            <Link to="/admit-card" className="min-h-9 rounded-md px-3 py-2 text-[#475569] transition hover:bg-[#F1F5F9] hover:text-[#0B2545]">Admit Cards</Link>
+            <Link to="/results" className="min-h-9 rounded-md px-3 py-2 text-[#475569] transition hover:bg-[#F1F5F9] hover:text-[#0B2545]">Results</Link>
+            <Link to="/all-updates" className="min-h-9 rounded-md px-3 py-2 text-[#475569] transition hover:bg-[#F1F5F9] hover:text-[#0B2545]">All Updates</Link>
+            <Link to="/rtps-bihar" className="min-h-9 rounded-md px-3 py-2 text-[#475569] transition hover:bg-[#F1F5F9] hover:text-[#0B2545]">RTPS Services</Link>
+            <Link to="/useful-tools" className="min-h-9 rounded-md px-3 py-2 text-[#475569] transition hover:bg-[#F1F5F9] hover:text-[#0B2545]">Useful Tools</Link>
+          </div>
         </div>
       </div>
     </nav>

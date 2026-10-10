@@ -1,70 +1,19 @@
 import PropTypes from "prop-types";
 import { Link } from "react-router-dom";
-import { 
-  Calendar, 
-  GraduationCap, 
-  ArrowUpRight, 
-  FileText, 
-  AlertCircle, 
-  Award, 
-  Sparkles, 
-  Building2, 
-  CheckCircle2, 
+import {
+  Calendar,
+  GraduationCap,
+  ArrowUpRight,
+  FileText,
+  AlertCircle,
+  Building2,
   Clock3,
   IndianRupee,
-  ShieldCheck,
-  Timer
+  Timer,
 } from "lucide-react";
 import { generateSlug } from "../utils/slug";
 
-const DEPT_CONFIG = {
-  BPSC: {
-    badge: "bg-emerald-700 text-white",
-    bar: "bg-emerald-700",
-    borderHover: "hover:border-emerald-600",
-    btn: "bg-emerald-700 hover:bg-emerald-800 text-white"
-  },
-  CSBC: {
-    badge: "bg-blue-700 text-white",
-    bar: "bg-blue-700",
-    borderHover: "hover:border-blue-600",
-    btn: "bg-blue-700 hover:bg-blue-800 text-white"
-  },
-  "BPSSC (दारोगा)": {
-    badge: "bg-rose-700 text-white",
-    bar: "bg-rose-700",
-    borderHover: "hover:border-rose-600",
-    btn: "bg-rose-700 hover:bg-rose-800 text-white"
-  },
-  "BTSC तकनीकी आयोग": {
-    badge: "bg-teal-700 text-white",
-    bar: "bg-teal-700",
-    borderHover: "hover:border-teal-600",
-    btn: "bg-teal-700 hover:bg-teal-800 text-white"
-  },
-  "RTPS BIHAR": {
-    badge: "bg-indigo-700 text-white",
-    bar: "bg-indigo-700",
-    borderHover: "hover:border-indigo-600",
-    btn: "bg-indigo-700 hover:bg-indigo-800 text-white"
-  },
-  "BIHAR BHUMI": {
-    badge: "bg-amber-700 text-white",
-    bar: "bg-amber-700",
-    borderHover: "hover:border-amber-600",
-    btn: "bg-amber-700 hover:bg-amber-800 text-white"
-  },
-  DEFAULT: {
-    badge: "bg-slate-800 text-white",
-    bar: "bg-[#0B4F8A]",
-    borderHover: "hover:border-blue-600",
-    btn: "bg-[#0B4F8A] hover:bg-[#073863] text-white"
-  }
-};
-
 export default function NotificationCard({ item }) {
-  const deptKey = item.department?.toUpperCase().trim() || "DEFAULT";
-  const dept = DEPT_CONFIG[deptKey] || DEPT_CONFIG[item.department] || DEPT_CONFIG.DEFAULT;
   const postUrl = `/post/${generateSlug(item)}`;
 
   const category = (item.category || "").toLowerCase();
@@ -80,31 +29,19 @@ export default function NotificationCard({ item }) {
     slug.includes("rtps") || 
     slug.includes("bhumi") || 
     slug.includes("yojana");
+  const fee = item.fees ?? item.fee;
+  const processingTime = item.processing_time ?? item.delivery_time;
+  const lastDate = item.lastDate || item.last_date;
+  const eligibility = item.eligibility || item.qualification_details;
+  const totalPosts = item.total_posts ?? item.totalPosts;
+  const pdfUrl = item.pdfUrl || item.pdf_url;
+  const applyUrl = item.applyUrl || item.apply_url || item.link;
 
   const renderStatusBadge = () => {
-    if (isCitizenService) {
+    if (item.status) {
       return (
-        <span className="inline-flex items-center gap-1 bg-emerald-100 text-emerald-950 text-[11px] font-bold px-2.5 py-1 rounded-md border border-emerald-400">
-          <ShieldCheck size={13} className="text-emerald-800" />
-          Active Service
-        </span>
-      );
-    }
-
-    if (item.isResult || category === "results" || category === "result") {
-      return (
-        <span className="inline-flex items-center gap-1 bg-purple-100 text-purple-950 text-[11px] font-bold px-2.5 py-1 rounded-md border border-purple-400">
-          <Award size={13} className="text-purple-800" />
-          Result Declared
-        </span>
-      );
-    }
-
-    if (category === "admit_card") {
-      return (
-        <span className="inline-flex items-center gap-1 bg-amber-100 text-amber-950 text-[11px] font-black px-2.5 py-1 rounded-md border border-amber-400">
-          <CheckCircle2 size={13} className="text-amber-900" />
-          Admit Card Out
+        <span className="inline-flex items-center rounded-md border border-[#CBD5E1] bg-[#F1F5F9] px-2.5 py-1 text-[11px] font-semibold text-[#334155]">
+          {item.status}
         </span>
       );
     }
@@ -135,32 +72,26 @@ export default function NotificationCard({ item }) {
       );
     }
 
-    return (
-      <span className="inline-flex items-center gap-1 bg-sky-100 text-sky-950 text-[11px] font-bold px-2.5 py-1 rounded-md border border-sky-300">
-        <Sparkles size={12} className="text-sky-800" />
-        Live Circular
-      </span>
-    );
+    return null;
   };
 
   return (
-    <article className={`bg-white rounded-2xl border border-slate-200 ${dept.borderHover} transition-all duration-200 shadow-xs hover:shadow-md flex flex-col justify-between overflow-hidden group`}>
-      <div className={`h-1.5 w-full ${dept.bar}`} />
+    <article className="flex flex-col justify-between overflow-hidden rounded-lg border border-[#E2E8F0] bg-white shadow-[0_1px_2px_rgba(15,23,42,0.04)] transition hover:border-[#CBD5E1] hover:shadow-[0_4px_6px_-1px_rgba(11,37,69,0.07)]">
+      <div className="h-1 w-full bg-[#0B2545]" />
 
-      <div className="p-5">
-        <div className="flex items-center justify-between gap-2 mb-3">
-          <span className={`${dept.badge} text-[11px] font-black tracking-wider px-2.5 py-0.5 rounded-sm uppercase flex items-center gap-1 shadow-xs`}>
+      <div className="p-4">
+        <div className="mb-3 flex items-center justify-between gap-2">
+          <span className="inline-flex items-center gap-1 rounded border border-[#E2E8F0] bg-[#F1F5F9] px-2 py-1 text-[10px] font-bold tracking-wide text-[#0F172A]">
             <Building2 size={12} />
-            {item.department || "BIHAR"}
+            {item.department || "Bihar"}
           </span>
           {renderStatusBadge()}
         </div>
 
-        {/* Title */}
-        <h2 className="text-sm sm:text-base font-bold text-slate-900 leading-snug tracking-tight mb-4 line-clamp-2 min-h-11">
+        <h2 className="mb-3 min-h-11 text-sm font-bold leading-[1.6] tracking-tight text-[#0F172A] sm:text-base">
           <Link 
             to={postUrl}
-            className="hover:text-blue-700 transition-colors"
+            className="transition-colors hover:text-[#0B2545]"
             title={itemTitle}
             aria-label={itemTitle}
           >
@@ -168,70 +99,73 @@ export default function NotificationCard({ item }) {
           </Link>
         </h2>
 
-        {/* Dynamic Metric Grid based on Category */}
-        {isCitizenService ? (
-          <div className="grid grid-cols-2 gap-2 text-xs">
-            <div className="bg-emerald-50/70 border border-emerald-200 rounded-xl p-2.5">
-              <div className="text-[10px] uppercase font-black text-slate-700 flex items-center gap-1 mb-0.5">
-                <IndianRupee size={11} className="text-emerald-700" />
+        <div className="grid grid-cols-1 gap-2 text-xs min-[420px]:grid-cols-2">
+          {totalPosts !== undefined && totalPosts !== null && totalPosts !== "" && (
+            <div className="min-w-0 rounded-md border border-[#E2E8F0] bg-[#F8FAFC] p-2">
+              <div className="mb-0.5 flex items-center gap-1 text-[10px] font-bold uppercase text-[#64748B]">
+                <Building2 size={11} />
+                Total Posts
+              </div>
+              <div className="break-words font-semibold text-[#0F172A]">{totalPosts}</div>
+            </div>
+          )}
+          {lastDate && (
+            <div className="min-w-0 rounded-md border border-[#E2E8F0] bg-[#F8FAFC] p-2">
+              <div className="mb-0.5 flex items-center gap-1 text-[10px] font-bold uppercase text-[#64748B]">
+                <Calendar size={11} />
+                Important Date
+              </div>
+              <div className="break-words font-semibold text-[#0F172A]">{lastDate}</div>
+            </div>
+          )}
+          {eligibility && (
+            <div className="min-w-0 rounded-md border border-[#E2E8F0] bg-[#F8FAFC] p-2">
+              <div className="mb-0.5 flex items-center gap-1 text-[10px] font-bold uppercase text-[#64748B]">
+                <GraduationCap size={12} />
+                Eligibility
+              </div>
+              <div className="break-words font-semibold text-[#0F172A]">{eligibility}</div>
+            </div>
+          )}
+          {isCitizenService && fee && (
+            <div className="min-w-0 rounded-md border border-[#E2E8F0] bg-[#F8FAFC] p-2">
+              <div className="mb-0.5 flex items-center gap-1 text-[10px] font-bold uppercase text-[#64748B]">
+                <IndianRupee size={11} />
                 सरकारी शुल्क
               </div>
-              <div className="font-extrabold truncate text-emerald-800">
-                {item.fees || item.fee || "निःशुल्क (₹0)"}
-              </div>
+              <div className="break-words font-semibold text-[#0F172A]">{fee}</div>
             </div>
-
-            <div className="bg-slate-50 border border-slate-200 rounded-xl p-2.5">
-              <div className="text-[10px] uppercase font-black text-slate-700 flex items-center gap-1 mb-0.5">
-                <Timer size={12} className="text-slate-600" />
+          )}
+          {isCitizenService && processingTime && (
+            <div className="min-w-0 rounded-md border border-[#E2E8F0] bg-[#F8FAFC] p-2">
+              <div className="mb-0.5 flex items-center gap-1 text-[10px] font-bold uppercase text-[#64748B]">
+                <Timer size={12} />
                 समय सीमा
               </div>
-              <div className="font-bold text-slate-800 truncate">
-                {item.processing_time || item.delivery_time || "10-14 कार्य दिवस"}
-              </div>
+              <div className="break-words font-semibold text-[#0F172A]">{processingTime}</div>
             </div>
-          </div>
-        ) : (
-          <div className="grid grid-cols-2 gap-2 text-xs">
-            <div className="bg-slate-50 border border-slate-200 rounded-xl p-2.5">
-              <div className="text-[10px] uppercase font-black text-slate-700 flex items-center gap-1 mb-0.5">
-                <Calendar size={11} className="text-slate-600" />
-                {item.hasRealDate ? "Last Date" : "Status"}
-              </div>
-              <div className={`font-bold truncate ${item.hasRealDate ? "text-rose-800" : "text-slate-800"}`}>
-                {item.hasRealDate ? (item.lastDate || item.last_date) : "Active Circular"}
-              </div>
-            </div>
-
-            <div className="bg-slate-50 border border-slate-200 rounded-xl p-2.5">
-              <div className="text-[10px] uppercase font-black text-slate-700 flex items-center gap-1 mb-0.5">
-                <GraduationCap size={12} className="text-slate-600" />
-                {item.isResult ? "Category" : "Eligibility"}
-              </div>
-              <div className="font-bold text-slate-800 truncate">
-                {item.isResult ? "Merit / Score" : (item.eligibility || "Refer PDF")}
-              </div>
-            </div>
-          </div>
-        )}
+          )}
+        </div>
       </div>
 
-      <div className="px-5 py-3 bg-slate-50/90 border-t border-slate-200 flex items-center justify-between gap-2">
-        <a 
-          href={item.pdfUrl || item.applyUrl || item.link || "#"} 
-          target="_blank" 
-          rel="noopener noreferrer"
-          aria-label={`${isCitizenService ? "Portal लिंक खोलें" : "Official PDF डाउनलोड करें"}: ${itemTitle}`}
-          className="text-xs font-bold text-slate-800 hover:text-slate-950 bg-white border border-slate-300 px-3 py-1.5 rounded-lg flex items-center gap-1.5 transition hover:bg-slate-100 shadow-xs"
-        >
-          <FileText size={13} className="text-slate-700" />
-          {isCitizenService ? "Direct Portal" : "Official PDF"}
-        </a>
+      <div className="flex items-center justify-between gap-2 border-t border-[#E2E8F0] bg-[#F8FAFC] px-4 py-3">
+        {(pdfUrl || applyUrl) && (
+          <a
+            href={pdfUrl || applyUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            aria-label={`${isCitizenService ? "Portal लिंक खोलें" : "Official PDF डाउनलोड करें"}: ${itemTitle}`}
+            className="inline-flex min-h-11 items-center gap-1.5 rounded-md border border-[#E2E8F0] bg-white px-3 text-xs font-semibold text-[#475569] transition hover:border-[#CBD5E1] hover:text-[#0F172A]"
+          >
+            <FileText size={13} />
+            {isCitizenService ? "Direct Portal" : "Official PDF"}
+          </a>
+        )}
 
         <Link 
           to={postUrl}
           aria-label={`पूरी जानकारी देखें: ${itemTitle}`}
-          className={`${dept.btn} text-xs font-bold px-3.5 py-1.5 rounded-lg flex items-center gap-1 shadow-xs transition active:scale-95 cursor-pointer`}
+          className="ml-auto inline-flex min-h-11 items-center gap-1 rounded-md bg-[#0B2545] px-3.5 text-xs font-semibold text-white transition hover:bg-[#091E3A] active:scale-95"
         >
           View Details
           <ArrowUpRight size={13} />
@@ -246,19 +180,22 @@ NotificationCard.propTypes = {
     title: PropTypes.string,
     department: PropTypes.string,
     category: PropTypes.string,
+    status: PropTypes.string,
     slug: PropTypes.string,
-    isResult: PropTypes.bool,
     hasRealDate: PropTypes.bool,
     daysLeft: PropTypes.number,
+    total_posts: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+    totalPosts: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
     lastDate: PropTypes.string,
     last_date: PropTypes.string,
     eligibility: PropTypes.string,
-    pdfUrl: PropTypes.string,
-    applyUrl: PropTypes.string,
-    link: PropTypes.string,
+    qualification_details: PropTypes.string,
     fees: PropTypes.string,
     fee: PropTypes.string,
     processing_time: PropTypes.string,
-    delivery_time: PropTypes.string
+    delivery_time: PropTypes.string,
+    pdfUrl: PropTypes.string,
+    applyUrl: PropTypes.string,
+    link: PropTypes.string
   }).isRequired
 };
