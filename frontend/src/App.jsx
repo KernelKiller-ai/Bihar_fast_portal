@@ -326,7 +326,7 @@ export default function App() {
                           <div className="w-full max-w-md relative rounded-3xl overflow-hidden bg-linear-to-br from-[#0a2540] via-[#0e3b64] to-[#1e1b4b] p-6 text-white shadow-xl border border-sky-400/20 flex flex-col justify-between min-h-55">
                             <div>
                               <span className="bg-amber-400/20 text-amber-300 border border-amber-400/30 text-[10px] font-black px-2.5 py-1 rounded-full uppercase tracking-wider inline-block">
-                                Official Portal Aggregator
+                                Independent information portal
                               </span>
                               <h2 className="text-lg font-black text-white mt-3">
                                 सभी सरकारी भर्तियों और सेवाओं की सीधी जानकारी
@@ -336,7 +336,7 @@ export default function App() {
                               </p>
                             </div>
                             <div className="flex items-center justify-between pt-4 border-t border-white/10 text-xs font-bold text-cyan-300">
-                              <span>100% सटीक एवं सत्यापित</span>
+                              <span>आधिकारिक स्रोतों के लिंक</span>
                               <Link to="/sitemap" className="text-white hover:underline flex items-center gap-1">
                                 सभी लिंक्स देखें <ArrowRight size={13} />
                               </Link>

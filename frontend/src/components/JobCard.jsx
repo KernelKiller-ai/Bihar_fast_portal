@@ -1,6 +1,6 @@
 import PropTypes from "prop-types";
 import { Link } from "react-router-dom";
-import { Calendar, Users, GraduationCap, ArrowRight, ShieldCheck } from "lucide-react";
+import { Calendar, Users, GraduationCap, ArrowRight } from "lucide-react";
 import { generateSlug } from "../utils/slug";
 
 export default function JobCard({ post }) {
@@ -52,8 +52,8 @@ export default function JobCard({ post }) {
       </div>
 
       <div className="mt-3.5 pt-3 border-t border-slate-100 flex items-center justify-between">
-        <span className="text-[10px] text-slate-400 font-medium flex items-center gap-1">
-          <ShieldCheck size={12} className="text-emerald-500" /> NIC Verified
+        <span className="text-[10px] text-slate-500 font-medium">
+          Official-source links
         </span>
 
         <Link

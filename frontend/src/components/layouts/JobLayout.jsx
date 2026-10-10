@@ -6,7 +6,6 @@ import {
   ExternalLink, 
   Download, 
   ArrowLeft, 
-  ShieldCheck, 
   Users,
   CheckCircle2,
   FileText,
@@ -58,19 +57,19 @@ export default function JobLayout({ post }) {
           </Link>
         </div>
         
-        <h1 className="text-xl sm:text-2xl md:text-3xl font-black leading-snug drop-shadow-xs">
+        <h1 className="text-xl sm:text-2xl md:text-3xl font-black leading-snug drop-shadow-xs [overflow-wrap:anywhere]">
           {title}
         </h1>
 
-        <div className="flex flex-wrap items-center gap-y-2 gap-x-4 text-xs text-sky-100 mt-4 pt-3 border-t border-white/10 font-medium">
+        <div className="flex min-w-0 flex-wrap items-center gap-y-2 gap-x-4 text-xs text-sky-100 mt-4 pt-3 border-t border-white/10 font-medium">
           {dept && (
-            <span className="flex items-center gap-1.5">
+            <span className="flex min-w-0 items-center gap-1.5 [overflow-wrap:anywhere]">
               <Briefcase size={15} className="text-amber-400" /> 
               विभाग: <strong className="text-white font-bold">{dept}</strong>
             </span>
           )}
-          <span className="flex items-center gap-1.5">
-            <ShieldCheck size={15} className="text-emerald-400" /> प्रमाणित आधिकारिक अधिसूचना
+          <span className="text-sky-100">
+            स्वतंत्र सूचना पोर्टल • आधिकारिक स्रोतों के लिंक
           </span>
         </div>
       </header>
@@ -80,31 +79,31 @@ export default function JobLayout({ post }) {
         {(totalPosts || lastDate || eligibility) && (
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
             {totalPosts && (
-              <div className="bg-slate-50 border border-slate-200 rounded-xl p-4 flex items-start gap-3">
+              <div className="min-w-0 bg-slate-50 border border-slate-200 rounded-xl p-4 flex items-start gap-3">
                 <Users size={18} className="text-[#0F3966] shrink-0 mt-0.5" />
-                <div>
+                <div className="min-w-0">
                   <p className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">कुल पद (Vacancies)</p>
-                  <p className="text-sm font-black text-slate-900 mt-0.5">{totalPosts}</p>
+                  <p className="text-sm font-black text-slate-900 mt-0.5 [overflow-wrap:anywhere]">{totalPosts}</p>
                 </div>
               </div>
             )}
 
             {lastDate && (
-              <div className="bg-rose-50/70 border border-rose-200 rounded-xl p-4 flex items-start gap-3">
+              <div className="min-w-0 bg-rose-50/70 border border-rose-200 rounded-xl p-4 flex items-start gap-3">
                 <Calendar size={18} className="text-rose-600 shrink-0 mt-0.5" />
-                <div>
+                <div className="min-w-0">
                   <p className="text-[11px] font-bold text-rose-700 uppercase tracking-wider">अंतिम तिथि (Last Date)</p>
-                  <p className="text-sm font-black text-rose-900 mt-0.5">{lastDate}</p>
+                  <p className="text-sm font-black text-rose-900 mt-0.5 [overflow-wrap:anywhere]">{lastDate}</p>
                 </div>
               </div>
             )}
 
             {eligibility && (
-              <div className="bg-slate-50 border border-slate-200 rounded-xl p-4 flex items-start gap-3">
+              <div className="min-w-0 bg-slate-50 border border-slate-200 rounded-xl p-4 flex items-start gap-3">
                 <GraduationCap size={18} className="text-[#0F3966] shrink-0 mt-0.5" />
-                <div>
+                <div className="min-w-0">
                   <p className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">अनिवार्य योग्यता</p>
-                  <p className="text-xs font-bold text-slate-800 mt-0.5 leading-snug">{eligibility}</p>
+                  <p className="text-xs font-bold text-slate-800 mt-0.5 leading-snug [overflow-wrap:anywhere]">{eligibility}</p>
                 </div>
               </div>
             )}
@@ -113,17 +112,17 @@ export default function JobLayout({ post }) {
 
         {/* Action Callout Hub */}
         {(applyLink !== "#" || pdfLink !== "#") && (
-          <div className="bg-linear-to-br from-blue-50/90 to-indigo-50/70 border-2 border-blue-200/90 rounded-2xl p-6 text-center space-y-4 shadow-xs">
+          <div className="bg-linear-to-br from-blue-50/90 to-indigo-50/70 border-2 border-blue-200/90 rounded-2xl p-4 sm:p-6 text-center space-y-4 shadow-xs">
             <p className="text-sm sm:text-base font-black text-slate-900">
               सीधे आधिकारिक पोर्टल से ऑनलाइन आवेदन करें अथवा अधिसूचना पीडीएफ डाउनलोड करें
             </p>
-            <div className="flex flex-wrap items-center justify-center gap-3">
+            <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-center gap-3">
               {applyLink !== "#" && (
                 <a
                   href={applyLink}
                   target="_blank"
                   rel="noreferrer"
-                  className="inline-flex items-center gap-2 bg-[#0F3966] hover:bg-[#0b2b4d] text-white font-black text-xs sm:text-sm px-6 py-3 rounded-xl shadow-md transition active:scale-95 cursor-pointer"
+                  className="inline-flex w-full sm:w-auto items-center justify-center gap-2 bg-[#0F3966] hover:bg-[#0b2b4d] text-white font-black text-xs sm:text-sm px-4 sm:px-6 py-3 rounded-xl shadow-md transition active:scale-95 cursor-pointer"
                 >
                   <ExternalLink size={16} /> ऑनलाइन आवेदन करें (Apply Online)
                 </a>
@@ -133,7 +132,7 @@ export default function JobLayout({ post }) {
                   href={pdfLink}
                   target="_blank"
                   rel="noreferrer"
-                  className="inline-flex items-center gap-2 bg-white hover:bg-slate-50 text-slate-800 border border-slate-300 font-bold text-xs sm:text-sm px-6 py-3 rounded-xl shadow-xs transition active:scale-95 cursor-pointer"
+                  className="inline-flex w-full sm:w-auto items-center justify-center gap-2 bg-white hover:bg-slate-50 text-slate-800 border border-slate-300 font-bold text-xs sm:text-sm px-4 sm:px-6 py-3 rounded-xl shadow-xs transition active:scale-95 cursor-pointer"
                 >
                   <Download size={16} /> आधिकारिक विज्ञापन (Official PDF)
                 </a>
@@ -158,9 +157,9 @@ export default function JobLayout({ post }) {
         {/* Full Rich Article Body */}
         {sanitizedContent && (
           <section className="border-t border-slate-200 pt-7">
-            <div 
+            <div
               className="
-                text-slate-800 text-xs sm:text-sm leading-relaxed space-y-5
+                min-w-0 max-w-full text-slate-800 text-xs sm:text-sm leading-relaxed space-y-5 [overflow-wrap:anywhere]
                 [&_h2]:text-base [&_h2]:sm:text-lg [&_h2]:font-black [&_h2]:text-[#0F3966] [&_h2]:border-l-4 [&_h2]:border-amber-500 [&_h2]:pl-3 [&_h2]:mt-6 [&_h2]:mb-2
                 [&_h3]:text-sm [&_h3]:sm:text-base [&_h3]:font-black [&_h3]:text-slate-900 [&_h3]:mt-5 [&_h3]:mb-2
                 [&_p]:text-slate-700 [&_p]:leading-relaxed [&_p]:my-2.5
@@ -168,7 +167,7 @@ export default function JobLayout({ post }) {
                 [&_ol]:list-decimal [&_ol]:list-inside [&_ol]:space-y-2.5 [&_ol]:my-3 [&_ol]:pl-2 [&_ol]:bg-slate-50 [&_ol]:p-4 [&_ol]:rounded-xl [&_ol]:border [&_ol]:border-slate-200
                 [&_li]:text-slate-800 [&_li]:leading-relaxed
                 [&_strong]:text-slate-950 [&_strong]:font-bold
-                [&_table]:block [&_table]:w-full [&_table]:max-w-full [&_table]:overflow-x-auto [&_table]:border-collapse [&_table]:my-4
+                [&_table]:block [&_table]:w-full [&_table]:max-w-full [&_table]:overflow-x-auto [&_table]:overscroll-x-contain [&_table]:border-collapse [&_table]:my-4
                 [&_th]:border [&_th]:border-slate-300 [&_th]:bg-slate-100 [&_th]:p-2 [&_th]:text-left [&_th]:font-bold
                 [&_td]:border [&_td]:border-slate-300 [&_td]:p-2 [&_td]:align-top
                 [&_a]:text-blue-700 [&_a]:underline [&_img]:max-w-full [&_img]:h-auto

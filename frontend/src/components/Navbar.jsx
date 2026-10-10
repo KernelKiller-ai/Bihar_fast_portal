@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { Link } from "react-router-dom";
-import { ChevronDown, LogOut, ShieldCheck, Sparkles, UserRound } from "lucide-react";
+import { ChevronDown, LogOut, Sparkles, UserRound } from "lucide-react";
 import { useAuth } from "../context/AuthContext.jsx";
 
 export default function Navbar() {
@@ -59,11 +59,11 @@ export default function Navbar() {
                   BIHAR<span className="text-[#FF9933]">FAST</span>
                 </span>
                 <span className="hidden sm:inline text-[9.5px] font-black uppercase tracking-wider bg-amber-400 text-slate-950 px-2 py-0.5 rounded-full font-mono shadow-xs">
-                  OFFICIAL
+                  INDEPENDENT
                 </span>
               </div>
               <span className="hidden sm:block text-[10.5px] text-sky-200 font-semibold tracking-wide -mt-0.5">
-                Govt Jobs & Public Services • Bihar
+                Bihar information portal • links to official sources
               </span>
             </div>
           </Link>
@@ -74,12 +74,10 @@ export default function Navbar() {
               <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
               <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-400"></span>
             </span>
-            <span className="font-extrabold text-white text-[11px] tracking-wide">Live Feed:</span>
-            <span className="text-sky-200 font-medium text-[11px]">NIC Verified 2026</span>
+            <span className="font-extrabold text-white text-[11px] tracking-wide">Updates:</span>
+            <span className="text-sky-200 font-medium text-[11px]">Bihar jobs & public services</span>
             <span className="text-sky-400/50">•</span>
-            <span className="flex items-center gap-1 text-emerald-300 font-bold text-[11px]">
-              <ShieldCheck size={13} className="text-emerald-400" /> 100% Direct Links
-            </span>
+            <span className="text-emerald-300 font-bold text-[11px]">Independent information portal</span>
           </div>
 
           {/* Right Action Buttons */}
