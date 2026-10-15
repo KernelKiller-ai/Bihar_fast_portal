@@ -43,7 +43,19 @@ function getSlug(req) {
 function sendHtml(res, statusCode, html) {
   res.statusCode = statusCode;
   res.setHeader("Content-Type", "text/html; charset=utf-8");
-  res.setHeader("X-Robots-Tag", statusCode === 200 ? "index, follow" : "noindex, nofollow");
+
+  if (statusCode === 200) {
+    res.setHeader("X-Robots-Tag", "index, follow, max-image-preview:large");
+    res.setHeader("Cache-Control", "public, s-maxage=300, stale-while-revalidate=600");
+  } else if (statusCode === 404) {
+    res.setHeader("X-Robots-Tag", "noindex, nofollow");
+    res.setHeader("Cache-Control", "no-cache, no-store, must-revalidate");
+  } else {
+    // 5xx / temporary upstream errors: DO NOT send noindex!
+    // Allows Googlebot to back off and retry later without dropping the page from search index
+    res.setHeader("Cache-Control", "no-cache, no-store, must-revalidate");
+  }
+
   res.end(html);
 }
 
@@ -57,6 +69,23 @@ function notFoundHtml() {
   </head>
   <body>
     <main><h1>Post Not Found</h1><p>The requested post could not be found.</p></main>
+  </body>
+</html>`;
+}
+
+function serverErrorHtml() {
+  return `<!doctype html>
+<html lang="hi">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>सेवा अस्थायी रूप से अनुपलब्ध है - BiharFast</title>
+  </head>
+  <body>
+    <main>
+      <h1>सेवा अस्थायी रूप से अनुपलब्ध है</h1>
+      <p>सर्वर लोड या नेटवर्क अपडेट के कारण यह सूचना अस्थायी रूप से उपलब्ध नहीं है। कृपया कुछ क्षणों बाद पुनः प्रयास करें।</p>
+    </main>
   </body>
 </html>`;
 }
@@ -159,8 +188,12 @@ export default async function handler(req, res) {
 
   try {
     const response = await fetch(`${BACKEND_URL}/api/posts/${encodeURIComponent(slug)}`);
+    if (response.status === 404) {
+      sendHtml(res, 404, notFoundHtml());
+      return;
+    }
     if (!response.ok) {
-      sendHtml(res, response.status === 404 ? 404 : 502, notFoundHtml());
+      sendHtml(res, 503, serverErrorHtml());
       return;
     }
 
@@ -173,6 +206,6 @@ export default async function handler(req, res) {
     sendHtml(res, 200, articleHtml(payload.data, slug));
   } catch (error) {
     console.error("Post SEO render failed:", error);
-    sendHtml(res, 502, "<!doctype html><title>Post Unavailable</title>");
+    sendHtml(res, 503, serverErrorHtml());
   }
 }

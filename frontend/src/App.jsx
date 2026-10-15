@@ -10,6 +10,7 @@ import AgeCalculator from "./components/AgeCalculator";
 import Footer from "./components/Footer";
 import { generateSlug } from "./utils/slug";
 import SiteMapPage from "./pages/SiteMapPage";
+import RouteSEO from "./components/RouteSEO";
 
 // Icons
 import { 
@@ -179,6 +180,7 @@ export default function App() {
     <div className="flex min-h-screen w-full min-w-0 max-w-full flex-col justify-between overflow-x-hidden bg-[#F8FAFC] font-sans text-[#0F172A] antialiased">
       <ScrollToTop />
       <LoginModal />
+      <RouteSEO />
       <div>
         <Navbar />
         <DownloadAppBanner />

@@ -7,12 +7,13 @@ export function generateSlug(item) {
   return base
     .toLowerCase()
     .trim()
-    // \p{L} aur \p{N} Hindi/Devanagari samet sabhi language characters ko preserve karte hain
-    .replace(/[^\p{L}\p{N}\s-]/gu, "")
+    // \p{L}: Letters, \p{M}: Marks/Matras, \p{N}: Numbers, preserve spaces, underscores, hyphens
+    .replace(/[^\p{L}\p{M}\p{N}\s_-]/gu, "")
     // Spaces aur underscores ko hyphens me badle
     .replace(/[\s_]+/g, "-")
     // Consecutive hyphens ko single hyphen karein aur start/end hyphens hatayein
     .replace(/-+/g, "-")
     .replace(/^-+|-+$/g, "")
-    .slice(0, 80) || "notice";
+    .slice(0, 90)
+    .replace(/-+$/, "") || "notice";
 }

@@ -1,6 +1,7 @@
 import base64
 import os
 import re
+import unicodedata
 from io import BytesIO
 from typing import Dict, List, Literal, Optional, Union
 
@@ -69,8 +70,18 @@ def _validate_pdf(pdf_bytes: bytes) -> None:
 
 
 def _slug_from_title(title: str) -> str:
-    slug = re.sub(r"[^\w\s-]", "", title.lower(), flags=re.UNICODE)
-    return re.sub(r"[-\s]+", "-", slug).strip("-")[:90]
+    combined = title.strip().lower()
+    chars = []
+    for ch in combined:
+        cat = unicodedata.category(ch)
+        if cat[0] in ("L", "M", "N") or ch in (" ", "_", "-"):
+            chars.append(ch)
+    filtered = "".join(chars)
+    hyphenated = re.sub(r"[\s_]+", "-", filtered)
+    collapsed = re.sub(r"-+", "-", hyphenated)
+    stripped = collapsed.strip("-")
+    slug = stripped[:90].rstrip("-")
+    return slug or "notice"
 
 
 def extract_notification(

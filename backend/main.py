@@ -9,6 +9,7 @@ from urllib.parse import urlparse
 from typing import Optional, Any, List, Dict, Literal
 import urllib.request
 import urllib.parse
+import unicodedata
 
 from fastapi import Depends, FastAPI, HTTPException, BackgroundTasks, Query, Request, Response, UploadFile, File, Form, status
 from fastapi.responses import JSONResponse, PlainTextResponse
@@ -261,9 +262,18 @@ def require_admin(
     return True
 
 def slugify(title: str, dept: str) -> str:
-    combined = f"{dept}-{title}"
-    slug = re.sub(r"[^\w\s-]", "", combined.lower()).strip()
-    return re.sub(r"[\s_-]+", "-", slug)[:90]
+    combined = f"{dept}-{title}".strip().lower()
+    chars = []
+    for ch in combined:
+        cat = unicodedata.category(ch)
+        if cat[0] in ("L", "M", "N") or ch in (" ", "_", "-"):
+            chars.append(ch)
+    filtered = "".join(chars)
+    hyphenated = re.sub(r"[\s_]+", "-", filtered)
+    collapsed = re.sub(r"-+", "-", hyphenated)
+    stripped = collapsed.strip("-")
+    slug = stripped[:90].rstrip("-")
+    return slug or "notice"
 
 def flush_cache(slug: Optional[str] = None):
     if redis:
@@ -573,8 +583,9 @@ def dynamic_posts_sitemap(request: Request):
         if slug:
             raw_time = item.get("updated_at")
             lastmod = raw_time.split("T")[0] if raw_time and "T" in raw_time else today
+            encoded_slug = urllib.parse.quote(str(slug).strip(), safe="-")
             xml_lines.append(f"""  <url>
-    <loc>{site_base}/post/{slug}</loc>
+    <loc>{site_base}/post/{encoded_slug}</loc>
     <lastmod>{lastmod}</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.85</priority>
