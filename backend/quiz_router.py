@@ -7,7 +7,7 @@ from typing import Dict, Any, List, Optional
 from datetime import datetime, timezone, timedelta, time
 from fastapi import APIRouter, HTTPException, Query, Request, Depends, status
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
-from pydantic import BaseModel, Field, field_validator
+from pydantic import BaseModel, Field, field_validator, model_validator
 from supabase import create_client
 from database import get_db, SUPABASE_URL, SUPABASE_KEY, get_service_db
 from rate_limiter import enforce_rate_limit
@@ -163,31 +163,74 @@ class TodayQuizResponse(BaseModel):
     message: Optional[str] = None
 
 class SubmitAnswersRequest(BaseModel):
+    """Quiz submission payload.
+
+    Designed for robustness: every identity field is optional with safe
+    fallbacks so demo submissions, empty-string values, nulls, or omitted
+    fields never trigger a 422 Unprocessable Content. Identity is bound
+    server-side via the verified bearer token, not this payload.
+    """
     quiz_id: str = Field(..., min_length=1, max_length=100)
-    user_id: Optional[str] = Field(None, max_length=100)
-    student_name: str = Field("छात्र", min_length=2, max_length=50)
-    district: str = Field("बिहार", min_length=2, max_length=50)
-    exam_category: str = Field("BSEB_10TH", max_length=50)
+    user_id: Optional[str] = Field(None, max_length=100)  # ignored server-side; kept for compat
+    student_name: Optional[str] = Field("Student", max_length=100)
+    district: Optional[str] = Field("Bihar", max_length=100)
+    exam_category: Optional[str] = Field("BSEB_10TH", max_length=50)
     phone: Optional[str] = Field(None, max_length=15)
-    answers: Dict[str, str] = Field(default_factory=dict, max_length=150)
+    answers: Dict[str, Any] = Field(default_factory=dict, max_length=150)
     time_taken_seconds: Optional[int] = Field(0, ge=0)
     demo_mode: bool = False
 
-    @field_validator("student_name", "district")
+    @field_validator("student_name", "district", mode="before")
     @classmethod
-    def sanitize_text(cls, value: str) -> str:
+    def sanitize_text(cls, value: Any) -> str:
+        """Strip whitespace; coerce None/empty/non-string into safe fallbacks.
+
+        mode="before" runs prior to Pydantic type validation, so a payload
+        sending `"student_name": null` or `"district": ""` is normalized to
+        the fallback string instead of raising a 422 validation error.
+        """
+        if value is None:
+            value = ""
+        if not isinstance(value, str):
+            value = str(value)
         clean = re.sub(r"[<>\"'%;()&+]", "", value).strip()
-        return clean if clean else "परीक्षार्थी"
+        # Fallback applied by the caller (see model_validator below) so each
+        # field gets its own sensible default.
+        return clean
+
+    @model_validator(mode="after")
+    def apply_fallbacks(self) -> "SubmitAnswersRequest":
+        """Assign per-field fallbacks after sanitization."""
+        if not self.student_name:
+            self.student_name = "Guest Student"
+        if not self.district:
+            self.district = "Bihar"
+        if not self.exam_category:
+            self.exam_category = "BSEB_10TH"
+        return self
+
+    @field_validator("answers", mode="before")
+    @classmethod
+    def coerce_answers(cls, value: Any) -> Any:
+        """Accept null/omitted answers object as an empty dict (no 422)."""
+        if value is None:
+            return {}
+        return value
 
     @field_validator("answers")
     @classmethod
-    def validate_answers(cls, value: Dict[str, str]) -> Dict[str, str]:
+    def validate_answers(cls, value: Dict[str, Any]) -> Dict[str, str]:
+        """Normalize answer values; drop null/empty entries instead of 422."""
         normalized = {}
-        for question_id, answer in value.items():
+        for question_id, answer in (value or {}).items():
             clean_id = str(question_id).strip()
-            clean_answer = str(answer).strip().upper()
+            clean_answer = str(answer).strip().upper() if answer is not None else ""
             if not clean_id or len(clean_id) > 100:
                 raise ValueError("Invalid question ID")
+            # Empty/null answer values are dropped instead of raising 422 —
+            # an unanswered question is simply not part of the submission.
+            if not clean_answer:
+                continue
             if clean_answer not in {"A", "B", "C", "D"}:
                 raise ValueError("Answers must be A, B, C, or D")
             normalized[clean_id] = clean_answer

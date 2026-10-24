@@ -226,18 +226,31 @@ function getExamCategoryCode(examId, subject) {
       }
 
       const timeTaken = startedAtRef.current ? Math.max(0, Math.round((Date.now() - startedAtRef.current) / 1000)) : 0;
+
+      // Align registration state & quiz reference
+      const registration = student;
+      const quiz = quizMeta;
+
+      const validQuizId = String(quizMeta?.id || quiz?.id || quizId || "").trim();
+      const answersPayload = (answers && typeof answers === "object" && !Array.isArray(answers)) ? answers : {};
+      const isDemo = demoMode;
+      const studentName = (registration?.name || "").trim() || profileName || "Student";
+      const studentDistrict = (registration?.district || "").trim() || "Bihar";
+      const studentPhone = (registration?.phone && String(registration.phone).trim()) ? String(registration.phone).trim() : null;
+
       // NOTE: user_id is intentionally NOT sent. The backend derives identity
       // exclusively from the verified bearer token, so any client-controlled
       // user_id would be ignored (or flagged) server-side.
       const payload = {
-        quiz_id: quizMeta.id,
-        answers: answers,
-        student_name: student.name.trim() || profileName || "छात्र",
-        district: student.district || "बिहार",
-        exam_category: getExamCategoryCode(examId, quizMeta.subject),
-        phone: student.phone.trim() || null,
-        time_taken_seconds: timeTaken,
-        demo_mode: demoMode
+        quiz_id: validQuizId,
+        answers: answersPayload,
+        demo_mode: Boolean(isDemo),
+        name: studentName,
+        student_name: studentName,
+        district: studentDistrict,
+        exam_category: getExamCategoryCode(examId, quizMeta?.subject),
+        phone: studentPhone,
+        time_taken_seconds: timeTaken
       };
 
       const headers = { "Content-Type": "application/json" };
@@ -245,6 +258,9 @@ function getExamCategoryCode(examId, subject) {
         headers.Authorization = `Bearer ${accessToken}`;
       }
       // Demo mode stays fully anonymous: no Authorization header at all.
+
+      // Temporary logging to verify payload structure during local testing
+      console.log("[Quiz Submit Payload]:", payload);
 
       const res = await fetch(`${API_BASE_URL}/api/quiz/submit`, {
         method: "POST",

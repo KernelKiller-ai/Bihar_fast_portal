@@ -570,6 +570,47 @@ export default function Admin() {
     });
   }, [posts, searchQuery]);
 
+  // ==================== AUTH TRIGGER ====================
+  // Supabase JS v2 has NO supabase.auth.signInWithGoogle() — the official
+  // method is auth.signInWithOAuth({ provider: 'google' }). Calling the
+  // non-existent method throws TypeError (caught previously as an unhandled
+  // promise rejection crashing the click handler).
+  const handleAdminAuthAction = async () => {
+    if (!supabase) {
+      setAuthError("Supabase login is not configured for this deployment.");
+      return;
+    }
+    try {
+      if (authState === "forbidden") {
+        const { error } = await supabase.auth.signOut();
+        if (error) {
+          console.error("Sign out failed:", error.message);
+        }
+        window.location.reload();
+        return;
+      }
+
+      const { error } = await supabase.auth.signInWithOAuth({
+        provider: "google",
+        options: {
+          redirectTo: `${window.location.origin}/admin`,
+        },
+      });
+      if (error) {
+        console.error("Google sign-in failed:", error.message);
+        setAuthError(`Google sign-in failed: ${error.message}`);
+      }
+    } catch (err) {
+      // Never crash the UI on an auth error — log it and surface a banner.
+      console.error("Admin auth action failed:", err);
+      setAuthError(
+        err instanceof Error
+          ? `Authentication error: ${err.message}`
+          : "Authentication error. Please try again."
+      );
+    }
+  };
+
   // ==================== AUTH GATE SCREENS ====================
   if (!authCheckDone || authState === "loading") {
     return (
@@ -605,18 +646,7 @@ export default function Admin() {
 
           <button
             type="button"
-            onClick={async () => {
-              if (!supabase) return;
-              if (forbidden) {
-                await supabase.auth.signOut();
-                window.location.reload();
-              } else {
-                await supabase.auth.signInWithGoogle({
-                  provider: "google",
-                  options: { redirectTo: `${window.location.origin}/admin` },
-                });
-              }
-            }}
+            onClick={handleAdminAuthAction}
             className="w-full bg-[#0B4F8A] hover:bg-[#083b66] text-white font-bold py-3.5 rounded-xl transition shadow-md cursor-pointer text-sm tracking-wide"
           >
             {forbidden ? "Sign Out & Switch Account" : "Continue with Google"}
