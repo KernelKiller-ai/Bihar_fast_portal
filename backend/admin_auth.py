@@ -12,7 +12,9 @@ Auth flow (Supabase JWT + profiles.role):
   4. Invalid token / missing profile / insufficient role => 403 Forbidden.
 """
 
+import hmac
 import logging
+import os
 from typing import Any, Dict, Optional
 
 from fastapi import Depends, HTTPException, Request, status
@@ -27,6 +29,7 @@ logger = logging.getLogger("biharfast_admin_auth")
 bearer_scheme = HTTPBearer(auto_error=False)
 
 ADMIN_ROLES = {"admin", "creator"}
+ADMIN_API_TOKEN = os.getenv("ADMIN_API_TOKEN", "").strip()
 
 
 def get_current_admin(
@@ -52,6 +55,15 @@ def get_current_admin(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Admin authentication required.",
         )
+
+    # Allow legacy static token if configured (e.g. CLI scripts / tests)
+    if ADMIN_API_TOKEN and hmac.compare_digest(token, ADMIN_API_TOKEN):
+        return {
+            "id": "admin-static-token",
+            "email": "admin@biharfast.in",
+            "role": "admin",
+            "full_name": "System Administrator",
+        }
 
     supabase = get_service_db() or get_db()
     if not supabase or not SUPABASE_URL or not SUPABASE_KEY:

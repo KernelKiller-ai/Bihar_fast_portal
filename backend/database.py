@@ -207,6 +207,17 @@ def update_notice_by_id(post_id: str, updates: Dict[str, Any]) -> Optional[Dict[
     res = client.table("notices").update(updates).eq("id", post_id).execute()
     return res.data[0] if res.data else None
 
+def delete_notice_by_id(post_id: str) -> bool:
+    client = get_service_db() or get_db()
+    if not client:
+        raise RuntimeError("Database client not available")
+    try:
+        client.table("notices").delete().eq("id", post_id).execute()
+        return True
+    except Exception as e:
+        logger.error(f"Error deleting notice {post_id}: {e}")
+        return False
+
 def upsert_notice(record: Dict[str, Any]) -> Any:
     client = get_db()
     if not client:

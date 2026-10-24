@@ -513,7 +513,10 @@ def get_post_detail(slug: str, request: Request):
 
 # ----------------- ADMIN ROUTES (100% MANUAL PUBLISHING) -----------------
 @app.get("/api/admin/posts")
-def get_admin_posts(status: Optional[str] = Query(None), _: None = Depends(require_admin)):
+def get_admin_posts(
+    status: Optional[str] = Query(None),
+    current_admin: Dict[str, Any] = Depends(get_current_admin),
+):
     posts = db.fetch_admin_notices(status=status, limit=100)
     return Response(
         content=orjson.dumps({"success": True, "count": len(posts), "data": posts}),
@@ -525,7 +528,7 @@ def get_admin_posts(status: Optional[str] = Query(None), _: None = Depends(requi
 async def extract_admin_notification(
     file: Optional[UploadFile] = File(None),
     raw_text: Optional[str] = Form(None),
-    _: None = Depends(require_admin),
+    current_admin: Dict[str, Any] = Depends(get_current_admin),
 ):
     try:
         has_raw_text = raw_text is not None and bool(raw_text.strip())
@@ -655,7 +658,12 @@ def create_manual_post(
     )
 
 @app.put("/api/admin/posts/{post_id}")
-def update_existing_post(post_id: str, payload: PostUpdateRequest, bg: BackgroundTasks, _: None = Depends(require_admin)):
+def update_existing_post(
+    post_id: str,
+    payload: PostUpdateRequest,
+    bg: BackgroundTasks,
+    current_admin: Dict[str, Any] = Depends(get_current_admin),
+):
     existing = db.fetch_notice_by_id(post_id)
     if not existing:
         raise HTTPException(status_code=404, detail="Post not found")
@@ -679,7 +687,12 @@ def update_existing_post(post_id: str, payload: PostUpdateRequest, bg: Backgroun
     )
 
 @app.post("/api/admin/posts/{post_id}/status")
-def change_post_status(post_id: str, payload: StatusUpdateRequest, bg: BackgroundTasks, _: None = Depends(require_admin)):
+def change_post_status(
+    post_id: str,
+    payload: StatusUpdateRequest,
+    bg: BackgroundTasks,
+    current_admin: Dict[str, Any] = Depends(get_current_admin),
+):
     existing = db.fetch_notice_by_id(post_id)
     if not existing:
         raise HTTPException(status_code=404, detail="Post not found")
@@ -689,6 +702,26 @@ def change_post_status(post_id: str, payload: StatusUpdateRequest, bg: Backgroun
 
     return Response(
         content=orjson.dumps({"success": True, "message": f"Status changed to {payload.status}", "data": updated_post}),
+        media_type="application/json"
+    )
+
+@app.delete("/api/admin/posts/{post_id}")
+def delete_existing_post(
+    post_id: str,
+    bg: BackgroundTasks,
+    current_admin: Dict[str, Any] = Depends(get_current_admin),
+):
+    existing = db.fetch_notice_by_id(post_id)
+    if not existing:
+        raise HTTPException(status_code=404, detail="Post not found")
+
+    deleted = db.delete_notice_by_id(post_id)
+    if not deleted:
+        raise HTTPException(status_code=500, detail="Failed to delete post")
+
+    bg.add_task(flush_cache, slug=existing.get("slug"))
+    return Response(
+        content=orjson.dumps({"success": True, "message": "Post deleted successfully"}),
         media_type="application/json"
     )
 
