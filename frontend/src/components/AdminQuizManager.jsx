@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import PropTypes from "prop-types";
 import { 
   Plus, Power, Trash2, ListOrdered, RefreshCw, 
@@ -65,6 +65,7 @@ const EXAM_SUBJECT_MAP = {
 export default function AdminQuizManager({ adminToken, apiBaseUrl }) {
   const [quizzes, setQuizzes] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [authError, setAuthError] = useState(false); // 401/403 encountered
   const [selectedQuiz, setSelectedQuiz] = useState(null);
   const [quizQuestions, setQuizQuestions] = useState([]);
   const [loadingQuestions, setLoadingQuestions] = useState(false);
@@ -88,15 +89,29 @@ export default function AdminQuizManager({ adminToken, apiBaseUrl }) {
   const [correctOpt, setCorrectOpt] = useState("A");
   const [explanation, setExplanation] = useState("");
 
-  const authHeaders = {
+  const tokenReady = Boolean(adminToken && String(adminToken).trim());
+
+  // The Supabase JWT arrives via the adminToken prop from Admin.jsx. There is
+  // intentionally NO local PIN input or hardcoded token here — the parent owns
+  // the session. Headers are built per-request so a refreshed token is used.
+  const buildHeaders = () => ({
     "Content-Type": "application/json",
-    Authorization: `Bearer ${adminToken.trim()}`
+    Authorization: `Bearer ${String(adminToken || "").trim()}`,
+  });
+
+  const handleAuthFailure = () => {
+    setAuthError(true);
   };
 
   const fetchQuizzes = async () => {
+    if (!tokenReady) return;
     setLoading(true);
     try {
-      const res = await fetch(`${apiBaseUrl}/api/quiz/admin/all-quizzes`, { headers: authHeaders });
+      const res = await fetch(`${apiBaseUrl}/api/quiz/admin/all-quizzes`, { headers: buildHeaders() });
+      if (res.status === 401 || res.status === 403) {
+        handleAuthFailure();
+        return;
+      }
       const data = await res.json();
       if (data.success && Array.isArray(data.data)) {
         setQuizzes(data.data);
@@ -109,9 +124,14 @@ export default function AdminQuizManager({ adminToken, apiBaseUrl }) {
   };
 
   const fetchQuestionsForQuiz = async (quizId) => {
+    if (!tokenReady) return;
     setLoadingQuestions(true);
     try {
-      const res = await fetch(`${apiBaseUrl}/api/quiz/admin/quiz-questions/${quizId}`, { headers: authHeaders });
+      const res = await fetch(`${apiBaseUrl}/api/quiz/admin/quiz-questions/${quizId}`, { headers: buildHeaders() });
+      if (res.status === 401 || res.status === 403) {
+        handleAuthFailure();
+        return;
+      }
       const data = await res.json();
       if (data.success) {
         setQuizQuestions(data.data || []);
@@ -124,8 +144,31 @@ export default function AdminQuizManager({ adminToken, apiBaseUrl }) {
   };
 
   useEffect(() => {
-    fetchQuizzes();
-  }, []);
+    if (!tokenReady) return undefined;
+    let cancelled = false;
+    (async () => {
+      setLoading(true);
+      try {
+        const res = await fetch(`${apiBaseUrl}/api/quiz/admin/all-quizzes`, { headers: buildHeaders() });
+        if (cancelled) return;
+        if (res.status === 401 || res.status === 403) {
+          handleAuthFailure();
+          return;
+        }
+        const data = await res.json();
+        if (cancelled) return;
+        if (data.success && Array.isArray(data.data)) {
+          setQuizzes(data.data);
+        }
+      } catch (e) {
+        console.error("Quizzes fetch failed:", e);
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+    })();
+    return () => { cancelled = true; };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [tokenReady]);
 
   const handleSelectQuiz = (quiz) => {
     setSelectedQuiz(quiz);
@@ -134,45 +177,62 @@ export default function AdminQuizManager({ adminToken, apiBaseUrl }) {
 
   const handleCreateQuiz = async (e) => {
     e.preventDefault();
+    if (!tokenReady) return;
     try {
       const res = await fetch(`${apiBaseUrl}/api/quiz/admin/create-quiz`, {
         method: "POST",
-        headers: authHeaders,
+        headers: buildHeaders(),
         body: JSON.stringify(newQuiz)
       });
+      if (res.status === 401 || res.status === 403) {
+        handleAuthFailure();
+        return;
+      }
       const data = await res.json();
       if (data.success) {
         alert("नया टेस्ट स्लॉट सफलतापूर्वक बन गया!");
         setNewQuiz({ ...newQuiz, title: "" });
         fetchQuizzes();
       }
-    } catch (e) {
+    } catch {
       alert("Quiz create karne me error!");
     }
   };
 
   const toggleStatus = async (id, currentStatus) => {
+    if (!tokenReady) return;
     try {
-      await fetch(`${apiBaseUrl}/api/quiz/admin/toggle-status/${id}?is_active=${!currentStatus}`, {
+      const res = await fetch(`${apiBaseUrl}/api/quiz/admin/toggle-status/${id}?is_active=${!currentStatus}`, {
         method: "POST",
-        headers: authHeaders
+        headers: buildHeaders()
       });
-      fetchQuizzes();
-      if (selectedQuiz?.id === id) {
-        setSelectedQuiz(prev => ({ ...prev, is_active: !currentStatus }));
+      if (res.status === 401 || res.status === 403) {
+        handleAuthFailure();
+        return;
       }
-    } catch (e) {
+      if (res.ok) {
+        fetchQuizzes();
+        if (selectedQuiz?.id === id) {
+          setSelectedQuiz(prev => ({ ...prev, is_active: !currentStatus }));
+        }
+      }
+    } catch {
       alert("Status change error");
     }
   };
 
   const handleDeleteQuiz = async (id) => {
+    if (!tokenReady) return;
     if (!window.confirm("क्या आप वाकई इस पूरे टेस्ट और इसके सभी प्रश्नों को डिलीट करना चाहते हैं?")) return;
     try {
       const res = await fetch(`${apiBaseUrl}/api/quiz/admin/quiz/${id}`, {
         method: "DELETE",
-        headers: authHeaders
+        headers: buildHeaders()
       });
+      if (res.status === 401 || res.status === 403) {
+        handleAuthFailure();
+        return;
+      }
       if (res.ok) {
         alert("टेस्ट डिलीट हो गया!");
         if (selectedQuiz?.id === id) {
@@ -181,30 +241,35 @@ export default function AdminQuizManager({ adminToken, apiBaseUrl }) {
         }
         fetchQuizzes();
       }
-    } catch (e) {
+    } catch {
       alert("Delete failed");
     }
   };
 
   const handleDeleteQuestion = async (questionId) => {
+    if (!tokenReady || !selectedQuiz) return;
     if (!window.confirm("इस प्रश्न को हटाएं?")) return;
     try {
       const res = await fetch(`${apiBaseUrl}/api/quiz/admin/question/${questionId}?quiz_id=${selectedQuiz.id}`, {
         method: "DELETE",
-        headers: authHeaders
+        headers: buildHeaders()
       });
+      if (res.status === 401 || res.status === 403) {
+        handleAuthFailure();
+        return;
+      }
       if (res.ok) {
         fetchQuestionsForQuiz(selectedQuiz.id);
         fetchQuizzes();
       }
-    } catch (e) {
+    } catch {
       alert("Question delete failed");
     }
   };
 
   const handleAddSingleQuestion = async (e) => {
     e.preventDefault();
-    if (!selectedQuiz) return;
+    if (!tokenReady || !selectedQuiz) return;
 
     const payload = {
       quiz_id: selectedQuiz.id,
@@ -224,9 +289,13 @@ export default function AdminQuizManager({ adminToken, apiBaseUrl }) {
     try {
       const res = await fetch(`${apiBaseUrl}/api/quiz/admin/add-questions`, {
         method: "POST",
-        headers: authHeaders,
+        headers: buildHeaders(),
         body: JSON.stringify(payload)
       });
+      if (res.status === 401 || res.status === 403) {
+        handleAuthFailure();
+        return;
+      }
       if (res.ok) {
         setQuestionText("");
         setOptA("");
@@ -237,7 +306,7 @@ export default function AdminQuizManager({ adminToken, apiBaseUrl }) {
         fetchQuestionsForQuiz(selectedQuiz.id);
         fetchQuizzes();
       }
-    } catch (e) {
+    } catch {
       alert("Question save failed");
     }
   };
@@ -245,11 +314,11 @@ export default function AdminQuizManager({ adminToken, apiBaseUrl }) {
   const handleAddBulkQuestions = async (e) => {
     e.preventDefault();
     if (!selectedQuiz) return;
-    let parsed = [];
+    let parsed;
     try {
       parsed = JSON.parse(bulkJsonText);
       if (!Array.isArray(parsed)) throw new Error("JSON array hona chahiye");
-    } catch (err) {
+    } catch {
       alert("अमान्य JSON फॉर्मेट! कृपया सही JSON ऐरे पेस्ट करें।");
       return;
     }
@@ -257,19 +326,53 @@ export default function AdminQuizManager({ adminToken, apiBaseUrl }) {
     try {
       const res = await fetch(`${apiBaseUrl}/api/quiz/admin/add-questions`, {
         method: "POST",
-        headers: authHeaders,
+        headers: buildHeaders(),
         body: JSON.stringify({ quiz_id: selectedQuiz.id, questions: parsed })
       });
+      if (res.status === 401 || res.status === 403) {
+        handleAuthFailure();
+        return;
+      }
       if (res.ok) {
         alert(`${parsed.length} प्रश्न एक साथ जुड़ गए!`);
         setBulkJsonText("");
         fetchQuestionsForQuiz(selectedQuiz.id);
         fetchQuizzes();
       }
-    } catch (e) {
+    } catch {
       alert("Bulk add failed");
     }
   };
+
+  // ==================== AUTH FALLBACK / LOADING BANNER ====================
+  // Rendered while Admin.jsx resolves the Supabase session, or after a 401/403.
+  if (!tokenReady) {
+    return (
+      <div className="p-8 bg-white rounded-2xl border border-slate-200 shadow-xs text-center">
+        <RefreshCw size={20} className="animate-spin mx-auto text-blue-600 mb-3" />
+        <p className="text-xs font-bold text-slate-600">Verifying admin session...</p>
+        <p className="text-[11px] text-slate-400 mt-1">Quiz controls unlock once authentication completes.</p>
+      </div>
+    );
+  }
+
+  if (authError) {
+    return (
+      <div className="p-8 bg-rose-50 rounded-2xl border border-rose-200 text-center">
+        <p className="text-sm font-black text-rose-800 mb-1">Session expired or unauthorized role.</p>
+        <p className="text-xs font-bold text-rose-600 mb-4">
+          Session expired or unauthorized role. Please re-authenticate.
+        </p>
+        <button
+          type="button"
+          onClick={() => window.location.reload()}
+          className="px-4 py-2 bg-rose-600 hover:bg-rose-700 text-white font-bold rounded-xl text-xs cursor-pointer"
+        >
+          Re-authenticate / Refresh
+        </button>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">

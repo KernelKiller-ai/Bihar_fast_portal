@@ -1,10 +1,12 @@
-import { useState, useMemo, useRef } from "react";
+import { useState, useMemo, useRef, useEffect } from "react";
 import { 
-  PlusCircle, KeyRound, CheckCircle, AlertCircle, Loader2, 
+  PlusCircle, CheckCircle, AlertCircle, Loader2, 
   FileText, Edit3, Check, RefreshCw,
-  Search, Eye, Clock, ShieldCheck, X, Trophy, Layers, Trash2, Sparkles
+  Search, Eye, Clock, ShieldCheck, X, Trophy, Layers, Trash2, Sparkles,
+  ImagePlus, Lock, LogIn
 } from "lucide-react";
 import AdminQuizManager from "../components/AdminQuizManager";
+import { supabase, isSupabaseConfigured } from "../api/supabase";
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "https://bihar-fast-portal.onrender.com";
 
@@ -103,15 +105,26 @@ const schemeDepartments = [
 ];
 
 export default function Admin() {
-  const [authPin, setAuthPin] = useState("");
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  // ==================== AUTH STATE (Supabase session + role gate) ====================
+  // The static PIN was removed: identity now comes from the Supabase session
+  // and the backend verifies role via the profiles table.
+  const [authState, setAuthState] = useState("loading"); // 'loading' | 'signed_out' | 'forbidden' | 'authorized'
+  const [authError, setAuthError] = useState("");
+  const [authCheckDone, setAuthCheckDone] = useState(false);
   const [loading, setLoading] = useState(false);
   const [actionLoading, setActionLoading] = useState(null);
-  const [feedback, setFeedback] = useState({ type: "", message: "" });
+  const [feedback, setFeedback] = useState({ type: "", message: "", link: "" });
   const [extracting, setExtracting] = useState(false);
   const [extractorFile, setExtractorFile] = useState(null);
   const [extractorText, setExtractorText] = useState("");
   const extractorFileInput = useRef(null);
+
+  // Author card (live profile details)
+  const [author, setAuthor] = useState({ name: "", email: "", avatar: "", role: "" });
+  const [authorToken, setAuthorToken] = useState("");   // Supabase access token (render-safe)
+  const accessTokenRef = useRef(null);   // latest Supabase access token (async helpers)
+  const uploadInputRef = useRef(null);
+  const [uploadingImage, setUploadingImage] = useState(false);
 
   // Navigation Tabs: 'all' | 'new' | 'quiz'
   const [activeTab, setActiveTab] = useState("all");
@@ -134,6 +147,8 @@ export default function Admin() {
     eligibility: "",
     apply_url: "",
     pdf_url: "",
+    image_url: "",
+    tags: "",
     short_desc: "",
     meta_title: "",
     meta_desc: "",
@@ -147,16 +162,139 @@ export default function Admin() {
   });
   const categoryFields = categoryFieldConfig[formData.category] || categoryFieldConfig.jobs;
 
-  const authHeaders = (token = authPin, includeJson = false) => ({
-    ...(includeJson ? { "Content-Type": "application/json" } : {}),
-    Authorization: `Bearer ${token}`,
-  });
+  // ==================== AUTH HELPERS ====================
+  const getBearerToken = async () => {
+    if (!isSupabaseConfigured || !supabase) return null;
+    const { data } = await supabase.auth.getSession();
+    accessTokenRef.current = data?.session?.access_token || null;
+    return accessTokenRef.current;
+  };
 
-  const loadDashboardData = async (token = authPin) => {
-    setLoading(true);
+  const authHeaders = async (includeJson = false) => {
+    const token = await getBearerToken();
+    return {
+      ...(includeJson ? { "Content-Type": "application/json" } : {}),
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+    };
+  };
+
+  // ==================== ROLE GATE (profiles table) ====================
+  useEffect(() => {
+    let isMounted = true;
+
+    async function checkAdminAccess() {
+      if (!isSupabaseConfigured || !supabase) {
+        if (isMounted) {
+          setAuthState("signed_out");
+          setAuthError("Supabase login is not configured for this deployment.");
+          setAuthCheckDone(true);
+        }
+        return;
+      }
+
+      try {
+        const { data, error: sessionError } = await supabase.auth.getSession();
+        if (isMounted) setAuthCheckDone(true);
+        if (sessionError || !data?.session) {
+          if (isMounted) setAuthState("signed_out");
+          return;
+        }
+
+        const session = data.session;
+        accessTokenRef.current = session.access_token;
+        setAuthorToken(session.access_token);
+        const meta = session.user?.user_metadata || {};
+        if (isMounted) {
+          setAuthor({
+            name: meta.full_name || meta.name || session.user.email?.split("@")[0] || "",
+            email: session.user.email || "",
+            avatar: meta.avatar_url || meta.picture || "",
+            role: "",
+          });
+        }
+
+        // Fetch the role from the profiles table (backend enforces it again).
+        const { data: profile, error: profileError } = await supabase
+          .from("profiles")
+          .select("role, full_name")
+          .eq("id", session.user.id)
+          .single();
+
+        if (profileError && profileError.code !== "PGRST116") {
+          // Table missing / RLS error etc. — treat as no access.
+          console.warn("Profile lookup failed:", profileError.message);
+        }
+
+        const role = (profile?.role || "").toLowerCase();
+        if (isMounted) {
+          setAuthor((prev) => ({
+            ...prev,
+            role: role || "—",
+            name: profile?.full_name || prev.name,
+          }));
+          setAuthState(role === "admin" || role === "creator" ? "authorized" : "forbidden");
+        }
+      } catch (err) {
+        console.error("Admin auth check failed:", err);
+        if (isMounted) {
+          setAuthState("signed_out");
+          setAuthCheckDone(true);
+        }
+      }
+    }
+
+    checkAdminAccess();
+    return () => { isMounted = false; };
+  }, []);
+
+  // ==================== IMAGE UPLOAD (Supabase Storage: post-images) ====================
+  const handleImageUpload = async (event) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+    if (!file.type.startsWith("image/")) {
+      setFeedback({ type: "error", message: "केवल image files अपलोड करें (JPG/PNG/WebP)." });
+      return;
+    }
+    if (file.size > 5 * 1024 * 1024) {
+      setFeedback({ type: "error", message: "Image size 5 MB से कम होनी चाहिए।" });
+      return;
+    }
+
+    setUploadingImage(true);
     setFeedback({ type: "", message: "" });
     try {
-      await fetchPosts(token);
+      const token = await getBearerToken();
+      if (!token) {
+        setFeedback({ type: "error", message: "Upload के लिए login आवश्यक है।" });
+        return;
+      }
+
+      const ext = (file.name.split(".").pop() || "jpg").toLowerCase().replace(/[^a-z0-9]/g, "");
+      const path = `${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${ext}`;
+
+      const { error: uploadError } = await supabase.storage
+        .from("post-images")
+        .upload(path, file, { contentType: file.type, upsert: false });
+      if (uploadError) throw uploadError;
+
+      const { data: urlData } = supabase.storage.from("post-images").getPublicUrl(path);
+      if (!urlData?.publicUrl) throw new Error("Public URL could not be generated.");
+
+      setFormData((prev) => ({ ...prev, image_url: urlData.publicUrl }));
+    } catch (err) {
+      console.error("Image upload failed:", err);
+      setFeedback({ type: "error", message: `Image upload failed: ${err.message}` });
+    } finally {
+      setUploadingImage(false);
+      if (uploadInputRef.current) uploadInputRef.current.value = "";
+    }
+  };
+
+  const loadDashboardData = async () => {
+    setLoading(true);
+    setFeedback({ type: "", message: "", link: "" });
+    try {
+      await fetchPosts();
     } catch (err) {
       console.error("Dashboard initial load error:", err);
     } finally {
@@ -164,9 +302,14 @@ export default function Admin() {
     }
   };
 
-  const fetchPosts = async (token = authPin) => {
+  const fetchPosts = async () => {
     try {
-      const res = await fetch(`${API_BASE_URL}/api/admin/posts`, { headers: authHeaders(token) });
+      const headers = await authHeaders();
+      const res = await fetch(`${API_BASE_URL}/api/admin/posts`, { headers });
+      if (res.status === 403) {
+        setAuthState("forbidden");
+        return;
+      }
       if (!res.ok) throw new Error(`HTTP Error ${res.status}`);
       const json = await res.json();
 
@@ -183,31 +326,30 @@ export default function Admin() {
     }
   };
 
-  const handleLogin = async (e) => {
-    e.preventDefault();
-    const token = authPin.trim();
-    if (!token) return;
-
-    try {
-      const res = await fetch(`${API_BASE_URL}/api/admin/posts`, { headers: authHeaders(token) });
-      if (!res.ok) throw new Error(res.status === 401 ? "गलत Admin Token! कृपया सही Token डालें।" : `HTTP ${res.status}`);
-      setIsAuthenticated(true);
-      setFeedback({ type: "", message: "" });
-      await loadDashboardData(token);
-    } catch (err) {
-      setIsAuthenticated(false);
-      setFeedback({ type: "error", message: err.message });
+  // Auto-load posts once authorized
+  useEffect(() => {
+    if (authState === "authorized" && posts.length === 0) {
+      fetchPosts();
     }
-  };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [authState]);
 
   const handleStatusChange = async (postId, newStatus) => {
     setActionLoading(postId);
     try {
+      const headers = await authHeaders(true);
       const res = await fetch(`${API_BASE_URL}/api/admin/posts/${postId}/status`, {
         method: "POST",
-        headers: authHeaders(authPin, true),
+        headers,
         body: JSON.stringify({ status: newStatus }),
       });
+      if (res.status === 401 || res.status === 403) {
+        setFeedback({ type: "error", message: res.status === 401
+          ? "सत्र समाप्त हो गया। पृष्ठ को रीफ्रेश करें और दोबारा लॉगिन करें।"
+          : "आपके पास इस क्रिया की अनुमति नहीं है।" });
+        if (res.status === 403) setAuthState("forbidden");
+        return;
+      }
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
 
       setPosts(prev => prev.map(p => p.id === postId ? { ...p, status: newStatus } : p));
@@ -228,11 +370,18 @@ export default function Admin() {
     e.preventDefault();
     setActionLoading("modal_save");
     try {
+      const headers = await authHeaders(true);
       const res = await fetch(`${API_BASE_URL}/api/admin/posts/${editingPost.id}`, {
         method: "PUT",
-        headers: authHeaders(authPin, true),
+        headers,
         body: JSON.stringify(editingPost),
       });
+      if (res.status === 401 || res.status === 403) {
+        setFeedback({ type: "error", message: res.status === 401
+          ? "सत्र समाप्त हो गया। पृष्ठ को रीफ्रेश करें और दोबारा लॉगिन करें।"
+          : "आपके पास इस क्रिया की अनुमति नहीं है।" });
+        return;
+      }
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       const json = await res.json();
       const updated = json?.data || editingPost;
@@ -265,11 +414,19 @@ export default function Admin() {
   const handleNewSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
-    setFeedback({ type: "", message: "" });
+    setFeedback({ type: "", message: "", link: "" });
+
+    // Tags: comma-separated string -> cleaned array
+    const tagArray = (formData.tags || "")
+      .split(",")
+      .map((t) => t.trim())
+      .filter(Boolean)
+      .slice(0, 15);
 
     // Clean empty FAQs and steps
     const cleanedPayload = {
       ...formData,
+      tags: tagArray,
       total_posts: categoryFields.showTotalPosts
         ? formData.total_posts
         : categoryFields.totalPostsFallback,
@@ -282,15 +439,37 @@ export default function Admin() {
     };
 
     try {
-      const res = await fetch(`${API_BASE_URL}/api/admin/posts`, {
+      const headers = await authHeaders(true);
+      if (!headers.Authorization) {
+        setFeedback({ type: "error", message: "प्रकाशित करने के लिए कृपया पहले लॉगिन करें।" });
+        return;
+      }
+
+      const res = await fetch(`${API_BASE_URL}/api/posts/create`, {
         method: "POST",
-        headers: authHeaders(authPin, true),
+        headers,
         body: JSON.stringify(cleanedPayload),
       });
       const data = await res.json().catch(() => ({}));
+
+      if (res.status === 401) {
+        setFeedback({ type: "error", message: "सत्र समाप्त हो गया है। कृपया पृष्ठ रीफ्रेश करके दोबारा लॉगिन करें।" });
+        setAuthState("signed_out");
+        return;
+      }
+      if (res.status === 403) {
+        setFeedback({ type: "error", message: data.detail || "आपके खाते को प्रकाशित करने की अनुमति नहीं है।" });
+        setAuthState("forbidden");
+        return;
+      }
       if (!res.ok) throw new Error(data.detail || `HTTP ${res.status}`);
 
-      setFeedback({ type: "success", message: "नया हाई-वैल्यू आर्टिकल सीधे पोर्टल पर लाइव हो गया!" });
+      const slug = data.slug || cleanedPayload.slug;
+      setFeedback({
+        type: "success",
+        message: "नया हाई-वैल्यू आर्टिकल सीधे पोर्टल पर लाइव हो गया!",
+        link: `/post/${slug}`,
+      });
       setFormData({
         title: "",
         slug: "",
@@ -301,6 +480,8 @@ export default function Admin() {
         eligibility: "",
         apply_url: "",
         pdf_url: "",
+        image_url: "",
+        tags: "",
         short_desc: "",
         meta_title: "",
         meta_desc: "",
@@ -333,10 +514,16 @@ export default function Admin() {
 
       const response = await fetch(`${API_BASE_URL}/api/admin/ai/extract`, {
         method: "POST",
-        headers: authHeaders(),
+        headers: await authHeaders(),
         body,
       });
       const result = await response.json().catch(() => ({}));
+      if (response.status === 401 || response.status === 403) {
+        setFeedback({ type: "error", message: response.status === 401
+          ? "सत्र समाप्त हो गया। पृष्ठ को रीफ्रेश करें और दोबारा लॉगिन करें।"
+          : "आपके पास AI extraction की अनुमति नहीं है।" });
+        return;
+      }
       if (!response.ok) {
         throw new Error(result.detail || `HTTP ${response.status}`);
       }
@@ -383,40 +570,57 @@ export default function Admin() {
     });
   }, [posts, searchQuery]);
 
-  if (!isAuthenticated) {
+  // ==================== AUTH GATE SCREENS ====================
+  if (!authCheckDone || authState === "loading") {
+    return (
+      <div className="min-h-[60vh] flex items-center justify-center text-slate-500 text-xs font-bold">
+        <Loader2 className="animate-spin mr-2" size={18} /> Checking access...
+      </div>
+    );
+  }
+
+  if (authState === "signed_out" || authState === "forbidden") {
+    const forbidden = authState === "forbidden";
     return (
       <div className="min-h-[85vh] flex items-center justify-center px-4 bg-slate-50">
         <div className="max-w-md w-full bg-white rounded-3xl p-8 border border-slate-200 shadow-xl space-y-6 text-center">
-          <div className="w-16 h-16 bg-blue-50 text-[#0B4F8A] rounded-2xl flex items-center justify-center mx-auto shadow-inner">
-            <KeyRound size={32} />
+          <div className={`w-16 h-16 rounded-2xl flex items-center justify-center mx-auto shadow-inner ${
+            forbidden ? "bg-rose-50 text-rose-600" : "bg-blue-50 text-[#0B4F8A]"
+          }`}>
+            {forbidden ? <Lock size={32} /> : <LogIn size={32} />}
           </div>
           <div>
-            <h2 className="text-2xl font-black text-slate-900 tracking-tight">BiharFast Control Room</h2>
-            <p className="text-xs text-slate-500 mt-1.5 font-medium">100% Manual Publishing • Class 10th Quiz Engine</p>
+            <h2 className="text-2xl font-black text-slate-900 tracking-tight">
+              {forbidden ? "Access Denied / अनधिकृत" : "BiharFast Control Room"}
+            </h2>
+            <p className="text-xs text-slate-500 mt-1.5 font-medium">
+              {forbidden
+                ? "यह क्षेत्र केवल admin या creator भूमिका वाले खातों के लिए है। आपके खाते को प्रवेश अनुमति नहीं है।"
+                : (authError || "सुरक्षित प्रकाशन केंद्र में प्रवेश के लिए लॉगिन करें।")}
+            </p>
+            {forbidden && author.email && (
+              <p className="text-[11px] text-slate-400 mt-2">Signed in as: {author.email}</p>
+            )}
           </div>
 
-          <form onSubmit={handleLogin} className="space-y-4">
-            <input
-              type="password"
-              placeholder="Enter admin access token"
-              value={authPin}
-              onChange={(e) => setAuthPin(e.target.value)}
-              className="w-full text-center tracking-widest text-lg font-bold border-2 border-slate-200 rounded-xl py-3 px-4 focus:border-[#0B4F8A] focus:outline-none transition"
-              required
-            />
-            <button
-              type="submit"
-              className="w-full bg-[#0B4F8A] hover:bg-[#083b66] text-white font-bold py-3.5 rounded-xl transition shadow-md cursor-pointer text-sm tracking-wide"
-            >
-              Verify Admin Access
-            </button>
-          </form>
-
-          {feedback.type === "error" && (
-            <p className="text-xs text-rose-600 font-bold bg-rose-50 p-3 rounded-xl border border-rose-200">
-              {feedback.message}
-            </p>
-          )}
+          <button
+            type="button"
+            onClick={async () => {
+              if (!supabase) return;
+              if (forbidden) {
+                await supabase.auth.signOut();
+                window.location.reload();
+              } else {
+                await supabase.auth.signInWithGoogle({
+                  provider: "google",
+                  options: { redirectTo: `${window.location.origin}/admin` },
+                });
+              }
+            }}
+            className="w-full bg-[#0B4F8A] hover:bg-[#083b66] text-white font-bold py-3.5 rounded-xl transition shadow-md cursor-pointer text-sm tracking-wide"
+          >
+            {forbidden ? "Sign Out & Switch Account" : "Continue with Google"}
+          </button>
         </div>
       </div>
     );
@@ -426,7 +630,7 @@ export default function Admin() {
     <div className="min-h-screen bg-slate-50/50 py-8 px-4 sm:px-6">
       <div className="max-w-6xl mx-auto space-y-6">
         
-        {/* Top Header */}
+        {/* Top Header with live author card */}
         <div className="bg-white rounded-2xl p-6 border border-slate-200 shadow-xs flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div>
             <h1 className="text-2xl font-black text-slate-900 flex items-center gap-2.5">
@@ -435,6 +639,19 @@ export default function Admin() {
             <p className="text-xs text-slate-500 mt-1 font-medium">
               Manual High-Value Authoring • AdSense Ready Architecture
             </p>
+          </div>
+          <div className="flex items-center gap-3 bg-slate-50 border border-slate-200 rounded-2xl px-4 py-2.5">
+            {author.avatar ? (
+              <img src={author.avatar} alt={author.name} className="w-10 h-10 rounded-full object-cover border border-slate-200" />
+            ) : (
+              <div className="w-10 h-10 rounded-full bg-[#0B4F8A] text-white flex items-center justify-center font-black text-sm">
+                {(author.name || "A").charAt(0).toUpperCase()}
+              </div>
+            )}
+            <div className="text-left">
+              <p className="text-xs font-black text-slate-900 leading-tight">{author.name || "Admin"}</p>
+              <p className="text-[10px] font-bold text-slate-500">{author.role.toUpperCase()} • {author.email}</p>
+            </div>
           </div>
         </div>
 
@@ -481,7 +698,7 @@ export default function Admin() {
           </button>
         </div>
 
-        {/* Global Feedback Banner */}
+        {/* Global Feedback Banner (with live post link) */}
         {feedback.message && (
           <div
             className={`p-4 rounded-xl text-xs font-bold flex items-center justify-between shadow-xs ${
@@ -490,11 +707,21 @@ export default function Admin() {
                 : "bg-rose-50 text-rose-800 border border-rose-200"
             }`}
           >
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 flex-wrap">
               {feedback.type === "success" ? <CheckCircle size={16} /> : <AlertCircle size={16} />}
-              {feedback.message}
+              <span>{feedback.message}</span>
+              {feedback.link && (
+                <a
+                  href={feedback.link}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="underline text-emerald-900 hover:text-emerald-700"
+                >
+                  लाइव पोस्ट देखें →
+                </a>
+              )}
             </div>
-            <button onClick={() => setFeedback({ type: "", message: "" })} className="text-slate-400 hover:text-slate-600 cursor-pointer">
+            <button onClick={() => setFeedback({ type: "", message: "", link: "" })} className="text-slate-400 hover:text-slate-600 cursor-pointer">
               <X size={16} />
             </button>
           </div>
@@ -503,7 +730,7 @@ export default function Admin() {
         {/* TAB: 10TH QUIZ MANAGER */}
         {activeTab === "quiz" && (
           <AdminQuizManager 
-            adminToken={authPin} 
+            adminToken={authorToken}
             apiBaseUrl={API_BASE_URL} 
           />
         )}
@@ -819,6 +1046,87 @@ export default function Admin() {
                       placeholder="https://..."
                       className="w-full border border-slate-300 rounded-xl p-3 text-xs font-semibold focus:outline-[#0B4F8A]"
                     />
+                  </div>
+
+                  {/* Instagram-style Cover Image: upload to Supabase Storage or paste URL */}
+                  <div className="sm:col-span-2 p-4 bg-gradient-to-br from-rose-50/60 to-orange-50/60 border border-rose-100 rounded-xl space-y-3">
+                    <div className="flex items-center justify-between">
+                      <label className="block text-xs font-black text-slate-900 uppercase tracking-wider">
+                        <ImagePlus size={13} className="inline mr-1 -mt-0.5" /> Cover Image (Instagram-style)
+                      </label>
+                      {formData.image_url && (
+                        <button
+                          type="button"
+                          onClick={() => setFormData({ ...formData, image_url: "" })}
+                          className="text-[11px] font-bold text-rose-600 hover:underline cursor-pointer"
+                        >
+                          Remove image
+                        </button>
+                      )}
+                    </div>
+
+                    {formData.image_url ? (
+                      <div className="relative rounded-xl overflow-hidden border border-slate-200 shadow-sm max-w-sm">
+                        <img
+                          src={formData.image_url}
+                          alt="Cover preview"
+                          className="w-full aspect-[16/9] object-cover"
+                          onError={(e) => { e.currentTarget.style.opacity = "0.4"; }}
+                        />
+                        <span className="absolute bottom-2 left-2 bg-black/70 text-white text-[10px] font-bold px-2 py-0.5 rounded">
+                          Live Preview
+                        </span>
+                      </div>
+                    ) : (
+                      <div className="max-w-sm aspect-[16/9] rounded-xl border-2 border-dashed border-slate-300 bg-white/70 flex flex-col items-center justify-center gap-2 text-slate-400">
+                        <ImagePlus size={28} />
+                        <p className="text-[11px] font-bold">कोई image चुनी नहीं गई</p>
+                      </div>
+                    )}
+
+                    <div className="flex flex-col sm:flex-row gap-2 max-w-xl">
+                      <input
+                        ref={uploadInputRef}
+                        type="file"
+                        accept="image/*"
+                        disabled={uploadingImage}
+                        onChange={handleImageUpload}
+                        className="flex-1 text-xs text-slate-700 file:mr-3 file:rounded-lg file:border-0 file:bg-[#0B4F8A] file:px-3 file:py-2 file:font-bold file:text-white"
+                      />
+                      <input
+                        type="url"
+                        value={formData.image_url}
+                        onChange={(e) => setFormData({ ...formData, image_url: e.target.value })}
+                        placeholder="...या image URL पेस्ट करें"
+                        className="flex-1 border border-slate-300 rounded-lg p-2 text-xs font-semibold focus:outline-[#0B4F8A]"
+                      />
+                    </div>
+                    {uploadingImage && (
+                      <p className="text-[11px] font-bold text-[#0B4F8A] flex items-center gap-1.5">
+                        <Loader2 size={13} className="animate-spin" /> Uploading to Supabase Storage (post-images)...
+                      </p>
+                    )}
+                  </div>
+
+                  {/* Tags (comma separated) */}
+                  <div className="sm:col-span-2">
+                    <label className="block text-xs font-black text-slate-700 mb-1">Tags (comma separated)</label>
+                    <input
+                      type="text"
+                      value={formData.tags}
+                      onChange={(e) => setFormData({ ...formData, tags: e.target.value })}
+                      placeholder="e.g. BPSC, 70th CCE, Notification, Sarkari Naukri"
+                      className="w-full border border-slate-300 rounded-xl p-3 text-xs font-semibold focus:outline-[#0B4F8A]"
+                    />
+                    {formData.tags.trim() && (
+                      <div className="flex flex-wrap gap-1.5 mt-2">
+                        {formData.tags.split(",").map((t, i) => t.trim() && (
+                          <span key={i} className="bg-slate-100 text-slate-700 text-[10px] font-bold px-2 py-0.5 rounded-full">
+                            #{t.trim()}
+                          </span>
+                        ))}
+                      </div>
+                    )}
                   </div>
                 </div>
               </div>

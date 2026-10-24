@@ -8,8 +8,10 @@ from datetime import datetime, timezone, timedelta, time
 from fastapi import APIRouter, HTTPException, Query, Request, Depends, status
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from pydantic import BaseModel, Field, field_validator
-from database import get_db
+from supabase import create_client
+from database import get_db, SUPABASE_URL, SUPABASE_KEY, get_service_db
 from rate_limiter import enforce_rate_limit
+from admin_auth import get_current_admin, bearer_scheme
 
 logger = logging.getLogger("master_quiz")
 quiz_router = APIRouter(prefix="/api/quiz", tags=["Universal Exam & Quiz Engine"])
@@ -17,89 +19,111 @@ quiz_router = APIRouter(prefix="/api/quiz", tags=["Universal Exam & Quiz Engine"
 IST_ZONE = timezone(timedelta(hours=5, minutes=30))
 DAILY_ATTEMPT_LIMIT = 6
 
-bearer_scheme = HTTPBearer(auto_error=False)
-ADMIN_API_TOKEN = os.getenv("ADMIN_API_TOKEN", "").strip()
-
 
 # ==================== SECURITY & AUTHENTICATION ====================
+# NOTE: The legacy static ADMIN_API_TOKEN comparison (verify_quiz_admin) was
+# removed. All /api/quiz/admin/* routes now use the shared dynamic dependency
+# get_current_admin (Supabase JWT + profiles.role check) imported from
+# admin_auth.py — the same dependency protecting the posts admin routes.
 
-def verify_quiz_admin(
-    request: Request,
-    credentials: Optional[HTTPAuthorizationCredentials] = Depends(bearer_scheme)
-):
-    enforce_rate_limit(request, limit=30, window_seconds=60, scope="quiz-admin")
-    """Admin Token verification for managing quizzes from frontend."""
-    if not ADMIN_API_TOKEN:
-        logger.critical("ADMIN_API_TOKEN is not configured on server!")
-        raise HTTPException(
-            status_code=status.HTTP_503_SERVICE_UNAVAILABLE, 
-            detail="ADMIN_API_TOKEN not configured"
-        )
-    if (
-        not credentials 
-        or credentials.scheme.lower() != "bearer" 
-        or not hmac.compare_digest(credentials.credentials.strip(), ADMIN_API_TOKEN)
-    ):
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED, 
-            detail="Invalid or missing admin token"
-        )
-    return True
 
 def get_current_ist_time() -> datetime:
     return datetime.now(timezone.utc).astimezone(IST_ZONE)
 
 def extract_client_ip(request: Request) -> str:
-    cf_connecting_ip = request.headers.get("cf-connecting-ip")
-    if cf_connecting_ip:
-        return cf_connecting_ip.strip()
+    """Return the socket peer address only.
 
-    x_forwarded_for = request.headers.get("x-forwarded-for")
-    if x_forwarded_for:
-        return x_forwarded_for.split(",")[0].strip()
-
+    Deliberately ignores cf-connecting-ip / x-forwarded-for: these headers are
+    client-controlled unless every proxy in the chain is trusted and sanitized.
+    Trusting them allowed trivial bypass of the per-IP attempt limit.
+    """
     return request.client.host if request.client else "unknown_ip"
 
+# Secret salt loaded from environment (never hardcode). A missing value fails
+# closed: the hash becomes valueless but submissions still run through the
+# atomic RPC counter, so quota enforcement is never bypassed.
+IP_HASH_SALT = os.getenv("INTERNAL_SYNC_SECRET", "").strip()
+if not IP_HASH_SALT:
+    logger.warning("INTERNAL_SYNC_SECRET is not configured - IP hashes are derived without a secret salt.")
+
 def get_secure_ip_hash(ip_address: str, target_date: str) -> str:
-    # Future-proof dynamic salt (changes automatically by year)
-    secret_salt = f"BIHARFAST_IP_SHIELD_{target_date[:4]}"
+    """Per-day salted SHA-256 of the client IP; the salt rotates by year."""
+    secret_salt = f"{IP_HASH_SALT or 'BIHARFAST_IP_SHIELD'}_{target_date[:4]}"
     return hashlib.sha256(f"{secret_salt}:{ip_address}:{target_date}".encode()).hexdigest()
 
 def enforce_ip_rate_limit(supabase, ip_hash: str, today_str: str) -> int:
+    """Atomically consume one attempt via Postgres RPC.
+
+    Replaces the previous read-then-write pattern, which allowed concurrent
+    submissions to all observe attempt_count=0 and exceed the daily limit.
+    The RPC performs INSERT ... ON CONFLICT DO UPDATE ... RETURNING in a single
+    statement, so the increment-and-check is race-free at the database level.
+    """
     try:
-        res = (
-            supabase.table("quiz_ip_rate_limits")
-            .select("attempt_count")
-            .eq("ip_hash", ip_hash)
-            .eq("attempt_date", today_str)
-            .limit(1)
-            .execute()
-        )
-
-        current_attempts = res.data[0]["attempt_count"] if res.data else 0
-
-        if current_attempts >= DAILY_ATTEMPT_LIMIT:
+        res = supabase.rpc("increment_quiz_attempts", {
+            "p_ip_hash": ip_hash,
+            "p_attempt_date": today_str,
+            "p_max_limit": DAILY_ATTEMPT_LIMIT,
+        }).execute()
+        new_count = res.data
+        # RPC returns NULL when the daily limit has already been consumed.
+        if new_count is None:
             logger.warning(f"Rate limit exceeded for IP Hash {ip_hash[:10]}...")
             raise HTTPException(
                 status_code=status.HTTP_429_TOO_MANY_REQUESTS,
-                detail=f"सुरक्षा सीमा समाप्त: आपके IP पते से आज के सभी {DAILY_ATTEMPT_LIMIT} टेस्ट प्रयास पूरे हो चुके हैं। कृपया कल पुनः प्रयास करें।"
+                detail=(
+                    f"सुरक्षा सीमा समाप्त: आपके IP पते से आज के सभी "
+                    f"{DAILY_ATTEMPT_LIMIT} टेस्ट प्रयास पूरे हो चुके हैं। कृपया कल पुनः प्रयास करें।"
+                ),
             )
-
-        new_count = current_attempts + 1
-        supabase.table("quiz_ip_rate_limits").upsert({
-            "ip_hash": ip_hash,
-            "attempt_date": today_str,
-            "attempt_count": new_count,
-            "updated_at": datetime.now(timezone.utc).isoformat()
-        }, on_conflict="ip_hash,attempt_date").execute()
-
-        return new_count
-
+        return int(new_count)
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"IP Rate limit check error: {e}")
-        return 0
+        # Fail closed: if the security RPC cannot run, refuse the submission
+        # instead of silently granting unlimited attempts (previous behavior).
+        logger.error(f"IP rate limit RPC error: {e}")
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="Attempt-limit service unavailable. कृपया कुछ देर बाद पुनः प्रयास करें।",
+        )
+
+
+def verify_authenticated_user(
+    credentials: Optional[HTTPAuthorizationCredentials],
+    supabase,
+) -> Optional[str]:
+    """Validate a Supabase access token and return the authenticated user id.
+
+    Returns None when no bearer token is supplied (caller decides whether that
+    is acceptable, e.g. demo submissions). Raises 401 for tokens that fail
+    verification, and never trusts a client-supplied user_id.
+    """
+    if not credentials or credentials.scheme.lower() != "bearer":
+        return None
+
+    token = credentials.credentials.strip()
+    if not token:
+        return None
+
+    try:
+        auth_client = create_client(SUPABASE_URL, SUPABASE_KEY)
+        auth_client.postgrest.auth(token)
+        result = auth_client.auth.get_user(token)
+        user = result.user if result else None
+    except Exception as e:
+        logger.warning(f"Supabase token verification failed: {e}")
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid or expired session token.",
+        )
+
+    if not user or not user.id:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid or expired session token.",
+        )
+    return str(user.id)
 
 
 # ==================== PYDANTIC SCHEMAS ====================
@@ -399,13 +423,33 @@ def get_today_quiz(
 @quiz_router.post(
     "/submit",
     response_model=SubmitQuizResponse,
-    summary="Evaluate candidate submissions with 6 attempts/day limit"
+    summary="Evaluate candidate submissions with atomic 6 attempts/day limit",
 )
-def submit_quiz_answers(sub: SubmitAnswersRequest, request: Request):
+def submit_quiz_answers(
+    sub: SubmitAnswersRequest,
+    request: Request,
+    credentials: Optional[HTTPAuthorizationCredentials] = Depends(bearer_scheme),
+):
     enforce_rate_limit(request, limit=10, window_seconds=60, scope="quiz-submit")
     supabase = get_db()
     if not supabase:
         raise HTTPException(status_code=503, detail="Database service temporarily unavailable")
+
+    # ==================== AUTHENTICATION ====================
+    # Verify the bearer token against Supabase auth. The client-supplied
+    # user_id is IGNORED: the leaderboard identity always comes from a verified
+    # session, which prevents forging submissions on behalf of other students.
+    verified_user_id = verify_authenticated_user(credentials, supabase)
+
+    if not sub.demo_mode and not verified_user_id:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Login required to submit a full test. Please sign in and try again.",
+        )
+
+    # In demo mode an identity is optional; if a token was supplied it must be
+    # valid, and it takes precedence over any client-declared user_id.
+    effective_user_id = verified_user_id if verified_user_id else None
 
     now_ist = get_current_ist_time()
     today_str = now_ist.date().isoformat()
@@ -417,10 +461,14 @@ def submit_quiz_answers(sub: SubmitAnswersRequest, request: Request):
 
     clean_quiz_id = sub.quiz_id.strip()
 
+    # ==================== SERVER-SIDE GRADING (ISOLATED ANSWER KEYS) ====================
+    # Questions come from the anon-visible table (no answer columns are
+    # selected); the correct answers are read ONLY via the service-role client
+    # from master_answer_keys, a table with no anon-facing policies.
     try:
         db_res = (
             supabase.table("master_questions")
-            .select("id, question_text, correct_option, explanation, order_index")
+            .select("id, question_text, order_index")
             .eq("quiz_id", clean_quiz_id)
             .order("order_index", desc=False)
             .execute()
@@ -434,10 +482,32 @@ def submit_quiz_answers(sub: SubmitAnswersRequest, request: Request):
         raise HTTPException(status_code=404, detail="No questions found for the supplied quiz ID")
 
     evaluation_questions = db_questions[:5] if sub.demo_mode else db_questions
-    question_ids = {str(question["id"]) for question in evaluation_questions}
-    unknown_question_ids = set(sub.answers) - question_ids
+    question_ids = [str(question["id"]) for question in evaluation_questions]
+    question_id_set = set(question_ids)
+    unknown_question_ids = set(sub.answers) - question_id_set
     if unknown_question_ids:
         raise HTTPException(status_code=422, detail="Answers contain invalid question IDs")
+
+    service_db = get_service_db()
+    if not service_db:
+        raise HTTPException(status_code=503, detail="Grading service temporarily unavailable")
+
+    try:
+        keys_res = (
+            service_db.table("master_answer_keys")
+            .select("question_id, correct_option, explanation")
+            .in_("question_id", question_ids)
+            .execute()
+        )
+        answer_keys = {str(row["question_id"]): row for row in (keys_res.data or [])}
+    except Exception as e:
+        logger.error(f"Error loading isolated answer keys: {e}")
+        raise HTTPException(status_code=500, detail="Failed to evaluate test answers")
+
+    missing_keys = [qid for qid in question_ids if qid not in answer_keys]
+    if missing_keys:
+        logger.error(f"Answer keys missing for quiz {clean_quiz_id}: {len(missing_keys)} questions")
+        raise HTTPException(status_code=500, detail="Answer key configuration incomplete for this test")
 
     total = len(evaluation_questions)
     correct = 0
@@ -447,9 +517,10 @@ def submit_quiz_answers(sub: SubmitAnswersRequest, request: Request):
 
     for q in evaluation_questions:
         q_id = str(q["id"])
+        key_row = answer_keys[q_id]
         user_ans = sub.answers.get(q_id)
-        actual_ans = str(q.get("correct_option", "")).strip().upper()
-        
+        actual_ans = str(key_row.get("correct_option", "")).strip().upper()
+
         is_attempted = user_ans is not None
         is_correct = (user_ans == actual_ans) if is_attempted else False
 
@@ -460,6 +531,8 @@ def submit_quiz_answers(sub: SubmitAnswersRequest, request: Request):
             else:
                 wrong += 1
 
+        # Per-question feedback is limited to THIS submission's questions;
+        # explanations for other questions are never exposed.
         detailed_breakdown.append(
             QuestionResultItem(
                 id=q_id,
@@ -467,7 +540,7 @@ def submit_quiz_answers(sub: SubmitAnswersRequest, request: Request):
                 user_choice=user_ans,
                 correct_option=actual_ans,
                 is_correct=is_correct,
-                explanation=q.get("explanation") or "NCERT आधिकारिक मॉडल उत्तर।"
+                explanation=key_row.get("explanation") or "NCERT आधिकारिक मॉडल उत्तर।"
             )
         )
 
@@ -477,7 +550,7 @@ def submit_quiz_answers(sub: SubmitAnswersRequest, request: Request):
         try:
             supabase.table("master_leaderboard").insert({
                 "quiz_id": clean_quiz_id,
-                "user_id": sub.user_id,
+                "user_id": effective_user_id,
                 "student_name": sub.student_name,
                 "district": sub.district,
                 "exam_category": sub.exam_category,
@@ -547,7 +620,7 @@ def get_quiz_leaderboard(quiz_id: str, limit: int = 25):
 # ==================== ADMIN FULL-CONTROL SUITE ====================
 
 @quiz_router.get("/admin/all-quizzes", summary="Admin: Fetch all test slots")
-def admin_get_all_quizzes(_: bool = Depends(verify_quiz_admin)):
+def admin_get_all_quizzes(current_admin: Dict[str, Any] = Depends(get_current_admin)):
     supabase = get_db()
     if not supabase:
         raise HTTPException(status_code=503, detail="Database unavailable")
@@ -567,7 +640,7 @@ def admin_get_all_quizzes(_: bool = Depends(verify_quiz_admin)):
 
 
 @quiz_router.get("/admin/quiz-questions/{quiz_id}", summary="Admin: Fetch questions of a quiz")
-def admin_get_quiz_questions(quiz_id: str, _: bool = Depends(verify_quiz_admin)):
+def admin_get_quiz_questions(quiz_id: str, current_admin: Dict[str, Any] = Depends(get_current_admin)):
     supabase = get_db()
     if not supabase:
         raise HTTPException(status_code=503, detail="Database unavailable")
@@ -586,7 +659,7 @@ def admin_get_quiz_questions(quiz_id: str, _: bool = Depends(verify_quiz_admin))
 
 
 @quiz_router.post("/admin/create-quiz", summary="Admin: Create or schedule new quiz slot")
-def admin_create_quiz(payload: AdminQuizCreateRequest, _: bool = Depends(verify_quiz_admin)):
+def admin_create_quiz(payload: AdminQuizCreateRequest, current_admin: Dict[str, Any] = Depends(get_current_admin)):
     supabase = get_db()
     if not supabase:
         raise HTTPException(status_code=503, detail="Database unavailable")
@@ -610,7 +683,7 @@ def admin_create_quiz(payload: AdminQuizCreateRequest, _: bool = Depends(verify_
 
 
 @quiz_router.post("/admin/toggle-status/{quiz_id}", summary="Admin: Turn ON/OFF test")
-def admin_toggle_quiz_status(quiz_id: str, is_active: bool = Query(...), _: bool = Depends(verify_quiz_admin)):
+def admin_toggle_quiz_status(quiz_id: str, is_active: bool = Query(...), current_admin: Dict[str, Any] = Depends(get_current_admin)):
     supabase = get_db()
     if not supabase:
         raise HTTPException(status_code=503, detail="Database unavailable")
@@ -624,12 +697,16 @@ def admin_toggle_quiz_status(quiz_id: str, is_active: bool = Query(...), _: bool
 
 
 @quiz_router.delete("/admin/question/{question_id}", summary="Admin: Delete a specific question")
-def admin_delete_question(question_id: str, quiz_id: str = Query(...), _: bool = Depends(verify_quiz_admin)):
+def admin_delete_question(question_id: str, quiz_id: str = Query(...), current_admin: Dict[str, Any] = Depends(get_current_admin)):
     supabase = get_db()
     if not supabase:
         raise HTTPException(status_code=503, detail="Database unavailable")
     try:
         clean_quiz_id = quiz_id.strip()
+        # Remove the isolated answer key first, then the public question row.
+        service_db = get_service_db()
+        if service_db:
+            service_db.table("master_answer_keys").delete().eq("question_id", question_id.strip()).execute()
         supabase.table("master_questions").delete().eq("id", question_id.strip()).execute()
         
         cnt_res = supabase.table("master_questions").select("id", count="exact").eq("quiz_id", clean_quiz_id).execute()
@@ -643,7 +720,7 @@ def admin_delete_question(question_id: str, quiz_id: str = Query(...), _: bool =
 
 
 @quiz_router.delete("/admin/quiz/{quiz_id}", summary="Admin: Delete entire quiz")
-def admin_delete_entire_quiz(quiz_id: str, _: bool = Depends(verify_quiz_admin)):
+def admin_delete_entire_quiz(quiz_id: str, current_admin: Dict[str, Any] = Depends(get_current_admin)):
     supabase = get_db()
     if not supabase:
         raise HTTPException(status_code=503, detail="Database unavailable")
@@ -656,7 +733,7 @@ def admin_delete_entire_quiz(quiz_id: str, _: bool = Depends(verify_quiz_admin))
 
 
 @quiz_router.post("/admin/add-questions", summary="Admin: Add questions batch")
-def admin_add_questions_batch(payload: AdminBatchQuestionRequest, _: bool = Depends(verify_quiz_admin)):
+def admin_add_questions_batch(payload: AdminBatchQuestionRequest, current_admin: Dict[str, Any] = Depends(get_current_admin)):
     supabase = get_db()
     if not supabase:
         raise HTTPException(status_code=503, detail="Database unavailable")
@@ -670,6 +747,7 @@ def admin_add_questions_batch(payload: AdminBatchQuestionRequest, _: bool = Depe
         existing_count = 0
 
     formatted = []
+    keys_payload = []
     for idx, q in enumerate(payload.questions, start=existing_count + 1):
         formatted.append({
             "quiz_id": clean_quiz_id,
@@ -678,14 +756,33 @@ def admin_add_questions_batch(payload: AdminBatchQuestionRequest, _: bool = Depe
             "option_b": q.option_b.strip(),
             "option_c": q.option_c.strip(),
             "option_d": q.option_d.strip(),
-            "correct_option": q.correct_option.strip().upper(),
-            "explanation": q.explanation.strip() if q.explanation else "NCERT आधिकारिक मॉडल उत्तर।",
             "order_index": idx
         })
 
     if formatted:
         try:
-            supabase.table("master_questions").insert(formatted).execute()
+            res = supabase.table("master_questions").insert(formatted).execute()
+            inserted = res.data or []
+
+            # Answer keys live in an isolated, service-role-only table so they
+            # are never exposed through anon-facing question reads.
+            service_db = get_service_db()
+            if not service_db:
+                raise RuntimeError("Service-role client unavailable for answer-key storage")
+            for idx, q in enumerate(payload.questions):
+                question_id = str(inserted[idx]["id"]) if idx < len(inserted) else None
+                if question_id:
+                    keys_payload.append({
+                        "question_id": question_id,
+                        "quiz_id": clean_quiz_id,
+                        "correct_option": q.correct_option.strip().upper(),
+                        "explanation": q.explanation.strip() if q.explanation else "NCERT आधिकारिक मॉडल उत्तर।",
+                    })
+            if keys_payload:
+                service_db.table("master_answer_keys").upsert(
+                    keys_payload, on_conflict="question_id"
+                ).execute()
+
             supabase.table("master_quizzes").update({"total_questions": existing_count + len(formatted)}).eq("id", clean_quiz_id).execute()
         except Exception as e:
             logger.error(f"Error saving questions: {e}")

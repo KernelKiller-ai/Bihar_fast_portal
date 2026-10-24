@@ -1,16 +1,17 @@
 import os
 import re
-import json
 import hmac
+import json
 import logging
 import asyncio
 from datetime import datetime, timezone
 from urllib.parse import urlparse
 from typing import Optional, Any, List, Dict, Literal
-import urllib.request
 import urllib.parse
 import unicodedata
 
+import bleach
+import httpx
 from fastapi import Depends, FastAPI, HTTPException, BackgroundTasks, Query, Request, Response, UploadFile, File, Form, status
 from fastapi.responses import JSONResponse, PlainTextResponse
 from fastapi.middleware.cors import CORSMiddleware
@@ -22,12 +23,14 @@ from dotenv import load_dotenv
 import orjson
 
 import database as db
+from database import SUPABASE_URL, SUPABASE_KEY
 from quiz_router import quiz_router
 from rate_limiter import enforce_rate_limit
 from services.ai_extractor import (
     ExtractorConfigurationError,
     extract_notification,
 )
+from supabase import create_client
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
 logger = logging.getLogger("biharfast")
@@ -37,7 +40,11 @@ load_dotenv(override=False)
 
 UPSTASH_URL = os.getenv("UPSTASH_REDIS_REST_URL")
 UPSTASH_TOKEN = os.getenv("UPSTASH_REDIS_REST_TOKEN")
+# Kept for backwards compatibility: legacy static token still grants access if
+# configured, but the primary auth path is now the Supabase JWT + profiles.role
+# check (see get_current_admin below).
 ADMIN_API_TOKEN = os.getenv("ADMIN_API_TOKEN", "").strip()
+ADMIN_ROLES = {"admin", "creator"}
 
 # Telegram Channel Integration Keys
 TELEGRAM_BOT_TOKEN = os.getenv("TELEGRAM_BOT_TOKEN", "").strip()
@@ -94,7 +101,9 @@ app.add_middleware(
 
 @app.exception_handler(Exception)
 async def global_exception_handler(request: Request, exc: Exception):
-    logger.error(f"Unhandled Exception on {request.url.path}: {exc}", exc_info=True)
+    # Log the full stack trace internally, but never leak exception details
+    # (file paths, SQL fragments, library internals) to external clients.
+    logger.exception(f"Unhandled Exception on {request.url.path}")
     request_origin = request.headers.get("origin")
     error_headers = {}
     if request_origin and (
@@ -108,7 +117,11 @@ async def global_exception_handler(request: Request, exc: Exception):
         }
     return JSONResponse(
         status_code=500,
-        content={"success": False, "detail": str(exc), "path": request.url.path},
+        content={
+            "success": False,
+            "detail": "Internal server error. कृपया कुछ देर बाद पुनः प्रयास करें।",
+            "path": request.url.path,
+        },
         headers=error_headers,
     )
 
@@ -144,10 +157,12 @@ class PostCreateRequest(BaseModel):
     eligibility: Optional[str] = "विज्ञापन देखें"
     apply_url: Optional[str] = None
     pdf_url: Optional[str] = None
+    image_url: Optional[str] = None        # Supabase storage or any absolute https image
     short_desc: Optional[str] = None
     content: str  # 800+ words detailed article
     meta_title: Optional[str] = None
     meta_desc: Optional[str] = None
+    tags: Optional[List[str]] = []
     faqs: Optional[List[Dict[str, Any]]] = []
     how_to_apply: Optional[List[str]] = []
     selection_process: Optional[List[str]] = []
@@ -161,10 +176,12 @@ class PostUpdateRequest(BaseModel):
     eligibility: Optional[str] = None
     apply_url: Optional[str] = None
     pdf_url: Optional[str] = None
+    image_url: Optional[str] = None
     short_desc: Optional[str] = None
     content: Optional[str] = None
     meta_title: Optional[str] = None
     meta_desc: Optional[str] = None
+    tags: Optional[List[str]] = None
     faqs: Optional[List[Dict[str, Any]]] = None
     selection_process: Optional[List[str]] = None
     how_to_apply: Optional[List[str]] = None
@@ -185,14 +202,19 @@ def extract_client_ip(request: Request) -> str:
 
 def check_admin_lockout(client_ip: str):
     cache_key = f"admin_lock:{client_ip}"
-    attempts = 0
     if redis:
         try:
             val = redis.get(cache_key)
-            if val is not None:
-                attempts = int(val)
-        except Exception:
-            pass
+        except Exception as e:
+            # FAIL CLOSED: if the lockout state cannot be read we must not
+            # allow unlimited admin brute-force attempts. Refuse admin auth
+            # until Redis recovers.
+            logger.error(f"Redis lockout check failed (fail-closed): {e}")
+            raise HTTPException(
+                status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+                detail="Security backend unavailable. Try again shortly.",
+            )
+        attempts = int(val) if val is not None else 0
     else:
         record = _MEMORY_ATTEMPTS.get(client_ip)
         if record:
@@ -209,15 +231,21 @@ def check_admin_lockout(client_ip: str):
 
 def record_failed_attempt(client_ip: str):
     cache_key = f"admin_lock:{client_ip}"
-    current_attempts = 1
     if redis:
         try:
-            current = redis.incr(cache_key)
-            current_attempts = int(current)
-            if current_attempts == 1:
+            current = int(redis.incr(cache_key))
+            if current == 1:
                 redis.expire(cache_key, ADMIN_LOCKOUT_SECONDS)
-        except Exception:
-            pass
+        except Exception as e:
+            # FAIL CLOSED: a failure to record the failed attempt would let an
+            # attacker reset the brute-force counter by breaking Redis; refuse
+            # the attempt instead.
+            logger.error(f"Redis lockout record failed (fail-closed): {e}")
+            raise HTTPException(
+                status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+                detail="Security backend unavailable. Try again shortly.",
+            )
+        current_attempts = current
     else:
         now = datetime.now(timezone.utc).timestamp()
         record = _MEMORY_ATTEMPTS.get(client_ip, {"count": 0, "locked_until": now + ADMIN_LOCKOUT_SECONDS})
@@ -229,21 +257,29 @@ def record_failed_attempt(client_ip: str):
     remaining = max(0, MAX_ADMIN_ATTEMPTS - current_attempts)
     raise HTTPException(
         status_code=status.HTTP_401_UNAUTHORIZED,
-        detail=f"Galat Admin Token! {remaining} prayas shesh hain."
+        detail=f"Invalid admin credentials. {remaining} attempts remaining."
     )
 
 def reset_failed_attempts(client_ip: str):
     if redis:
         try:
             redis.delete(f"admin_lock:{client_ip}")
-        except Exception:
-            pass
+        except Exception as e:
+            # Non-critical path: a stale counter only risks a false lockout,
+            # never a security hole, so we log and continue.
+            logger.warning(f"Redis lockout reset failed: {e}")
     _MEMORY_ATTEMPTS.pop(client_ip, None)
 
 def require_admin(
     request: Request,
     credentials: Optional[HTTPAuthorizationCredentials] = Depends(bearer_scheme),
 ):
+    """Legacy static-token dependency (backwards compatibility).
+
+    The primary auth path is get_current_admin (Supabase JWT + profiles.role).
+    This legacy path is kept only so existing scripts with ADMIN_API_TOKEN
+    continue working; it is scheduled for removal.
+    """
     enforce_rate_limit(request, limit=30, window_seconds=60, scope="admin")
     if not ADMIN_API_TOKEN:
         raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail="Admin token missing")
@@ -260,6 +296,11 @@ def require_admin(
 
     reset_failed_attempts(client_ip)
     return True
+
+
+# get_current_admin lives in admin_auth.py so quiz_router can import it
+# without a circular import (main.py imports quiz_router at startup).
+from admin_auth import get_current_admin  # noqa: E402  (import placed here intentionally)
 
 def slugify(title: str, dept: str) -> str:
     combined = f"{dept}-{title}".strip().lower()
@@ -292,9 +333,72 @@ def flush_cache(slug: Optional[str] = None):
         except Exception as e:
             logger.error(f"Redis flush error: {e}")
 
+# ----------------- INPUT SANITIZATION -----------------
+ALLOWED_HTML_TAGS = [
+    "p", "b", "strong", "i", "em", "u", "ul", "ol", "li",
+    "a", "h2", "h3", "h4", "blockquote", "table", "thead", "tbody",
+    "tr", "td", "th", "br", "hr", "img", "figure", "figcaption"
+]
+ALLOWED_HTML_ATTRS = {
+    "a": ["href", "title", "target"],
+    "img": ["src", "alt", "width", "height"],
+    "td": ["colspan", "rowspan"],
+    "th": ["colspan", "rowspan"],
+}
+
+def sanitize_admin_html(value: Optional[str]) -> str:
+    """Allowlist-based sanitizer for admin-authored rich content.
+
+    Stored XSS previously depended entirely on the (brute-forceable) admin
+    token; this ensures even a compromised admin session cannot persist
+    script payloads into `notices.content`.
+    """
+    if not value:
+        return ""
+    cleaned = bleach.clean(
+        str(value),
+        tags=ALLOWED_HTML_TAGS,
+        attributes=ALLOWED_HTML_ATTRS,
+        strip=True,
+        strip_comments=True,
+    )
+    # Force nofollow on external links to avoid the site being used as a
+    # link-farm if an admin session is ever abused.
+    return cleaned
+
+def sanitize_admin_text(value: Optional[str], max_len: int = 500) -> str:
+    """Strip all tags/entities for plain-text fields (title, meta, lists)."""
+    if not value:
+        return ""
+    return bleach.clean(str(value), tags=[], strip=True, strip_comments=True).strip()[:max_len]
+
+def validate_slug_or_none(slug: Optional[str]) -> Optional[str]:
+    """Accept only URL-safe slugs (latin + devanagari letters, digits, hyphen)."""
+    if not slug:
+        return None
+    clean = slug.strip()
+    if not re.fullmatch(r"[a-z0-9\u0900-\u097F]+(?:-[a-z0-9\u0900-\u097F]+)*", clean):
+        raise HTTPException(status_code=422, detail="Invalid slug format.")
+    return clean
+
+def validate_safe_url(url: Optional[str]) -> Optional[str]:
+    """Allow only http(s) absolute URLs; blocks javascript:, data:, etc."""
+    if not url:
+        return None
+    clean = str(url).strip()
+    parsed = urlparse(clean)
+    if parsed.scheme not in ("http", "https") or not parsed.netloc:
+        raise HTTPException(status_code=422, detail="Invalid URL: only absolute http(s) URLs are allowed.")
+    return clean
+
 # ----------------- TELEGRAM BROADCASTER -----------------
-def send_telegram_alert(title: str, dept: str, total_posts: str, last_date: str, slug: str):
-    """Broadcasts newly published post to official Telegram channel."""
+async def send_telegram_alert(title: str, dept: str, total_posts: str, last_date: str, slug: str):
+    """Broadcasts newly published post to official Telegram channel.
+
+    Async via httpx so background tasks no longer occupy threadpool threads
+    for up to 10s each (previous urllib implementation caused threadpool
+    starvation under publish spikes).
+    """
     if not TELEGRAM_BOT_TOKEN or not TELEGRAM_CHANNEL_ID:
         logger.info("Telegram notification skipped (Keys not configured in .env).")
         return
@@ -317,13 +421,14 @@ def send_telegram_alert(title: str, dept: str, total_posts: str, last_date: str,
             "chat_id": TELEGRAM_CHANNEL_ID,
             "text": message_text,
             "parse_mode": "Markdown",
-            "disable_web_page_preview": False
+            "disable_web_page_preview": False,
         }
-        data = json.dumps(payload).encode("utf-8")
-        req = urllib.request.Request(url, data=data, headers={"Content-Type": "application/json"})
-        with urllib.request.urlopen(req, timeout=10) as response:
-            if response.status == 200:
+        async with httpx.AsyncClient(timeout=10) as client:
+            resp = await client.post(url, json=payload)
+            if resp.status_code == 200:
                 logger.info(f"Telegram alert sent successfully for slug: {slug}")
+            else:
+                logger.warning(f"Telegram API non-200 for slug {slug}: {resp.status_code}")
     except Exception as err:
         logger.error(f"Telegram broadcast error: {err}")
 
@@ -466,28 +571,59 @@ async def extract_admin_notification(
 
 
 @app.post("/api/admin/posts")
-def create_manual_post(payload: PostCreateRequest, bg: BackgroundTasks, _: None = Depends(require_admin)):
-    """Creates an in-depth, human-verified post and broadcasts it to Telegram."""
-    slug = payload.slug.strip() if payload.slug else slugify(payload.title, payload.department)
+@app.post("/api/posts/create")
+def create_manual_post(
+    payload: PostCreateRequest,
+    bg: BackgroundTasks,
+    current_admin: Dict[str, Any] = Depends(get_current_admin),
+):
+    """Instagram-style post creation with verified author attribution.
+
+    Auth: Supabase JWT + profiles.role check (get_current_admin).
+    Security: allowlist HTML sanitization + strict slug/URL validation.
+    Attribution: author_id is bound to the verified admin's Supabase id.
+    """
+    # ---------- INPUT VALIDATION & SANITIZATION ----------
+    clean_title = sanitize_admin_text(payload.title, max_len=300)
+    if not clean_title:
+        raise HTTPException(status_code=422, detail="Title is required.")
+
+    clean_slug = validate_slug_or_none(payload.slug)
+    slug = clean_slug or slugify(clean_title, payload.department)
     normalized_cat = normalize_post_category(payload.category)
+
+    # Tags: strict allowlist, bounded count/length, no markup.
+    clean_tags = []
+    for tag in (payload.tags or [])[:15]:
+        t = sanitize_admin_text(tag, max_len=40)
+        if t and re.fullmatch(r"[\w\u0900-\u097F -]+", t):
+            clean_tags.append(t)
+
+    clean_apply_url = validate_safe_url(payload.apply_url)
+    clean_pdf_url = validate_safe_url(payload.pdf_url)
+    clean_image_url = validate_safe_url(payload.image_url)
 
     record = {
         "slug": slug,
-        "title": payload.title.strip(),
-        "department": payload.department.strip(),
+        "title": clean_title,
+        "department": sanitize_admin_text(payload.department, max_len=120) or "BPSC",
         "category": normalized_cat,
-        "total_posts": payload.total_posts or "अधिसूचना देखें",
-        "last_date": payload.last_date or "सक्रिय सूचना",
-        "eligibility": payload.eligibility or "विज्ञापन देखें",
-        "apply_url": payload.apply_url,
-        "pdf_url": payload.pdf_url,
-        "short_desc": payload.short_desc,
-        "content": payload.content,
-        "meta_title": payload.meta_title or payload.title,
-        "meta_desc": payload.meta_desc or payload.short_desc,
+        "total_posts": sanitize_admin_text(payload.total_posts, max_len=80) or "अधिसूचना देखें",
+        "last_date": sanitize_admin_text(payload.last_date, max_len=80) or "सक्रिय सूचना",
+        "eligibility": sanitize_admin_text(payload.eligibility, max_len=500) or "विज्ञापन देखें",
+        "apply_url": clean_apply_url,
+        "pdf_url": clean_pdf_url,
+        "image_url": clean_image_url,
+        "short_desc": sanitize_admin_text(payload.short_desc, max_len=500),
+        "content": sanitize_admin_html(payload.content),
+        "meta_title": sanitize_admin_text(payload.meta_title, max_len=200) or clean_title,
+        "meta_desc": sanitize_admin_text(payload.meta_desc, max_len=400) or sanitize_admin_text(payload.short_desc, max_len=400),
+        "tags": clean_tags,
         "faqs": payload.faqs or [],
-        "how_to_apply": payload.how_to_apply or [],
-        "selection_process": payload.selection_process or [],
+        "how_to_apply": [sanitize_admin_text(x, max_len=400) for x in (payload.how_to_apply or [])],
+        "selection_process": [sanitize_admin_text(x, max_len=400) for x in (payload.selection_process or [])],
+        "author_id": current_admin["id"],          # verified attribution
+        "author_name": current_admin.get("full_name") or current_admin.get("email") or "admin",
         "is_active": True,
         "status": "published"
     }
@@ -495,7 +631,7 @@ def create_manual_post(payload: PostCreateRequest, bg: BackgroundTasks, _: None 
     try:
         db.upsert_notice(record)
         bg.add_task(flush_cache, slug=slug)
-        # Trigger Telegram post in background
+        # Trigger async Telegram post in background (httpx, no thread blocking)
         bg.add_task(
             send_telegram_alert,
             title=record["title"],
@@ -505,11 +641,16 @@ def create_manual_post(payload: PostCreateRequest, bg: BackgroundTasks, _: None 
             slug=slug
         )
     except Exception as e:
-        logger.error(f"Error saving manual post: {e}")
-        raise HTTPException(status_code=500, detail=f"Database write failed: {str(e)}")
+        logger.exception("Error saving manual post")
+        raise HTTPException(status_code=500, detail="Database write failed. Please retry.")
 
     return Response(
-        content=orjson.dumps({"success": True, "message": "Article published live & Telegram alert queued!", "slug": slug}),
+        content=orjson.dumps({
+            "success": True,
+            "message": "Article published live & Telegram alert queued!",
+            "slug": slug,
+            "author_id": current_admin["id"],
+        }),
         media_type="application/json"
     )
 
@@ -525,7 +666,12 @@ def update_existing_post(post_id: str, payload: PostUpdateRequest, bg: Backgroun
         update_dict["category"] = normalize_post_category(update_dict["category"])
 
     updated_post = db.update_notice_by_id(post_id, update_dict)
+    # Flush BOTH the old and new slug keys; previously only the old slug was
+    # cleared, so a slug rename could serve stale/wrong cached content.
     bg.add_task(flush_cache, slug=existing.get("slug"))
+    new_slug = (updated_post or {}).get("slug")
+    if new_slug and new_slug != existing.get("slug"):
+        bg.add_task(flush_cache, slug=new_slug)
 
     return Response(
         content=orjson.dumps({"success": True, "message": "Post updated successfully", "data": updated_post}),

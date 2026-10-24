@@ -106,6 +106,28 @@ class TestStaticSEOPrerender(unittest.TestCase):
         self.assertIsNotNone(canonical, "Root index.html missing canonical tag")
         self.assertEqual(canonical.get("href"), "https://biharfast.in/")
 
+    def test_vercel_www_redirect_configured(self):
+        import json
+        vercel_path = os.path.join(BASE_DIR, "frontend", "vercel.json")
+        self.assertTrue(os.path.exists(vercel_path), "frontend/vercel.json must exist")
+        with open(vercel_path, "r", encoding="utf-8") as f:
+            cfg = json.load(f)
+        redirects = cfg.get("redirects", [])
+        self.assertTrue(isinstance(redirects, list) and len(redirects) > 0, "redirects must be a non-empty list")
+        www_rule = next((r for r in redirects if any(h.get("value") == "www.biharfast.in" for h in r.get("has", []))), None)
+        self.assertIsNotNone(www_rule, "vercel.json missing host-based redirect rule for www.biharfast.in")
+        self.assertEqual(www_rule.get("source"), "/:path*")
+        self.assertEqual(www_rule.get("destination"), "https://biharfast.in/:path*")
+        self.assertTrue(www_rule.get("permanent"))
+
+    def test_quiz_player_share_urls_use_apex(self):
+        quiz_path = os.path.join(BASE_DIR, "frontend", "src", "components", "Class10QuizPlayer.jsx")
+        self.assertTrue(os.path.exists(quiz_path), "Class10QuizPlayer.jsx must exist")
+        with open(quiz_path, "r", encoding="utf-8") as f:
+            content = f.read()
+        self.assertNotIn("https://www.biharfast.in", content, "Class10QuizPlayer.jsx must not contain www.biharfast.in")
+        self.assertIn("https://biharfast.in/mock-test", content, "Class10QuizPlayer.jsx must use https://biharfast.in/mock-test")
+
 if __name__ == "__main__":
     unittest.main()
 

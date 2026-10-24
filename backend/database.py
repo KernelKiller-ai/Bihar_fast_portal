@@ -29,6 +29,7 @@ SUPABASE_KEY = (
 ).strip()
 
 _supabase_client: Optional[Client] = None
+_service_supabase_client: Optional[Client] = None
 
 def init_supabase() -> Optional[Client]:
     """Initializes and returns a cached Supabase client singleton."""
@@ -54,6 +55,35 @@ def get_db() -> Optional[Client]:
     if _supabase_client is None:
         return init_supabase()
     return _supabase_client
+
+def get_service_db() -> Optional[Client]:
+    """Returns a cached service-role client for privileged reads (answer keys).
+
+    Prefers SUPABASE_SECRET_KEY / SUPABASE_SERVICE_ROLE_KEY and falls back to
+    SUPABASE_KEY so deployments that only configure a service key still work.
+    Reuses the module-level singleton when it was already built from the
+    service key; otherwise constructs a dedicated client.
+    """
+    global _service_supabase_client
+    if _service_supabase_client is not None:
+        return _service_supabase_client
+
+    service_key = (
+        os.getenv("SUPABASE_SECRET_KEY")
+        or os.getenv("SUPABASE_SERVICE_ROLE_KEY")
+        or os.getenv("SUPABASE_KEY")
+        or ""
+    ).strip()
+    if not SUPABASE_URL or not service_key:
+        logger.error("Service-role Supabase credentials missing; answer-key fetch unavailable.")
+        return None
+
+    try:
+        _service_supabase_client = create_client(SUPABASE_URL, service_key)
+        return _service_supabase_client
+    except Exception as e:
+        logger.critical(f"Failed to create service-role Supabase client: {e}", exc_info=True)
+        return None
 
 # Initialize on module import
 init_supabase()

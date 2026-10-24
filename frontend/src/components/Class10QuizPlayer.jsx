@@ -15,6 +15,7 @@ import {
 } from "lucide-react";
 import Leaderboard from "./Leaderboard";
 import { useAuth } from "../context/AuthContext.jsx";
+import { supabase, isSupabaseConfigured } from "../api/supabase";
 import { savePendingStudentAttempt, saveStudentAttempt } from "../utils/studentHistory";
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "https://bihar-fast-portal.onrender.com";
@@ -195,10 +196,41 @@ function getExamCategoryCode(examId, subject) {
     setSubmitting(true);
 
     try {
+      // ==================== AUTH (Bearer token for competitive mode) ====================
+      // The hardened backend verifies the Supabase session server-side and
+      // rejects non-demo submissions without a valid bearer token. Fetch the
+      // FRESH session here (not a cached user object) so an expired token is
+      // caught before the API call instead of after.
+      let accessToken = null;
+      if (!demoMode) {
+        if (!isSupabaseConfigured || !supabase) {
+          submissionLockRef.current = false;
+          setSubmitting(false);
+          setSubmitError("लॉगिन सिस्टम उपलब्ध नहीं है। कृपया बाद में प्रयास करें।");
+          return;
+        }
+
+        const { data, error: sessionError } = await supabase.auth.getSession();
+        accessToken = data?.session?.access_token || null;
+
+        if (sessionError || !accessToken) {
+          submissionLockRef.current = false;
+          setSubmitting(false);
+          // No valid session: stop the timer from auto-submitting again and
+          // ask the student to re-authenticate instead of firing a doomed API
+          // call that would burn one of their 6 daily attempts.
+          openLoginModal();
+          setSubmitError("सत्र समाप्त हो गया है। कृपया पुनः लॉगिन करें और टेस्ट जमा करें।");
+          return;
+        }
+      }
+
       const timeTaken = startedAtRef.current ? Math.max(0, Math.round((Date.now() - startedAtRef.current) / 1000)) : 0;
+      // NOTE: user_id is intentionally NOT sent. The backend derives identity
+      // exclusively from the verified bearer token, so any client-controlled
+      // user_id would be ignored (or flagged) server-side.
       const payload = {
         quiz_id: quizMeta.id,
-        user_id: user?.id || null,
         answers: answers,
         student_name: student.name.trim() || profileName || "छात्र",
         district: student.district || "बिहार",
@@ -208,11 +240,40 @@ function getExamCategoryCode(examId, subject) {
         demo_mode: demoMode
       };
 
+      const headers = { "Content-Type": "application/json" };
+      if (!demoMode && accessToken) {
+        headers.Authorization = `Bearer ${accessToken}`;
+      }
+      // Demo mode stays fully anonymous: no Authorization header at all.
+
       const res = await fetch(`${API_BASE_URL}/api/quiz/submit`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers,
         body: JSON.stringify(payload)
       });
+
+      if (res.status === 401) {
+        // Session expired / invalid credentials: force re-authentication and
+        // keep the local answers intact so the student can resubmit.
+        submissionLockRef.current = false;
+        setSubmitting(false);
+        openLoginModal();
+        setSubmitError("आपका सत्र समाप्त हो गया है। कृपया पुनः लॉगिन करें — आपके उत्तर सुरक्षित हैं।");
+        return;
+      }
+
+      if (res.status === 429) {
+        const detail = await res.json().catch(() => null);
+        submissionLockRef.current = false;
+        setSubmitting(false);
+        setSubmitError(
+          detail?.detail
+            || "आज के सभी प्रयास पूरे हो चुके हैं। कृपया कल पुनः प्रयास करें।"
+        );
+        // Local state (answers/step/timer) is left untouched — the student can
+        // review their paper; the server-side limit is what actually governs.
+        return;
+      }
 
       if (!res.ok) {
         const error = new Error("Submission failed");
@@ -247,7 +308,7 @@ function getExamCategoryCode(examId, subject) {
       submissionLockRef.current = false;
       setSubmitting(false);
     }
-  }, [quizMeta, activeQuestions.length, answers, student, profileName, demoMode, user]);
+  }, [quizMeta, activeQuestions.length, answers, student, profileName, demoMode, user, openLoginModal]);
 
   useEffect(() => {
     submitRef.current = handleSubmit;
@@ -278,8 +339,8 @@ function getExamCategoryCode(examId, subject) {
   const shareToWhatsApp = () => {
     if (!result || !quizMeta) return;
     const shareUrl = quizId 
-      ? `https://www.biharfast.in/mock-test?exam=${encodeURIComponent(examId)}&quiz_id=${encodeURIComponent(quizMeta.id)}`
-      : `https://www.biharfast.in/mock-test?exam=${encodeURIComponent(examId)}`;
+      ? `https://biharfast.in/mock-test?exam=${encodeURIComponent(examId)}&quiz_id=${encodeURIComponent(quizMeta.id)}`
+      : `https://biharfast.in/mock-test?exam=${encodeURIComponent(examId)}`;
 
     const badge = getResultBadge(result.accuracy_percentage);
     const dateText = attemptDate?.toLocaleDateString("hi-IN") || "आज";
@@ -303,7 +364,7 @@ function getExamCategoryCode(examId, subject) {
 
   const shareToTelegram = () => {
     if (!result || !quizMeta) return;
-    const shareUrl = `https://www.biharfast.in/mock-test?exam=${encodeURIComponent(examId)}&quiz_id=${encodeURIComponent(quizMeta.id)}`;
+    const shareUrl = `https://biharfast.in/mock-test?exam=${encodeURIComponent(examId)}&quiz_id=${encodeURIComponent(quizMeta.id)}`;
     const badge = getResultBadge(result.accuracy_percentage);
     const text = `${student.name} ने ${result.score}/${result.total_questions} अंक और ${result.accuracy_percentage}% सटीकता हासिल की (${badge.label})। क्या आप उनका स्कोर पार कर सकते हैं?`;
     window.open(`https://t.me/share/url?url=${encodeURIComponent(shareUrl)}&text=${encodeURIComponent(text)}`, "_blank");

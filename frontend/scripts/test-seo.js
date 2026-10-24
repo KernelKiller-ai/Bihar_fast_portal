@@ -122,7 +122,30 @@ function runTests() {
     console.log("⚠ Dist directory not found, skipping Test 4 (run after build).");
   }
 
-  console.log("\nALL STATIC SEO TESTS PASSED SUCCESSFULLY!");
+  // Test 5: Verify frontend/vercel.json host-based redirect configuration
+  const vercelJsonPath = path.resolve(__dirname, "../vercel.json");
+  assert.ok(fs.existsSync(vercelJsonPath), "frontend/vercel.json must exist");
+  const vercelConfig = JSON.parse(fs.readFileSync(vercelJsonPath, "utf-8"));
+  assert.ok(Array.isArray(vercelConfig.redirects), "vercel.json must contain a 'redirects' array");
+
+  const wwwRedirect = vercelConfig.redirects.find((r) =>
+    Array.isArray(r.has) && r.has.some((h) => h.type === "host" && h.value === "www.biharfast.in")
+  );
+  assert.ok(wwwRedirect, "Missing host-based redirect from www.biharfast.in in vercel.json");
+  assert.equal(wwwRedirect.source, "/:path*", "Redirect source must be '/:path*'");
+  assert.equal(wwwRedirect.destination, "https://biharfast.in/:path*", "Redirect destination must be 'https://biharfast.in/:path*'");
+  assert.equal(wwwRedirect.permanent, true, "Redirect must be permanent (HTTP 308/301)");
+  console.log("✔ Test 5 Passed: vercel.json contains valid host-based permanent www-to-apex redirect.");
+
+  // Test 6: Verify Class10QuizPlayer viral share links use apex canonical domain
+  const quizPlayerPath = path.resolve(__dirname, "../src/components/Class10QuizPlayer.jsx");
+  assert.ok(fs.existsSync(quizPlayerPath), "Class10QuizPlayer.jsx must exist");
+  const quizContent = fs.readFileSync(quizPlayerPath, "utf-8");
+  assert.ok(!quizContent.includes("https://www.biharfast.in"), "Class10QuizPlayer.jsx must not contain hardcoded 'https://www.biharfast.in'");
+  assert.ok(quizContent.includes("https://biharfast.in/mock-test"), "Class10QuizPlayer.jsx must use 'https://biharfast.in/mock-test' for share links");
+  console.log("✔ Test 6 Passed: Class10QuizPlayer viral share links strictly use canonical apex domain.");
+
+  console.log("\nALL STATIC SEO & CANONICAL CONSOLIDATION TESTS PASSED SUCCESSFULLY!");
 }
 
 runTests();
