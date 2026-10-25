@@ -1,75 +1,94 @@
 # BiharFast UI/UX Design Brief
 
-## 1. Design philosophy
+**Scope:** Maintain current visual and interaction behavior while specifying accessible designs for the planned contributor/editor workflow. Proposed styling is not evidence that every token or component already exists.
 
-- **Mobile first:** core flows must fit 320px–360px viewports without horizontal scrolling; verify every route, not only the home screen.
-- **Trust and clarity:** distinguish the summary, dates, eligibility, and official action links; do not imply an automated verification guarantee that the publishing process does not enforce.
-- **Low-friction navigation:** categories and search should be discoverable before long-form content.
-- **Fast feedback:** use explicit loading, empty, success, and failure states for network actions.
-- **Hindi/English support:** allow for text expansion, line wrapping, and mixed-script labels; do not hard-code widths around English copy.
+## 1. Experience principles
 
-## 2. Visual language
+- **Mobile first:** prioritize fast notice discovery and readable action links on narrow screens.
+- **Trust and clarity:** distinguish editorial summaries from official source material; label external actions clearly.
+- **Low-friction navigation:** search and categories should be easy to find without hiding primary notice content.
+- **Honest feedback:** loading, empty, validation, success, and failure states must be distinguishable.
+- **Bilingual readability:** allow Hindi and English text expansion, wrapping, and mixed-script content.
+- **Accessible by default:** semantic structure, keyboard support, visible focus, adequate contrast, and reduced motion.
 
-The existing UI uses a high-contrast educational/public-information palette, including deep navy (`#0F2A4A`), blue (`#16406E` and action blues), amber for emphasis, green for success, and slate neutrals. Preserve contrast when creating new states; measure foreground/background combinations rather than relying on color alone.
+## 2. Design tokens
 
-Typography should prioritize legible Hindi and Latin text at mobile sizes. Use the project's established system/font stack and existing component styles rather than introducing an unverified brand font. Use strong hierarchy: one clear page title, concise section headings, readable body copy, and compact metadata.
+| Token | Target value | Use |
+|---|---|---|
+| Primary / BiharFast Blue | `#0B4F8A` | Main actions, selected navigation, focus accent |
+| Page background | `slate-50` | Main application surfaces |
+| Main text | `slate-900` | Body text and headings |
+| Muted text/surface | Slate scale | Secondary metadata, borders, disabled states; validate contrast |
+| Status | Text + icon + color | Pending, approved, rejected, success, and error states |
 
-## 3. Responsive behavior
+The checked-in styles also use deep navy such as `#0F2A4A`, blue including `#16406E`, amber, green, and slate neutrals. Apply the target primary consistently in new or revised components, then reconcile legacy colors rather than introducing a third competing blue.
 
-- Root document and app wrappers should stay `w-full max-w-full` with horizontal overflow contained.
-- Navbar at small widths should prioritize logo, menu/profile action, and WhatsApp contact/action; hide secondary badges and long desktop taglines below the mobile breakpoint.
-- Search should fill available width, with a flexible input and no fixed minimum width.
-- Cards should wrap long titles/URLs and use responsive padding; avoid `min-width` assumptions and non-wrapping metadata rows.
-- Test widths 320px, 360px, 390px, 640px, and desktop, including zoom and long Hindi/English titles.
+## 3. Typography, layout, and accessibility
 
-## 4. Core component guidance
+- Use the existing system UI font stack unless an approved, tested font change is made.
+- Maintain readable Hindi/English line lengths and natural wrapping for long titles, districts, and URLs.
+- Provide a visible keyboard focus ring against both light and colored surfaces.
+- Meet WCAG contrast targets for normal and large text; do not use color alone for status.
+- Design interactive controls with a **minimum 48 × 48 CSS px target where practical**; do not reduce existing native control affordances.
+- Use semantic headings, labels, buttons, and links; provide accessible names for icon-only controls and suitable alt text for meaningful imagery.
+- Respect `prefers-reduced-motion`.
 
-### Category-driven admin form
+## 4. Responsive behavior
 
-- Keep the persisted category values exactly `jobs`, `admit_card`, `results`, and `schemes`.
-- Update field labels/placeholders immediately when selection changes.
-- Hide total-posts for admit-card/results and clearly indicate the field is not applicable; retain the configured persistence fallback (`जारी (Released)` or `Result Declared`) in the payload.
-- For schemes, present financial benefit/grant copy as the total-posts equivalent without implying a vacancy count.
-- Keep URLs full-width and allow wrapping of long values; use native labels and accessible focus rings.
-- Use a subtle opacity/transform transition when category-specific copy changes and respect `prefers-reduced-motion`.
+- Prevent horizontal overflow at 320px and 360px; validate 390px, tablet, and desktop widths too.
+- Keep root wrappers at available width; allow long Hindi strings and URLs to wrap.
+- On mobile, prioritize logo, menu/profile action, and primary navigation; condense secondary navbar content.
+- Keep search flexible rather than imposing a fixed minimum width.
+- Stack apply/PDF actions when adjacent controls become cramped.
+- Ensure the mobile bottom navigation is introduced only if it fits the existing information architecture and does not duplicate/conflict with the current navbar.
 
-### Quiz player
+## 5. Critical interface patterns
 
-- Keep the question card distraction-free, with question number, readable prompt, tappable answer choices, timer, and progress indicator.
-- Ensure touch targets are comfortable and that the timer is not conveyed by color alone.
-- Keep answer confirmation and submission state explicit; prevent accidental double submission.
-- Avoid exposing correct options until server evaluation/submission.
+### Notice discovery and detail
 
-### Scorecard and social proof
+- Provide clear category badges for `jobs`, `admit_card`, `results`, and `schemes`.
+- Display the concise summary and critical dates/eligibility before dense content.
+- Label official apply, result/admit-card, and PDF actions explicitly; indicate external destinations.
+- A click-to-copy action may be added only where a copyable value has a clear user benefit; expose confirmation via a live region.
+- An official-notification preview modal is a proposed enhancement, not an existing verified component. If implemented, preserve keyboard focus, escape handling, and a direct open/download link.
+- Render rich content safely; the backend write and render paths must not rely on client-side sanitation alone.
 
-- Existing scorecard includes BiharFast branding, quiz title, student name/district, result badge, score, accuracy, date, and share actions.
-- Maintain a clear visual hierarchy and accessible contrast; allow long names and quiz titles to wrap.
-- Treat the existing “official” badge/watermark as product branding, not proof of government affiliation.
-- Keep share output readable and avoid adding personally identifying details beyond the student's chosen profile information.
+### Loading, errors, and layout stability
 
-### Notice details
+- Use reserved dimensions or skeletons for asynchronous regions to reduce layout shift.
+- The target is low CLS, not a promise of exactly `CLS = 0`; confirm with field data.
+- A dedicated hero skeleton is a design proposal unless confirmed in the live component tree. It must not flash unnecessarily for cached/fast responses.
+- Keep errors visible and recoverable; never use a success-shaped empty fallback for failed API requests.
 
-- Put the most actionable information (date, eligibility/credentials, benefit/vacancy details) before dense article content.
-- Differentiate apply, admit-card/result, and PDF links with explicit action labels.
-- Sanitize rendered HTML; visibly label external destinations and provide safe new-tab behavior.
-- On small screens, stack actions when side-by-side buttons would become cramped.
+### PWA and install
 
-## 5. Accessibility and content
+- Use the configured app name/icons and standalone manifest behavior.
+- Offer install guidance when appropriate, without blocking content or repeatedly prompting.
+- The current source has both Vite PWA/Workbox configuration and a manually registered public `/sw.js`; validate that users do not receive competing registrations, stale caches, or broken offline navigation.
 
-- Use semantic headings, form labels, buttons, and links; icon-only actions require accessible names.
-- Preserve visible keyboard focus and support full keyboard navigation.
-- Do not use color as the only status cue; pair it with text/iconography.
-- Use plain, actionable Hindi/English copy. Explain abbreviations and avoid overly long CTA labels on mobile.
-- Provide alt text for meaningful imagery and empty alt for purely decorative art.
-- Include reduced-motion styles for category transitions and other non-essential animation.
+### Contributor submission (planned)
+
+- Form order: title, category, primary source/official link, key dates/eligibility, and article content.
+- Mark required fields and show inline, field-specific validation in plain language.
+- Distinguish “Save draft” from “Submit for review”; pending status must be explicit and must not look published.
+- Do not claim plagiarism or destination links were automatically verified unless the relevant service actually ran and returned a result.
+- Make editing, submission status, rejection reason, and resubmission path visible to the contributor.
+
+### Editorial queue / Django Admin (planned)
+
+- Use scannable queue columns for title, category, author, submitted time, and status.
+- Make source and official destination easy to inspect without losing the draft context.
+- Approval/rejection actions require a confirmation/decision reason appropriate to the action; surface resulting status and audit details.
+- Django Admin is the target moderation interface, not a current route implementation. Keep public-facing design consistent if a custom editorial dashboard is later selected.
 
 ## 6. QA checklist
 
-- [ ] No horizontal scrollbar at 320px/360px on home, notice detail, admin, quiz, result, dashboard, and hubs.
-- [ ] Navbar secondary badges are hidden/condensed below the mobile breakpoint.
-- [ ] Search input and clear/search actions remain usable at narrow widths.
-- [ ] Long Hindi title, URL, district, and name wrap without clipping.
-- [ ] Category change updates form copy and conditional field visibility.
-- [ ] Admin submit includes a valid hidden-field fallback for result/admit-card.
-- [ ] Quiz loading, no-active-quiz, rate-limit, submit-error, and completed states are understandable.
-- [ ] Color contrast, keyboard focus, accessible labels, and reduced motion are checked.
+- [ ] Home, notice, admin, quiz, result, dashboard, and hubs checked at 320px, 360px, 390px, tablet, and desktop.
+- [ ] Long Hindi/English titles, labels, author names, and URLs wrap without clipping.
+- [ ] Keyboard focus, accessible names, contrast, zoom, and reduced-motion behavior tested.
+- [ ] Loading skeleton/reserved space reduces layout shifts without delaying fast content.
+- [ ] Category labels and status badges communicate meaning without color alone.
+- [ ] Official links are clearly labeled and work with keyboard and assistive technology.
+- [ ] PWA install, update, cache invalidation, and offline fallback tested on production-like builds.
+- [ ] Contributor/editor screens remain clearly distinct from public/published content.
+- [ ] Design claims and Core Web Vitals targets are checked against implementation and measurements.

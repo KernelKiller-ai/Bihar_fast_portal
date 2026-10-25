@@ -1,147 +1,139 @@
-# BiharFast Technical Requirements Document
+# BiharFast Technical Requirements and Architecture
 
-**Status:** As-built notes plus clearly identified recommendations. This document describes repository evidence, not a live environment audit.
+**Status:** Current implementation plus a staged Django/DRF target. Future-state components are explicitly marked.
 
-## 1. Technology stack
+## 1. System context
 
-| Layer | Observed implementation |
-|---|---|
-| Frontend | React 19, Vite, React Router DOM 7, Tailwind CSS 4, Lucide React |
-| Client identity | Supabase JS Auth client; Google OAuth when configured |
-| Backend | FastAPI, Pydantic 2, Uvicorn, Python Supabase client |
-| Data | Supabase/Postgres accessed through Supabase APIs |
-| Optional cache/rate limit | Upstash Redis REST client; in-process fallbacks exist |
-| Hosting configuration | Vercel frontend rewrites/cache headers; backend URLs reference Render |
-| Notifications | Optional Telegram Bot API background message after new notice |
+```mermaid
+flowchart LR
+  Visitor[Visitor / student browser] --> CDN[Frontend hosting and CDN]
+  CDN --> React[React 19 + Vite SPA / prerendered route shells]
+  React -->|public/admin/quiz JSON| FastAPI[Current FastAPI service]
+  React -->|optional student identity| SupaAuth[Supabase Auth]
+  FastAPI --> SupaDB[(Supabase PostgreSQL via Supabase client)]
+  FastAPI -. optional cache and rate limiting .-> Redis[Upstash Redis REST]
+  FastAPI -. optional new-notice alert .-> Telegram[Telegram]
+  React -->|GTM / GA4 / AdSense / push| ThirdParty[Google and OneSignal]
 
-## 2. Architecture and state flow
-
-```text
-React SPA / React Router
-  ├─ App feed state, search, category filters
-  ├─ Supabase AuthContext (session, modal, OAuth)
-  ├─ Quiz-player state + localStorage history
-  └─ HTTP JSON requests
-       ▼
-FastAPI
-  ├─ Notice routes ──► database.py ──► Supabase notices
-  ├─ Quiz router ────► Supabase quiz/leaderboard tables
-  ├─ Optional Upstash cache and rate limiting
-  └─ Optional Telegram background alert
+  React -. target API contract /api/posts/ .-> DRF[Planned Django + DRF]
+  DRF -. managed moderation .-> DjangoAdmin[Django Admin: editor / contributor permissions]
+  DRF -. PostgreSQL connection, after schema and identity review .-> SupaDB
+  DRF -. post-commit event, planned .-> Push[OneSignal notification dispatch]
 ```
 
-`frontend/src/main.jsx` mounts `AuthProvider` around `BrowserRouter` and `App`. The application uses React component state for filters and interactions. Authentication state is restored and subscribed to through `AuthContext`. Quiz attempts in the student dashboard are stored in `localStorage`, not fetched from a profile/attempt table.
+The solid path is the implementation evidenced by source. Dashed paths are target architecture and must not be presented as deployed.
 
-The frontend has no general React error boundary identified in the checked-in route tree. FastAPI logs unhandled exceptions and returns a JSON 500 response; individual route handlers also map selected failures to HTTP errors. Optional cache errors can fall back to database reads.
+## 2. Technology stack
 
-## 3. API inventory
-
-### Notice API
-
-| Method | Route | Contract |
+| Layer | Checked-in implementation | Target / constraint |
 |---|---|---|
-| GET | `/` | Health/status response |
-| GET | `/api/notices`, `/api/posts` | Active, published notice feed; rate limited; cached when Redis is available |
-| GET | `/api/posts/{slug}` | Active, published notice detail; rate limited; cached when Redis is available |
-| GET | `/api/admin/posts?status=...` | Admin list; bearer token required |
-| POST | `/api/admin/posts` | Create/upsert notice and schedule cache invalidation/Telegram alert; bearer token required |
-| PUT | `/api/admin/posts/{post_id}` | Update notice; bearer token required |
-| POST | `/api/admin/posts/{post_id}/status` | Change status; bearer token required |
-| GET | `/api/sitemap-posts.xml` | Published notice sitemap |
+| Web client | React 19, Vite 8, Tailwind CSS 4, React Router, Lucide React | Retain SPA and established routes while migrating backend capabilities incrementally |
+| SEO/PWA | Vite PWA/Workbox configuration, public service worker registration, prerender script, static and dynamic sitemap assets | Reconcile the generated Workbox worker and manually registered `/sw.js`; test install/update/offline behavior on deployed builds |
+| API | Python FastAPI notice/admin endpoints and quiz router | Django 6 + Django REST Framework for contributor/editorial APIs, subject to runtime/dependency compatibility validation |
+| Data | Supabase PostgreSQL accessed by Python Supabase client/PostgREST | Direct PostgreSQL connection/pooling from Django is a proposed migration path; verify connection URI, SSL, pooler mode, schema, and migration ownership first |
+| Cache/rate limiting | Optional Upstash Redis REST cache/rate limiting; some in-process fallback behavior | Preserve graceful cache degradation; introduce shared cache for Django only where measured and needed |
+| Hosting | Frontend Vercel configuration; backend URL `https://bihar-fast-portal.onrender.com`; Cloudflare is referenced in repository documentation | Confirm actual routing, CDN cache policy, and service health in deployment configuration before changing assumptions |
 
-Admin notice creation accepts title, slug, department, category, total posts, last date, eligibility, apply/PDF URLs, short description, article content, SEO fields, FAQs, application steps, and selection process. Category identifiers are normalized to `jobs`, `admit_card`, `results`, or `schemes`. The update path currently maps unknown categories—including schemes—to `jobs`; correct/verify before depending on scheme-category edits.
+The root `package.json` is not the frontend application manifest; frontend scripts and dependencies are declared in `frontend/package.json`.
 
-The backend responds with JSON `success`/`data` envelopes on primary notice routes. HTTP status codes should be treated as authoritative. For detail data, the client expects `{success: true, data: ...}`.
+## 3. API contracts
 
-### Quiz API
+### Current FastAPI API
 
-| Method | Route | Access |
+| Method and path | Function |
+|---|---|
+| `GET /` | Health JSON |
+| `GET /api/notices`, `GET /api/posts` | Active published notice feed (up to 50) |
+| `GET /api/posts/{slug}` | Published notice detail |
+| `GET /api/admin/posts` | Admin notice list |
+| `POST /api/admin/ai/extract` | Admin PDF/raw-text extraction |
+| `POST /api/admin/posts`, `POST /api/posts/create` | Create/publish notice |
+| `PUT /api/admin/posts/{post_id}` | Update notice |
+| `POST /api/admin/posts/{post_id}/status` | Change notice status |
+| `DELETE /api/admin/posts/{post_id}` | Delete notice |
+| `GET /api/sitemap-posts.xml` | Dynamic sitemap for published notices |
+| `GET/POST /api/quiz/...` | Public quiz selection, submission, and leaderboard |
+| `GET/POST/DELETE /api/quiz/admin/...` | Quiz administration |
+
+The current admin dependency verifies a Supabase bearer JWT and `profiles.role` values `admin` or `creator`; a configured legacy `ADMIN_API_TOKEN` is also accepted. Quiz submission grades server-side and applies a non-demo daily IP limit.
+
+### Target Django/DRF contract
+
+Keep public URL semantics stable during the migration:
+
+| Method and path | Target behavior |
+|---|---|
+| `GET /api/posts/` | Paginated active, approved/published posts; optional category/search filters |
+| `GET /api/posts/{slug}/` | Public detail for approved/published posts only |
+| `POST /api/contributor/posts/` | Authenticated contributor creates a draft/submission; never public by default |
+| `GET /api/contributor/posts/` | Authenticated contributor lists only their submissions |
+| `POST /api/contributor/posts/{id}/submit/` | Validated transition from draft to pending review |
+| `GET /api/editor/posts/?status=pending` | Staff/editor queue |
+| `POST /api/editor/posts/{id}/approve/` | Permission-checked approval and publish transition |
+| `POST /api/editor/posts/{id}/reject/` | Permission-checked rejection with an editorial reason |
+
+Use JSON request/response bodies, explicit validation errors, pagination, and documented category/status enums. The current API uses `/api/notices` and `/api/posts` feed aliases; adoption of the trailing-slash canonical target must preserve aliases or coordinate a client change. Do not claim these DRF endpoints exist until implemented.
+
+## 4. Editorial, identity, and security requirements
+
+### Planned RBAC
+
+- **Contributor:** create and edit own drafts; submit for review; cannot publish or change another author's content.
+- **Editor/staff:** inspect queue, edit submissions, approve/reject, and record a reason.
+- **Administrator:** manage users, permissions, categories, and editorial settings.
+- Enforce authorization in DRF permission classes and service/state-transition layer, not only by hiding Django Admin controls.
+- Record author, reviewer, timestamps, transition, and decision reason. Restrict state transitions to allowed server-side paths.
+
+### Identity migration
+
+Current student identity is optional Supabase Auth; current admin authorization uses Supabase JWT plus profile role and possibly a legacy token. The target Django user model and role groups are not yet implemented. Before contributor rollout, choose an explicit identity ownership/bridge plan, account linking and recovery rules, session/JWT strategy, and retirement plan for the legacy token. Do not assume Supabase `profiles` can be mapped to Django users without a verified schema and migration.
+
+### Security baseline
+
+- Keep service-role/database credentials and Django secret keys server-side; use environment/hosting secret stores, never frontend variables.
+- Require HTTPS, secure cookie/session settings, CSRF protection for session-authenticated writes, and narrowly scoped CORS.
+- Apply request size limits, server-side validation, rate limits, audit logging, and safe HTML sanitization at write/render boundaries.
+- Validate official URLs (scheme, hostname policy, redirects, DNS/IP protections) at the backend publication boundary. A helper exists in current code, but invocation on notice writes was not found.
+- Keep quiz answer keys out of public responses and preserve backend scoring.
+- Define Supabase RLS and Django database-role privileges from an exported schema and threat model; do not assume service-role access is protected by RLS.
+- Current application integrations include GTM `GTM-MQVP93FK`, GA4 `G-2N03Q64SX9`, AdSense `ca-pub-2133187047291443`, and OneSignal `b7c92f29-666a-42e6-ba4b-5148849d773f`. Their presence is not proof of consent compliance or event coverage.
+
+## 5. Third-party integration requirements
+
+| Service | Current evidence | Requirement |
 |---|---|---|
-| GET | `/api/quiz/available` | Public |
-| GET | `/api/quiz/today?quiz_id=...&subject=...` | Public; selected quiz or active fallback |
-| POST | `/api/quiz/submit` | Public submission, server evaluated |
-| GET | `/api/quiz/leaderboard/{quiz_id}` | Public |
-| GET | `/api/quiz/admin/all-quizzes` | Admin bearer |
-| GET | `/api/quiz/admin/quiz-questions/{quiz_id}` | Admin bearer |
-| POST | `/api/quiz/admin/create-quiz` | Admin bearer |
-| POST | `/api/quiz/admin/toggle-status/{quiz_id}` | Admin bearer |
-| DELETE | `/api/quiz/admin/question/{question_id}` | Admin bearer |
-| DELETE | `/api/quiz/admin/quiz/{quiz_id}` | Admin bearer |
-| POST | `/api/quiz/admin/add-questions` | Admin bearer |
+| AdSense | Meta verification/account ID `ca-pub-2133187047291443`, deferred loader, `frontend/public/ads.txt` | Keep seller declaration synchronized; validate ad slots, consent and Core Web Vitals impact before release |
+| GTM | Container `GTM-MQVP93FK` in head and noscript container | Maintain one consistent container and document tags/events managed outside source |
+| GA4 | Measurement ID `G-2N03Q64SX9` loaded after page load/idle | Define event schema and consent handling; do not treat loader presence as confirmed analytics coverage |
+| OneSignal | Web SDK v16, app ID `b7c92f29-666a-42e6-ba4b-5148849d773f`, production-domain condition, `OneSignalSDKWorker.js` | Prompt only with user permission; planned approval dispatch must be post-commit, retryable, and idempotent |
+| Search/crawlers | Canonical/meta shell, WebSite/SearchAction JSON-LD, prerendered metadata, robots/sitemaps, Vercel post SEO function | Validate per-route output; current static metadata lookup does not cover all parameterized paths |
 
-Quiz read/submit routes apply rate limits. Non-demo submissions use an IP-derived daily limit (six attempts per date in the current implementation) and can be written to the leaderboard. Demo submissions skip that IP usage count and do not qualify for leaderboard persistence. The quiz system uses India Standard Time for date selection.
+Third-party loaders are deferred until page load/idle (with timeout fallback) in `frontend/index.html` to reduce critical-path work. `ads.txt` and a publisher ID indicate account configuration, not an actual ad placement.
 
-### Deployment proxy and SEO
+## 6. Performance, availability, and observability
 
-`frontend/vercel.json` rewrites `/api/*` to the Render backend and `/post/:slug` to `frontend/api/post-seo.js`; it also serves the SPA for other application paths and applies immutable caching to `/assets/*`. Some frontend components also use an API base URL directly, so confirm environment settings and actual deployment routing together.
+These are requirements/targets; no production measurements in this repository certify them.
 
-The footer issues `POST /api/subscribe`; although a `subscribers` upsert helper exists, no matching FastAPI route was found. Treat newsletter subscription as unverified.
+- Product target: mobile page speed under 1.5 seconds, measured with an explicit metric and field/lab method (for Core Web Vitals, report p75 LCP/INP/CLS separately).
+- API target: establish p50/p95/p99 by endpoint; the proposed sub-200ms API target requires load testing and must identify whether it is edge, service, or database response time.
+- Cache public read-only feeds/details only with explicit TTL and invalidation; never share authenticated responses across users.
+- Edge-cache immutable versioned frontend assets. Set public API/CDN TTLs only with verified purge behavior after publication.
+- Add request IDs, structured logs, health/readiness checks, error tracking, latency/error dashboards, database/cache metrics, and alerts before claiming availability objectives.
+- Redis is optional in the current implementation; cache failure must not silently return stale success-shaped data or prevent basic uncached reads.
 
-## 4. Configuration
+## 7. SEO, PWA, and verification behavior
 
-### Backend variables observed in code
+- Vite build runs `vite build` followed by `frontend/scripts/prerender.js`, which writes route-specific HTML metadata shells from `STATIC_ROUTE_METADATA`; it does not server-render route-specific React content.
+- The backend exposes `/api/sitemap-posts.xml`; the frontend also checks in `sitemap.xml` and `sitemap-static.xml`. `frontend/public/robots.txt` permits crawling and lists sitemaps. The backend's own `/robots.txt` is a separate route that returns `Disallow: /`; do not confuse the two hosts.
+- `backend/test_static_seo_prerender.py` checks generated route shell metadata when `frontend/dist` exists. `verify_30_urls_deep.py` and `verify_30_urls_full.py` make production URL checks when explicitly run; a checked-in JSON result is a timestamp-less snapshot, not a current health assertion.
+- The Vite config declares PWA/Workbox behavior and the HTML registers a public `/sw.js`; test for worker conflicts, cache versioning, navigation fallback, and update behavior.
+- The homepage has WebSite/SearchAction JSON-LD. Route-level structured data is not established by the current RouteSEO path, even though a metadata helper can accept schema.
 
-- `SUPABASE_URL`
-- One of `SUPABASE_SECRET_KEY`, `SUPABASE_SERVICE_ROLE_KEY`, or `SUPABASE_KEY` (server client selection order)
-- `ADMIN_API_TOKEN`
-- Optional `UPSTASH_REDIS_REST_URL`, `UPSTASH_REDIS_REST_TOKEN`
-- Optional `TELEGRAM_BOT_TOKEN`, `TELEGRAM_CHANNEL_ID` or `TELEGRAM_CHAT_ID`
+## 8. Deployment configuration and open prerequisites
 
-`ALLOWED_ORIGINS` appears in older documentation but the inspected FastAPI CORS configuration uses a source-defined origin list and regex; confirm actual deployment configuration rather than assuming that environment variable is consumed.
-
-### Frontend variables observed in code
-
-- `VITE_SUPABASE_URL`
-- `VITE_SUPABASE_ANON_KEY`
-- `VITE_API_BASE_URL` where API-consuming components use it
-
-Vite variables are bundled into browser code. Never place an admin token, Supabase service/secret key, or other privileged secret in a `VITE_*` variable.
-
-## 5. Security and RBAC
-
-### Implemented controls observed
-
-- Student identity is Supabase Auth; Google OAuth is initiated from the global auth context.
-- Admin notice and quiz endpoints use HTTP Bearer credentials checked against `ADMIN_API_TOKEN` with constant-time comparison.
-- Admin API rate-limiting/failed-token lockout logic exists; some lockout state uses Redis if configured and otherwise process memory.
-- CORS middleware defines allowed origins and a localhost/BiharFast regex.
-- Public request rate limits are configured for feed, post details, sitemap, and quiz routes.
-- Notice HTML is sanitized in the result/detail presentation path using DOMPurify.
-- Quiz public responses omit answer-key fields; scoring queries answers server-side.
-
-### Verify before production authorization claims
-
-- No Supabase RLS policy definitions are included in the repository. Inspect the live project and ensure tables accessed by the browser use least-privilege policies. Backend use of a secret/service key bypasses RLS protections; keep it server-only.
-- The official HTTPS URL helper in `backend/database.py` has no call site in the inspected notice publication route. It does not currently prove that writes are restricted to official links.
-- A shared admin bearer token is a limited internal-admin mechanism, not role-based multi-user admin identity. Consider migration to individual authenticated admin identities and auditable roles.
-- Forwarded client-IP headers should only be trusted behind a known proxy that overwrites them.
-- Avoid returning internal exception details to public clients; current global handler includes exception text in the 500 JSON body.
-- Keep CORS origins exact and environment-aware; do not allow a broad domain regex in production without a clear need.
-
-## 6. Reliability and error handling
-
-- FastAPI health endpoint: `GET /`.
-- GZip middleware compresses responses above its configured threshold.
-- Notice feed/detail can use Redis and Cache-Control directives; write/status updates schedule cache invalidation.
-- Redis access failures in cache paths fall back to uncached operations; monitor logs and database load during outages.
-- API handlers include HTTP error responses; the frontend has route-level loading/error handling. No application-wide React error boundary was located.
-- Telegram alert delivery is best-effort background work; notice persistence and Telegram delivery are separate outcomes.
-
-## 7. Performance and scale requirements
-
-### Current foundations
-
-- Vercel serves built static assets with one-year immutable caching and SPA routing.
-- FastAPI enables gzip and uses optional Redis for feed/detail/sitemap data.
-- Notice feed query selects a compact set of columns, filters active/published categories, orders by creation time, and limits results to 50.
-- Frontend design work includes narrow-screen constraints and responsive navbar/search behavior.
-
-### Recommended requirements (not measured guarantees)
-
-- Establish p50/p95 API latency, cache hit ratio, error rate, and freshness monitoring before capacity claims.
-- Keep static assets compressed and appropriately sized; use CDN delivery for frontend media and assets.
-- Use Supabase connection pooling/transaction-pooler settings appropriate to the hosting runtime; the code uses Supabase client APIs and does not establish a custom SQL connection-pool setting.
-- Add load tests for the feed, post details, quiz submissions, and leaderboard writes, with realistic cache-cold and cache-warm scenarios.
-- To plan for one million users, model concurrent traffic and database reads/writes; CDN caching alone does not ensure application/database capacity.
-- Consider Cloudflare/edge caching and asynchronous leaderboard aggregation only after correctness, invalidation, privacy, and consistency requirements are specified.
-- Responsive QA should include 320px/360px, 390px, tablet, and desktop viewport sizes, including long Hindi/English content.
+- Frontend API fallback: `https://bihar-fast-portal.onrender.com`; `VITE_API_BASE_URL` can override it. Vercel routing is configured in `frontend/vercel.json`.
+- Frontend Supabase Auth config: `VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY`.
+- Backend Supabase credential resolution includes `SUPABASE_SECRET_KEY`, `SUPABASE_SERVICE_ROLE_KEY`, then `SUPABASE_KEY`; configure the least-privileged suitable secret.
+- Optional integrations include Upstash REST credentials, `ADMIN_API_TOKEN`, and Telegram credentials.
+- Before Django connects to Supabase PostgreSQL: export the correct project schema, verify pooler/direct URI mode and SSL, select migration ownership, test least-privilege access, and document rollback. Django `inspectdb` output is evidence to review—not authority to blindly apply migrations.
+- The repository has no Django package, settings module, DRF app, Django Admin setup, or Django migrations at this time.

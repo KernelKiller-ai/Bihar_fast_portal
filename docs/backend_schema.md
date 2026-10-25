@@ -1,113 +1,106 @@
-# BiharFast Database and Schema Reference
+# BiharFast Database Architecture and Schema Reference
 
-## 1. Important accuracy note
+**Status:** Repository-evidenced table/field usage plus a proposed Django moderation model. This is not a live Supabase catalog export.
 
-This repository does **not** contain the canonical Supabase DDL/catalog export for `public.notices` or the quiz tables. The only checked-in SQL migration modifies `ai_usage_ledger` and `scraped_inbox`. Therefore this document cannot truthfully enumerate all 28 `notices` columns or confirm exact SQL types, defaults, nullability, constraints, indexes, or JSONB layouts.
+## 1. Source of truth and safety boundary
 
-Do not use field names observed in application code as a substitute for the live database definition. In particular, `important_dates` and `application_fees` were not established by tracked SQL or the inspected notice/quiz data-access code. Obtain and version a sanitized schema-only export from the deployed Supabase project to complete that contract.
+The repository contains no complete canonical DDL for `public.notices`, quiz tables, `profiles`, or base tables used by the tracked migration. The only checked-in SQL is [202609170001_phase2_concurrency.sql](../supabase/migrations/202609170001_phase2_concurrency.sql). It changes existing tables and creates one function; it does not create those base tables. Its presence does not prove it has been applied to the deployed project.
 
-## 2. Tables observed in application/migration code
+Consequently, exact SQL types, nullability, defaults, primary/foreign keys, RLS policies, grants, and all deployed indexes cannot be asserted. Field names below are observed application references, not a substitute for catalog metadata. **Do not create Django models or run migrations against the existing Supabase schema based only on this document.**
 
-| Table | Evidence in repository | Observed purpose |
+## 2. Observed tables and application use
+
+| Table | Observed use | Evidence boundary |
 |---|---|---|
-| `notices` | `backend/database.py`, `backend/main.py` | Published public notices and admin CRUD |
-| `subscribers` | `backend/database.py` helper | Email upsert; route integration not found |
-| `master_quizzes` | `backend/database.py`, `backend/quiz_router.py` | Quiz metadata and active/date selection |
-| `master_questions` | `backend/quiz_router.py` | Quiz questions, options, answer key, explanation |
-| `master_leaderboard` | Quiz submit/leaderboard code | Result/ranking records |
-| `quiz_ip_rate_limits` | Quiz submit code | Per-IP-hash daily attempt count |
-| `ai_usage_ledger` | Tracked migration | Daily LLM usage quota |
-| `scraped_inbox` | Tracked migration | Content intake/deduplication footprint |
+| `notices` | Public notice feed/detail and admin CRUD | Runtime code reads/writes it; no complete table DDL |
+| `profiles` | Backend admin authorization checks `role`; frontend admin checks user role | Application references only; exact columns/constraints/RLS unverified |
+| `subscribers` | Email upsert helper | Frontend requests `/api/subscribe`, but no matching FastAPI route was found |
+| `master_quizzes` | Quiz metadata, active/date selection, admin edits | Runtime query fields only |
+| `master_questions` | Quiz questions/options and server-side answer key | Runtime query fields only |
+| `master_answer_keys` | Server-side quiz answer data is referenced in quiz logic | Runtime/code comments; schema/policy not verified |
+| `master_leaderboard` | Persisted quiz rankings/results | Runtime query/insert fields only |
+| `quiz_ip_rate_limits` | Daily IP-hash quiz-attempt limiting | Runtime upsert conflict target; database constraint not in tracked migration |
+| `ai_usage_ledger` | Daily AI-generation quota counter | Existing base table presumed by tracked migration; full DDL absent |
+| `scraped_inbox` | Scraped-content intake/deduplication footprint | Existing base table presumed by tracked migration; full DDL absent |
 
-No profile table or persistent per-student attempt-history table access was identified. Student-specific history and district preference are held in browser localStorage.
+No `articles` table DDL or access was identified; `notices` is the observed content table. No persistent student-attempt-history table access was found. Student history is stored in browser localStorage.
 
-## 3. `notices`: observed application contract
+## 3. `notices`: observed fields and behavior
 
-### Fields selected for the public feed
+### Fields referenced by code
 
-`backend/database.py` selects:
+The public feed selects `id`, `slug`, `title`, `department`, `category`, `total_posts`, `last_date`, `eligibility`, `fees`, `apply_url`, `pdf_url`, `created_at`, and `status`. Other read/write references include `short_desc`, `content`, `meta_title`, `meta_desc`, `faqs`, `how_to_apply`, `selection_process`, `updated_at`, `last_edited_by`, and `is_active`.
 
-`id`, `slug`, `title`, `department`, `category`, `total_posts`, `last_date`, `eligibility`, `fees`, `apply_url`, `pdf_url`, `created_at`, and `status`.
+The app treats `faqs` as an array of `{q, a}` objects and application/selection steps as list-like content; this does not establish their database storage types. Admin upsert uses `slug` as a conflict target, which requires a matching database constraint/index but does not prove its exact definition.
 
-The feed also filters `is_active = true`, `status = 'published'`, and one of `jobs`, `admit_card`, `results`, or `schemes`, sorts by `created_at` descending, and limits to 50.
+### Current read/write semantics
 
-### Additional fields read/written in code
+- Public reads filter `is_active = true`, `status = 'published'`, and category in `jobs`, `admit_card`, `results`, `schemes`; feed is ordered newest-first and limited to 50.
+- Create writes an active/published notice and normalizes category to the four supported values.
+- The current update category normalization does not preserve `schemes`.
+- Admit-card and result forms submit text fallback values for hidden `total_posts`; this field must not be assumed numeric.
+- `official_link`, `author_id`, a unique slug constraint, or any requested 28-column structure are not verified schema facts. The code uses `apply_url` and `pdf_url` for action destinations.
 
-| Field | Observed use |
+## 4. Quiz query fields
+
+These names are query/insert projections, not a verified data dictionary.
+
+| Table | Observed fields |
 |---|---|
-| `short_desc` | Notice summaries and SEO fallback |
-| `content` | Long-form article content |
-| `meta_title`, `meta_desc` | SEO metadata |
-| `faqs` | Admin create/update payload and detail rendering; app treats it as an array of `{q, a}` objects |
-| `how_to_apply` | Admin create/update payload; application-step array |
-| `selection_process` | Admin create/update payload; step array |
-| `updated_at` | Set during update/upsert and selected for sitemap timestamps |
-| `last_edited_by` | Set to `"admin"` by update helper |
-| `is_active` | Public feed/detail visibility filter and create default |
+| `master_quizzes` | `id`, `title`, `subject`, `slot`, `quiz_date`, `total_questions`, `duration_minutes`, `is_active`, `created_at` |
+| `master_questions` | `id`, `quiz_id`, `question_text`, `option_a`, `option_b`, `option_c`, `option_d`, `correct_option`, `explanation`, `order_index` |
+| `master_leaderboard` | Student/quiz identifiers, name/district, score, question counts, accuracy, and attempt/creation timing are used; exact complete projection must be checked in code/schema |
+| `quiz_ip_rate_limits` | `ip_hash`, `attempt_date`, `attempt_count`, `updated_at`; code upserts using `ip_hash,attempt_date` |
 
-The runtime upsert uses `on_conflict="slug"`, which implies the deployment is expected to support a slug conflict target, but the exact uniqueness constraint is not verifiable without DDL.
+Public question responses exclude answer keys; FastAPI retrieves the key for server-side scoring. The backend calls `increment_quiz_attempts` for atomic attempt counting, but no definition for that RPC is in the tracked migration. Its live existence and implementation are unverified.
 
-### Business behavior observed
+## 5. Tracked migration effects
 
-- New notice rows are normalized to one of four category values by the create handler.
-- New notices are written with `is_active = true` and `status = "published"`.
-- Public feed/detail reads include only active published records.
-- Admin list reads can optionally filter by status.
-- `fees` is selected for the feed but is not part of the category-driven create form fields shown in the current UI.
-- Admit-card and result form submissions hide `total_posts` but send fallback strings; these values are presentation-compatible text, not numbers.
-- The edit handler's category normalization does not currently preserve `schemes`; it maps unrecognized categories to `jobs`.
+The migration `202609170001_phase2_concurrency.sql`:
 
-### Unknown until schema export
+1. Adds unique constraint `ai_usage_ledger_usage_date_key` on `ai_usage_ledger.usage_date`.
+2. Defines `increment_daily_llm_quota(p_usage_date date, p_max_limit integer DEFAULT 10) RETURNS boolean`. It inserts one usage count or atomically increments the date row only while `posts_generated < p_max_limit`; a missing return indicates the quota was not incremented.
+3. Adds `scraped_inbox.content_hash`, backfills it from normalized department/title/PDF/apply URL values using MD5, makes it non-null, and creates unique index `scraped_inbox_content_hash_key`.
 
-Do not assume the requested total of 28 columns, SQL types (including whether arrays are `jsonb`), nullable/default behavior, check constraints, foreign keys, indexes, RLS policies, or generated values. Frontend aliases such as `totalPosts`, `lastDate`, `pdfUrl`, and `applyUrl` are client compatibility fields, not evidence of separate database columns.
+It does not create the base tables or define the quiz RPC. Migration application status must be checked against the intended Supabase project.
 
-## 4. Quiz data contract observed in queries
+## 6. Roles, RLS, and authorization
 
-These are names used in Supabase selects/inserts and API models, **not a verified SQL dictionary**.
+- Runtime admin code checks `profiles.role` values `admin` and `creator`; the frontend also contains role-oriented admin checks.
+- These strings are application-level role values, not evidence of PostgreSQL roles or a complete role table.
+- No tracked SQL defines `CREATE POLICY`, RLS enablement, grants, or database roles. This absence does not establish the live project's policy state.
+- Backend Supabase access uses a server-side key resolver that may select a secret/service-role credential; such credentials must never be exposed in the frontend.
+- Confirm policy behavior separately for anon, authenticated, and server-side roles before the Django service connects.
 
-### `master_quizzes`
+## 7. Proposed editorial data lifecycle
 
-Observed fields: `id`, `title`, `subject`, `slot`, `quiz_date`, `total_questions`, `duration_minutes`, `is_active`, and `created_at`.
+The planned contributor workflow requires these logical states:
 
-### `master_questions`
+```text
+draft -> pending -> approved
+                   \-> rejected
+rejected -> draft (resubmission after edits)
+```
 
-Observed fields: `id`, `quiz_id`, `question_text`, `option_a`, `option_b`, `option_c`, `option_d`, `correct_option`, `explanation`, and `order_index`.
+`approved` is the target public state. The current application uses active records with `status = 'published'`; a migration must explicitly map legacy public rows to the target approved state (or retain a compatibility translation at the API boundary). Never expose `draft`, `pending`, or `rejected` records through public API, sitemap, or cached feed.
 
-Public quiz responses select question text/options/order without `correct_option` or explanation; the submission endpoint loads the answer key server-side. The precise relationship constraint and deletion behavior are not in tracked DDL.
+Logical audit requirements for the target include the author, reviewer, created/submitted/decision timestamps, rejection reason, and state transition history. Whether those attributes belong on `notices`, a review-history table, or both must be decided from the verified deployed schema and migration strategy.
 
-### `master_leaderboard`
+## 8. Django ORM mapping plan (not generated models)
 
-The backend writes and reads leaderboard records for submitted non-demo quiz attempts. Field projections use student/quiz identity, name/district, score, question counts, accuracy, and creation/attempt timing. Exact persisted column set, type, uniqueness, retention, and ordering indexes require schema inspection.
+No Django application or ORM model exists in this repository. Exact model definitions corresponding to Supabase cannot be truthfully authored without canonical DDL. The safe mapping sequence is:
 
-### `quiz_ip_rate_limits`
+1. Export schema-only catalog metadata and migration history from the correct Supabase project; exclude rows and secrets.
+2. Reconcile every referenced table, type, default, constraint, index, relation, and RLS rule with application code.
+3. Run Django `inspectdb` against a read-only/staging connection and review generated types, primary keys, naming, and unmanaged-table behavior.
+4. Use reviewed unmanaged mappings (`managed = False`) for legacy tables until ownership of schema changes is explicitly transferred to Django migrations.
+5. Keep Django auth tables and editorial additions in a documented, migration-owned schema; choose a custom user model before the first migration if required.
+6. Test least-privilege DB access, public/API compatibility, rollback, and content visibility before production cutover.
 
-The rate limiter reads/upserts `ip_hash`, `attempt_date`, `attempt_count`, and `updated_at`, using the pair `ip_hash,attempt_date` as an upsert conflict target. The implementation intends to allow six non-demo attempts per IP hash/date. Database-level uniqueness and race safety are not proven by the tracked migration.
+Do not allow `inspectdb` output or Django Admin to imply that existing tables are safe to mutate. The planned Django roles are contributor, staff/editor, and administrator; they should use Django groups/permissions and server-side policy checks. Reconcile these with current Supabase Auth/profile identities before allowing writes.
 
-## 5. Other database access
+## 9. Indexing and performance
 
-### `subscribers`
+The public feed filters status/category/active and orders by `created_at`; detail lookup uses slug; admin filtering may use status. Candidate indexes for evaluation include combinations supporting public visibility and recency plus a unique slug index, but **none should be described as existing or added without query-plan and DDL verification**. The only indexes/constraint defined in checked-in SQL are the AI usage date uniqueness and scraped inbox hash uniqueness above.
 
-The database utility upserts `{"email": normalized_email}` with conflict target `email`. The inspected FastAPI route set contains no `/api/subscribe` handler, despite a frontend footer request to that path. Do not claim the public subscription flow is operational without resolving this.
-
-### Migration-managed tables
-
-`supabase/migrations/202609170001_phase2_concurrency.sql`:
-
-- Adds a unique constraint to `ai_usage_ledger.usage_date`.
-- Creates `increment_daily_llm_quota(date, max_limit)` to atomically increment `posts_generated` below the cap.
-- Adds/backfills non-null `scraped_inbox.content_hash` and a unique index over it.
-
-The migration does not define the full base tables, and migration presence alone does not prove it has been applied to production.
-
-## 6. RLS, backups, and schema completion checklist
-
-No `CREATE POLICY`/RLS migration was found in tracked SQL. Verify live RLS policies table by table. The backend's Supabase key resolver prefers secret/service-role keys; those credentials bypass ordinary RLS and must remain server-side.
-
-To complete this reference safely:
-
-1. Export schema-only DDL/catalog metadata from the correct Supabase project (exclude data and secrets).
-2. Confirm environment/project identity and migration state.
-3. Record every notices column with type, nullability, default, generated behavior, and constraints.
-4. Document indexes and conflict targets used by upserts.
-5. Document RLS policies, grants, and foreign-key/delete behavior.
-6. Add the sanitized DDL or a reproducible migration to version control and update this document from it.
+Validate index selectivity, query plans, pooler behavior, cache TTL, and invalidation with representative data. “Sub-millisecond” execution is not a repository-verified guarantee or requirement.

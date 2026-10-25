@@ -4,9 +4,12 @@ import hmac
 import json
 import logging
 import asyncio
+import ipaddress
+import socket
+from concurrent.futures import ThreadPoolExecutor, TimeoutError as FutureTimeoutError
 from datetime import datetime, timezone
 from urllib.parse import urlparse
-from typing import Optional, Any, List, Dict, Literal
+from typing import Optional, Any, List, Dict, Literal, NoReturn, get_args
 import urllib.parse
 import unicodedata
 
@@ -17,7 +20,7 @@ from fastapi.responses import JSONResponse, PlainTextResponse
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.middleware.gzip import GZipMiddleware
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, field_validator
 from upstash_redis import Redis
 from dotenv import load_dotenv
 import orjson
@@ -128,7 +131,8 @@ async def global_exception_handler(request: Request, exc: Exception):
 app.include_router(quiz_router)
 
 # ----------------- PYDANTIC SCHEMAS -----------------
-PostCategory = Literal["jobs", "admit_card", "results", "schemes", "scholarship", "syllabus", "answer_key"]
+PostCategory = Literal["jobs", "admit_card", "results", "schemes"]
+POST_CATEGORIES = frozenset(get_args(PostCategory))
 
 
 def normalize_post_category(category: str) -> str:
@@ -142,7 +146,7 @@ def normalize_post_category(category: str) -> str:
         "scholarships": "scholarship",
         "answerkey": "answer_key",
     }.get(normalized, normalized)
-    if normalized not in db.POST_CATEGORIES:
+    if normalized not in POST_CATEGORIES:
         raise HTTPException(status_code=422, detail=f"Unsupported post category: {category}")
     return normalized
 
@@ -189,6 +193,35 @@ class PostUpdateRequest(BaseModel):
 
 class StatusUpdateRequest(BaseModel):
     status: str
+
+
+class SubscribeRequest(BaseModel):
+    email: str = Field(max_length=254)
+
+    @field_validator("email", mode="before")
+    @classmethod
+    def normalize_email(cls, value: Any) -> Any:
+        return value.strip().lower() if isinstance(value, str) else value
+
+    @field_validator("email")
+    @classmethod
+    def validate_email_format(cls, value: str) -> str:
+        local_part, separator, domain = value.partition("@")
+        email_pattern = (
+            r"[a-z0-9!#$%&'*+/=?^_`{|}~-]+"
+            r"(?:\.[a-z0-9!#$%&'*+/=?^_`{|}~-]+)*"
+            r"@[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?"
+            r"(?:\.[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?)+"
+        )
+        if (
+            not separator
+            or len(local_part) > 64
+            or len(value) > 254
+            or not re.fullmatch(email_pattern, value)
+        ):
+            raise ValueError("Please provide a valid email address.")
+        return value
+
 
 # ----------------- SECURITY & AUTH -----------------
 def extract_client_ip(request: Request) -> str:
@@ -345,6 +378,8 @@ ALLOWED_HTML_ATTRS = {
     "td": ["colspan", "rowspan"],
     "th": ["colspan", "rowspan"],
 }
+URL_DNS_TIMEOUT_SECONDS = 2
+_URL_DNS_EXECUTOR = ThreadPoolExecutor(max_workers=4, thread_name_prefix="url-dns")
 
 def sanitize_admin_html(value: Optional[str]) -> str:
     """Allowlist-based sanitizer for admin-authored rich content.
@@ -381,14 +416,75 @@ def validate_slug_or_none(slug: Optional[str]) -> Optional[str]:
         raise HTTPException(status_code=422, detail="Invalid slug format.")
     return clean
 
-def validate_safe_url(url: Optional[str]) -> Optional[str]:
-    """Allow only http(s) absolute URLs; blocks javascript:, data:, etc."""
-    if not url:
+def validate_safe_url(url: Optional[str], field_name: str = "URL") -> Optional[str]:
+    """Allow absolute public HTTP(S) URLs without making outbound requests."""
+    if url is None or not str(url).strip():
         return None
+
+    def reject(reason: str) -> NoReturn:
+        raise HTTPException(status_code=422, detail=f"{field_name}: {reason}")
+
     clean = str(url).strip()
-    parsed = urlparse(clean)
-    if parsed.scheme not in ("http", "https") or not parsed.netloc:
-        raise HTTPException(status_code=422, detail="Invalid URL: only absolute http(s) URLs are allowed.")
+    try:
+        parsed = urlparse(clean)
+        hostname = parsed.hostname
+        port = parsed.port
+    except ValueError as exc:
+        reject("URL is malformed.")
+
+    if parsed.scheme.lower() not in ("http", "https"):
+        reject("Only http(s) URLs are allowed.")
+    if not hostname or not parsed.netloc:
+        reject("An absolute URL with a hostname is required.")
+    if parsed.username is not None or parsed.password is not None:
+        reject("URLs containing credentials are not allowed.")
+    if port is not None and not 1 <= port <= 65535:
+        reject("URL port is invalid.")
+
+    normalized_host = hostname.rstrip(".").lower()
+    try:
+        ip_addresses = [ipaddress.ip_address(normalized_host)]
+    except ValueError:
+        ip_addresses = []
+
+    if not ip_addresses:
+        if (
+            normalized_host == "localhost"
+            or normalized_host.endswith(".localhost")
+            or normalized_host.endswith(".local")
+            or normalized_host.endswith(".internal")
+            or "." not in normalized_host
+        ):
+            reject("Local or internal hostnames are not allowed.")
+        try:
+            future = _URL_DNS_EXECUTOR.submit(
+                socket.getaddrinfo,
+                normalized_host,
+                port or (443 if parsed.scheme.lower() == "https" else 80),
+                type=socket.SOCK_STREAM,
+            )
+            addresses = future.result(timeout=URL_DNS_TIMEOUT_SECONDS)
+            ip_addresses = list({
+                ipaddress.ip_address(result[4][0])
+                for result in addresses
+            })
+        except FutureTimeoutError as exc:
+            future.cancel()
+            raise HTTPException(
+                status_code=422,
+                detail=f"{field_name}: Hostname resolution timed out.",
+            ) from exc
+        except (OSError, ValueError, IndexError) as exc:
+            raise HTTPException(
+                status_code=422,
+                detail=f"{field_name}: Hostname could not be resolved safely.",
+            ) from exc
+
+    if not ip_addresses:
+        reject("Hostname did not resolve to an IP address.")
+    if any(not address.is_global for address in ip_addresses):
+        reject("Private, reserved, or internal IP addresses are not allowed.")
+
     return clean
 
 # ----------------- TELEGRAM BROADCASTER -----------------
@@ -444,6 +540,25 @@ def health_check():
         content=b'{"status":"active","engine":"BiharFast Engine","version":"7.0.0"}',
         media_type="application/json"
     )
+
+
+@app.post("/api/subscribe")
+def subscribe(
+    payload: SubscribeRequest,
+    request: Request,
+):
+    enforce_rate_limit(request, limit=5, window_seconds=60, scope="subscribe")
+    try:
+        db.add_subscriber(payload.email)
+    except Exception as exc:
+        logger.exception("Subscriber upsert failed")
+        raise HTTPException(
+            status_code=503,
+            detail="Subscription service is temporarily unavailable. Please try again later.",
+        ) from exc
+
+    return {"success": True, "message": "Subscription successful."}
+
 
 @app.get("/api/notices")
 @app.get("/api/posts")
@@ -602,8 +717,8 @@ def create_manual_post(
         if t and re.fullmatch(r"[\w\u0900-\u097F -]+", t):
             clean_tags.append(t)
 
-    clean_apply_url = validate_safe_url(payload.apply_url)
-    clean_pdf_url = validate_safe_url(payload.pdf_url)
+    clean_apply_url = validate_safe_url(payload.apply_url, "apply_url")
+    clean_pdf_url = validate_safe_url(payload.pdf_url, "pdf_url")
     clean_image_url = validate_safe_url(payload.image_url)
 
     record = {
@@ -672,6 +787,9 @@ def update_existing_post(
     
     if "category" in update_dict:
         update_dict["category"] = normalize_post_category(update_dict["category"])
+    for field_name in ("apply_url", "pdf_url"):
+        if field_name in update_dict:
+            update_dict[field_name] = validate_safe_url(update_dict[field_name], field_name)
 
     updated_post = db.update_notice_by_id(post_id, update_dict)
     # Flush BOTH the old and new slug keys; previously only the old slug was

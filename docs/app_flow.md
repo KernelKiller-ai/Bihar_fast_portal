@@ -1,81 +1,117 @@
-# BiharFast Application and User Flow
+# BiharFast Application Flow and User Journeys
 
-## 1. Route map at a glance
+**Status:** Current journeys are distinguished from the planned contributor and Django editorial journeys.
 
-| User intent | Routes |
+## 1. Route map
+
+| Intent | Current routes |
 |---|---|
-| Browse and search notices | `/`, `/jobs`, `/admit-card`, `/results`, `/sitemap`, `/all-updates` |
-| Read an individual notice | `/post/:slug` |
-| Explore service or education hubs | `/rtps-bihar`, `/udyami-yojana`, `/bseb-matric-10th`, `/bseb-inter-12th`, `/kyp-bihar`, `/student-credit-card`, `/cuet-ug-admission` |
-| Take a mock test | `/class-10-quiz`, `/mock-test/class-10`, `/mock-test` |
-| Manage student session/history | `/dashboard` |
-| Administer content/quizzes | `/admin`, `/admin-portal` |
-| Learn about the service | `/about`, `/about-us`, `/contact`, `/contact-us`, `/disclaimer`, `/privacy-policy`, `/privacy`, `/terms`, `/terms-and-conditions` |
+| Browse/search notices | `/`, `/jobs`, `/admit-card`, `/results`, `/sitemap`, `/all-updates` |
+| Open a notice | `/post/:slug` |
+| Explore services/education | `/rtps-bihar`, `/udyami-yojana`, `/bseb-matric-10th`, `/bseb-inter-12th`, `/kyp-bihar`, `/student-credit-card`, `/cuet-ug-admission` |
+| Take a quiz | `/class-10-quiz`, `/mock-test/class-10`, `/mock-test` |
+| Student session/history | `/dashboard` |
+| Current administration | `/admin`, `/admin-portal` |
+| Information/legal | `/about`, `/about-us`, `/contact`, `/contact-us`, `/disclaimer`, `/privacy-policy`, `/privacy`, `/terms`, `/terms-and-conditions` |
 
-The current route map has no dedicated `/schemes` path; schemes are a supported backend category and can appear in the feed and all-updates grouping.
+There is no dedicated `/schemes` route in the current route map; `schemes` is a supported notice category.
 
-## 2. Visitor: find and act on a notice
+## 2. Visitor journey: find and act on a notice (current)
 
-1. Browser loads the SPA at `/`. `AuthProvider` is initialized above the router; the app requests `GET /api/notices`.
-2. Backend filters active, published notices and returns up to 50 records. The frontend normalizes display fields and categories.
-3. Visitor chooses a category tab and/or enters a search query. Filtering is performed in client state against the loaded records.
-4. Visitor opens a notice, navigating to `/post/:slug`.
-5. The detail page requests `GET /api/posts/{slug}` for the full article and metadata. During rendering, post presentation selects a category-oriented layout (jobs/admit-card/results) and exposes apply/PDF actions.
-6. Visitor follows the destination link, normally opening the official portal or document in a new browser context.
+```mermaid
+flowchart TD
+  A[Open /] --> B[Fetch GET /api/notices]
+  B --> C{Feed returned?}
+  C -->|Yes| D[Search and filter loaded notices]
+  C -->|No| E[Show fallback/error state]
+  D --> F[Open /post/:slug]
+  F --> G[Fetch GET /api/posts/{slug}]
+  G --> H{Notice available?}
+  H -->|Yes| I[Read summary and dates]
+  I --> J[Follow apply or official PDF link]
+  H -->|No| K[Show detail error state]
+```
 
-Failure/empty handoffs: feed failures show a fallback/empty feed state; missing or failed post detail shows an error state. Search/filter state is local and is not persisted by the route.
+1. `AuthProvider` initializes above the routed application. The home feed requests `GET /api/notices` (or the configured API base URL).
+2. FastAPI returns up to 50 active, published records. Search and category filtering operate on the loaded client-side list.
+3. A selected notice opens at `/post/:slug`; the detail view fetches `GET /api/posts/{slug}`.
+4. The visitor follows an explicit apply/PDF action to the destination. The app does not establish that all destinations are automatically verified.
+5. The frontend may initialize OneSignal on supported production domains. Browser push permission is user-controlled; there is no current approval-event notification flow.
 
-## 3. Student: take a quiz and view a scorecard
+Feed/detail failure states should be visible. Feed/filter state is in-memory and is not retained in the URL or persisted after navigation/reload.
 
-1. Student opens a mock-test route. The selection UI fetches available quizzes from `GET /api/quiz/available` and/or active quiz/question data from `GET /api/quiz/today` (optionally with `quiz_id` or `subject`).
-2. Backend chooses the selected active quiz or an active fallback and returns question text/options without the answer key.
-3. Student provides the requested name, district, and optional registration data, starts the timed attempt, and answers in client component state.
-4. Student submits to `POST /api/quiz/submit`. Backend loads the answer key, evaluates responses, applies the current daily non-demo IP limit, and persists eligible results to the leaderboard.
-5. Result screen shows the score, accuracy, attempt date, badge, and per-question answer/explanation details. The scorecard can be shared via WhatsApp or Telegram.
-6. The UI requests `GET /api/quiz/leaderboard/{quiz_id}` for rankings.
-7. For a non-demo attempt, user-specific history is stored in browser `localStorage`. Demo results can be kept as a pending result and attached to the local history after Supabase login.
-8. On `/dashboard`, the authenticated user sees locally saved performance history; it is not a server-synchronized attempt history.
+## 3. Student quiz journey (current)
 
-Handoff distinction: leaderboard persistence is backend-backed; student attempt history is browser-local. A demo result pending before login is a localStorage handoff, not a server account transaction.
+1. The student opens a mock-test route; the UI requests available quizzes and/or quiz questions from `GET /api/quiz/available` and `GET /api/quiz/today`.
+2. The backend returns public question text/options without answer keys.
+3. The student enters the requested quiz details, answers in the player, and submits to `POST /api/quiz/submit`.
+4. FastAPI loads the answer key and scores the attempt server-side. Non-demo attempts are subject to the daily per-IP limit and may be written to the leaderboard.
+5. The result view presents score/answer review; the client fetches `GET /api/quiz/leaderboard/{quiz_id}`.
+6. Student-specific attempt history is stored in browser localStorage (up to 50 attempts per user), not a server-side student history table.
 
-## 4. Admin: publish a notice
+## 4. Current admin journey: notice publication
 
-1. Administrator opens `/admin` or `/admin-portal`.
-2. Admin enters the configured API bearer token. The UI checks it by requesting `GET /api/admin/posts`.
-3. After a successful response, admin chooses the new-notice tab and selects one of `jobs`, `admit_card`, `results`, or `schemes`.
-4. Category state controls labels, example placeholders, and whether total-posts is visible. Changing category updates the form presentation; existing form values are still form state until reset/submission.
-5. Submit sanitizes/normalizes fields in the client (including slug, SEO metadata, non-empty FAQs/steps, and the hidden total-posts fallback) and sends `POST /api/admin/posts` with bearer auth.
-6. Backend normalizes category, writes/upserts the notice, marks it active/published, invalidates cache in a background task, and queues an optional Telegram alert.
-7. UI reports success/error and refreshes the admin list.
+1. An administrator opens `/admin` or `/admin-portal` and supplies the configured bearer credential.
+2. The UI checks access using `GET /api/admin/posts`. The current FastAPI dependency accepts a valid Supabase JWT whose `profiles.role` is `admin` or `creator`; a configured legacy `ADMIN_API_TOKEN` is also accepted.
+3. The administrator selects `jobs`, `admit_card`, `results`, or `schemes`; category selection changes labels and conditional fields.
+4. The UI posts structured content to `POST /api/admin/posts`. FastAPI normalizes the create category, publishes the record, invalidates relevant cache, and may queue a Telegram alert.
+5. Admin edits/status changes use `PUT /api/admin/posts/{post_id}` and `POST /api/admin/posts/{post_id}/status`.
 
-Admin edit/status paths call `PUT /api/admin/posts/{post_id}` and `POST /api/admin/posts/{post_id}/status`. The update handler's category normalization currently differs from the create handler for schemes; verify before treating scheme editing as reliable.
+This is not a student-contributor queue. The checked-in admin write path creates/publishes notices directly. The update path's category normalization does not preserve `schemes`, so editing a scheme must be corrected and tested before relying on it.
 
-## 5. Admin: manage mock tests
+## 5. Planned contributor and editorial journey (Django/DRF target)
 
-1. Admin switches to the quiz control hub inside the admin portal.
-2. Quiz manager requests the admin quiz list, creates a quiz slot, toggles active status, reviews uploaded questions, or adds a question batch.
-3. Requests under `/api/quiz/admin/...` use the same configured bearer-token mechanism.
-4. Public quiz routes can then discover active quizzes and serve their questions.
+```mermaid
+flowchart TD
+  A[Contributor signs in] --> B[Create structured draft]
+  B --> C[Client-side usability checks]
+  C --> D[POST /api/contributor/posts/]
+  D --> E[Server validates identity, fields and URLs]
+  E --> F[Save draft; contributor submits]
+  F --> G[Status becomes pending]
+  G --> H[Editor reviews source, content and links in Django Admin]
+  H --> I{Decision}
+  I -->|Reject| J[Record reason; notify contributor]
+  I -->|Request edits| B
+  I -->|Approve| K[Commit approved publication]
+  K --> L[Expose via GET /api/posts/ and sitemap]
+  K --> M[Queue idempotent OneSignal notification]
+```
 
-## 6. Authentication flow
+### Contributor steps
 
-1. `AuthProvider` calls Supabase `getSession()` on mount and subscribes to auth state changes.
-2. If configured, Google OAuth starts through Supabase and uses `${window.location.origin}/dashboard` as redirect target.
-3. The restored/updated session exposes `user`, `session`, loading state, and global login-modal controls to descendants.
-4. Pending local demo history is attached to localStorage for the authenticated user after session acquisition.
-5. Sign-out calls Supabase Auth and clears the in-memory session on success.
+1. Authenticate through the contributor identity mechanism selected for Django; identity ownership and account-linking rules remain a prerequisite.
+2. Draft title, category, source/official URL, eligibility, dates, and structured content.
+3. Submit through the authenticated contributor API; the server validates required fields and permissions.
+4. Submission enters `pending`; it is not returned by public feed/detail APIs.
+5. Contributor sees their own submission and editorial status only.
 
-Student Supabase Auth is separate from admin bearer-token authentication. No admin role table or user profile table access is established in the checked-in code.
+### Editorial steps
 
-## 7. State and persistence handoff summary
+1. An editor with Django permission opens `/admin` and filters the review queue by pending status/category.
+2. The editor checks primary-source provenance, content quality, duplicate/plagiarism concerns, and destination URL behavior. Plagiarism and link validation are review requirements; automated tooling is not implemented.
+3. The editor corrects, requests edits, rejects with a reason, or approves using a server-side permission-checked action.
+4. Only an approved/published record becomes visible through `GET /api/posts/` and the sitemap.
+5. After the database transaction commits, a retryable event dispatches the OneSignal notification. Push failure must not roll back publication.
 
-| State/data | Owner | Persistence |
+The target state names (`draft`, `pending`, `approved`, `rejected`) describe a proposed editorial lifecycle. Current production visibility is based on active/published notice data; there is no Django Admin or contributor state machine in source.
+
+## 6. State and persistence boundaries
+
+| Data | Current owner | Planned owner / rule |
 |---|---|---|
-| Feed records and filter query | `App` | In-memory React state; feed refetched on page load |
-| Login/session state | `AuthProvider` | Supabase Auth |
-| Admin token | Admin page | Component state during current page session |
-| Quiz answers/timer/current step | Quiz player | In-memory React state |
-| Student attempt history/district | Student history utility | Browser `localStorage`, up to 50 attempts per user |
-| Published notices and quiz data | FastAPI/database layer | Supabase tables |
-| Leaderboard entries | Quiz backend | `master_leaderboard` |
-| Feed/detail cache | Backend | Optional Upstash Redis with configured TTLs |
+| Feed/search/filter state | React memory | Keep public browsing behavior; use URL state if shareable filters are introduced |
+| Student login/session | Optional Supabase Auth | Do not migrate or duplicate without an explicit identity bridge |
+| Admin access | Supabase JWT/profile role or configured legacy token | Django users/groups/permissions for contributor/editor administration after migration |
+| Notice content | FastAPI + Supabase tables | Preserve existing data and public contracts; confirm schema before ORM mapping |
+| Quiz answers/results | FastAPI + Supabase | Keep answer keys server-side; migration is not required for contributor launch |
+| Student attempt history | Browser localStorage | Remains local until a separate privacy/retention-backed design is approved |
+| Cache/rate limits | Optional Upstash Redis and backend fallback | Shared cache only for measured need; never cache personalized responses publicly |
+| Push subscription | OneSignal/browser permission | Approval event triggers only after approved publication and commit |
+
+## 7. Known journey gaps
+
+- The footer calls `POST /api/subscribe`, but no corresponding FastAPI endpoint was identified.
+- No contributor registration, submission endpoint, pending-review queue, Django Admin, approval action, plagiarism service, or approval push webhook is implemented.
+- The application uses homepage WebSite/SearchAction JSON-LD; per-post structured data is not established by the route metadata flow.
+- The React and FastAPI route behavior is current source behavior; the Django API paths in this document are target contracts.

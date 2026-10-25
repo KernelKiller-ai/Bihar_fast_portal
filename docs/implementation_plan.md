@@ -1,63 +1,74 @@
 # BiharFast Implementation Plan
 
-**Status convention:** “Completed” means implemented in the checked-in source/config reviewed for this document; it is not a statement of production uptime or independent acceptance testing.
+**Status convention:** “Implemented” means present in checked-in source/configuration, not proof of production deployment, live uptime, or acceptance against an external service. “Active” identifies the next planned delivery stream; Django implementation itself is not yet present.
 
-## Phase 1 — Core portal and reliability baseline (completed in source)
+## Phase 1 — Public portal foundation (implemented in source)
 
-- [x] Public notice feed, client-side category filters/search, slug detail pages, and category-oriented layouts.
-- [x] FastAPI public notice, admin notice, sitemap, and quiz routes.
-- [x] Category-driven admin notice fields for `jobs`, `admit_card`, `results`, and `schemes`, with hidden total-posts fallbacks for admit cards/results.
-- [x] Student Supabase Auth context mounted at the application root.
-- [x] Responsive root/navbar/search changes intended to prevent overflow on 360px mobile layouts.
-- [x] Mock-test player, server-side scoring, result/answer review, leaderboard, and browser-local student history.
-- [x] Vercel SPA/API/SEO rewrites, immutable static-asset caching, gzip, optional Redis caching/rate limiting, and optional Telegram alert integration.
+- [x] React 19/Vite frontend, routed notice and information pages, category search/filter, and responsive layouts.
+- [x] Tailwind CSS 4, Lucide React, Supabase Auth client integration, and browser-local student history.
+- [x] FastAPI notice, admin, sitemap, and quiz APIs backed by Supabase client access.
+- [x] Quiz selection/player, server-side scoring, answer review, leaderboard, and attempt limiting paths.
+- [x] PWA manifest/icons and Vite PWA/Workbox configuration, plus a separately registered public service worker; deployed worker interaction still requires validation.
+- [x] SEO shell metadata, homepage WebSite/SearchAction JSON-LD, route metadata/prerender scripts, static sitemaps, robots file, and Vercel post SEO function.
+- [x] GTM `GTM-MQVP93FK`, GA4 `G-2N03Q64SX9`, AdSense publisher `ca-pub-2133187047291443` and matching `ads.txt`, and OneSignal app `b7c92f29-666a-42e6-ba4b-5148849d773f`.
+- [x] Optional Upstash Redis caching/rate-limiting paths and optional Telegram alert integration.
 
-**Acceptance follow-up:** run viewport regression coverage across all major routes; verify live Supabase DDL/RLS; verify category edit behavior for schemes; resolve the footer `/api/subscribe` route discrepancy; exercise production OAuth redirect and API settings.
+**Not implied by completion:** production Search Console verification, rich-result eligibility, measured mobile speed under 1.5s, ad-slot placement/monetization, fully covered per-post schema, stable OneSignal dispatch after editorial approval, or a capacity guarantee.
 
-## Phase 2 — Immediate next
+## Phase 2 — Django editorial foundation (active planning; code migration not started)
 
-### 2.1 SEO quality and indexing operations
+### 2.1 Establish the database and identity contract
 
-- [ ] Verify crawler responses from the deployed `/post/:slug` SEO function and canonical URLs.
-- [ ] Validate dynamic sitemap status/content, robots directives, structured data, metadata quality, and actual Search Console indexing.
-- [ ] Add repeatable SEO checks and measure impressions/clicks/average position. A crawler-facing SEO function already exists; the remaining work is validation, coverage, and measurement rather than creating the feature from zero.
+- [ ] Export schema-only DDL/catalog and migration history for the intended Supabase project; verify RLS, grants, policies, types, constraints, and indexes.
+- [ ] Decide whether Django connects through a Supabase pooler or direct PostgreSQL URI; verify SSL, connection limits, and least-privilege credentials.
+- [ ] Assign schema ownership: retain legacy tables as unmanaged Django mappings until deliberate migration ownership transfer.
+- [ ] Define the identity bridge from Supabase Auth/profile roles to Django contributors/editors/admins, including account linking, session/JWT, recovery, and legacy token retirement.
+- [ ] Decide where workflow/audit data lives and how current `status='published'` rows map to target `approved`.
 
-### 2.2 Safe, auditable content intake
+### 2.2 Build Django API and administration
 
-- [ ] Decide source inventory and human review requirements before implementing ingestion.
-- [ ] If using Telegram/webhook parsing, ingest into a review queue/deduplication stage; do not publish unverified messages directly.
-- [ ] Apply URL/source validation at the actual write boundary and audit failures. The current official-URL helper has no identified publication call site.
-- [ ] Establish ownership, retry/dead-letter behavior, idempotency, monitoring, and rollback.
-- [ ] Treat the existing `scraped_inbox` migration footprint as a possible foundation only; a complete running pipeline was not established by this source scan.
+- [ ] Add a compatible Django 6/DRF runtime only after Python/runtime and deployment compatibility are validated.
+- [ ] Establish Django settings, secure environment configuration, database health checks, and migrations for Django-owned auth/editorial additions.
+- [ ] Implement reviewed legacy-table mappings only after schema export; do not use blind `inspectdb` output to create production migrations.
+- [ ] Configure Django Admin with contributor/staff/editor/admin permissions and auditable review actions.
+- [ ] Implement validated contributor draft/list/submit and editor queue/approve/reject endpoints while preserving current public `GET /api/posts` behavior.
+- [ ] Enforce author ownership and state transitions server-side; ensure only approved public records enter APIs and sitemaps.
+- [ ] Add API compatibility tests and a rollback/cutover plan before shifting traffic from FastAPI.
 
-### 2.3 Mock-test content and persistence
+### 2.3 Close current reliability and correctness gaps
 
-- [ ] Expand and review question sets by exam, subject, and difficulty.
-- [ ] Add automated scoring, answer-key masking, date fallback, rate-limit, and leaderboard tests.
-- [ ] Decide whether student history must sync across devices. If yes, define authorization/retention and versioned schema migrations before replacing localStorage.
+- [ ] Fix and test scheme-category updates so `schemes` remains `schemes`.
+- [ ] Implement a protected, rate-limited `/api/subscribe` service or remove/replace the footer integration.
+- [ ] Add server-side official URL policy enforcement to actual notice writes.
+- [ ] Verify `increment_quiz_attempts` RPC definition and the actual daily quota migration state in Supabase.
+- [ ] Add API tests for feed visibility, admin authorization, quiz answer masking, errors, cache invalidation, and notification failures.
 
-### 2.4 Data contract and product correctness
+## Phase 3 — Contributor submission and approval delivery
 
-- [ ] Export and version actual Supabase schema/RLS definitions; finish the incomplete schema reference from deployment evidence.
-- [ ] Fix/verify scheme-category edit normalization.
-- [ ] Either implement an authenticated/rate-limited `/api/subscribe` endpoint or remove/replace the UI integration.
-- [ ] Add integration tests for publication, update, cache invalidation, and Telegram best-effort behavior.
+- [ ] Build accessible contributor form for title, category, source/official link, eligibility, dates, and structured content.
+- [ ] Provide draft, submit, pending, rejection reason, and resubmission states with clear ownership.
+- [ ] Provide editorial queue with source/link review and duplicate/plagiarism checks. Automated plagiarism checking is optional until a trustworthy service and policy are selected.
+- [ ] Make approve/reject operations audited, permission-checked, idempotent, and transactionally consistent.
+- [ ] After approval commit, dispatch a retryable, deduplicated OneSignal notification to opted-in subscribers; push failure must not undo publication.
+- [ ] Test end-to-end behavior for concurrent submissions, duplicate notices, bad links, rejected drafts, retries, and public sitemap/feed visibility.
 
-## Phase 3 — Scale and high traffic (proposed; not capacity-certified)
+## Phase 4 — Performance, monetization, and growth
 
-- [ ] Establish traffic, latency, data-growth, and availability targets; conduct load tests before sizing infrastructure.
-- [ ] Evaluate Cloudflare/edge CDN caching for public pages/assets with safe invalidation and personalized-response bypass rules.
-- [ ] Tune Supabase connection pooling and query/index strategy based on observed plans/metrics.
-- [ ] Consider asynchronous leaderboard writes or aggregation if measured write contention justifies the added consistency model.
-- [ ] Add monitoring/alerting for backend availability, database failures, cache hit rate, stale content, rate-limit events, and queue/Telegram delivery.
-- [ ] Complete a threat model and verify CORS, RLS, secrets management, rate limits, backup/restore, and incident response.
-- [ ] Validate projected capacity (including any one-million-user goal) with representative load tests; CDN presence alone is not a scale guarantee.
+- [ ] Establish a mobile performance baseline and work toward the product target of under 1.5s page speed using a defined metric; report LCP/INP/CLS and p75 field data separately.
+- [ ] Instrument and baseline approval turnaround, organic Search Console clicks/impressions, and official-link CTR.
+- [ ] Implement and test AdSense units (`ca-pub-2133187047291443`) only after placement, policy, consent, and Core Web Vitals review; the current source has no identified ad-slot markup.
+- [ ] Configure GA4/GTM events for feed impressions, detail views, search, and official-link clicks with privacy/consent rules.
+- [ ] Evaluate edge CDN caching on Vercel/Cloudflare and Upstash Redis cache TTLs/invalidation based on observed traffic and stale-content requirements.
+- [ ] Load-test the approved database pool and feed/quiz endpoints before increasing concurrency targets.
+- [ ] Add operational dashboards/alerts for API health, database/cache failures, stale feed, moderation queue age, and push delivery.
 
 ## Release gates
 
-- Automated build/lint and targeted API/frontend tests pass.
-- Tested mobile widths include 320px, 360px, 390px, and desktop with no horizontal overflow.
-- Admin category behavior and database payloads match exact persisted enum/value constraints.
-- Supabase DDL/RLS is documented from the correct project.
-- Public and admin route error cases are verified; no privileged key is shipped in frontend assets.
-- SEO, analytics, and performance claims are supported by production measurements.
+- Django dependencies, runtime version, security settings, and deployment path are verified before production rollout.
+- The target Supabase project identity, schema, RLS, migration state, and DB permissions are documented from live catalog evidence.
+- No service-role key or database credential is shipped in frontend assets.
+- Public feed/detail, sitemap, and cache expose only approved/published content; admin/editor actions enforce server-side permissions.
+- Contributor/admin identity reconciliation, audit history, rollback, and FastAPI cutover/rollback are tested.
+- Current route and API compatibility is retained or migrated with a verified client rollout.
+- Mobile accessibility, SEO crawler output, PWA worker behavior, and third-party consent/performance are tested on a production-like build.
+- Performance, Search Console growth, CTR, and approval-time claims are reported only from measured data.
