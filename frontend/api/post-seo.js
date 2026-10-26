@@ -1,20 +1,6 @@
 const BACKEND_URL = "https://bihar-fast-portal.onrender.com";
 const SITE_URL = "https://biharfast.in";
-
-const BOT_USER_AGENTS = [
-  "googlebot",
-  "google-inspectiontool",
-  "bingbot",
-  "twitterbot",
-  "facebookexternalhit",
-  "whatsapp",
-  "telegrambot"
-];
-
-function isCrawler(userAgent = "") {
-  const normalizedUserAgent = userAgent.toLowerCase();
-  return BOT_USER_AGENTS.some((bot) => normalizedUserAgent.includes(bot));
-}
+const UPSTREAM_TIMEOUT_MS = 6000;
 
 function escapeHtml(value = "") {
   return String(value)
@@ -32,134 +18,198 @@ function textContent(value = "") {
     .trim();
 }
 
-function getSlug(req) {
-  const querySlug = req.query?.slug;
-  if (querySlug) return decodeURIComponent(String(querySlug));
-
-  const path = new URL(req.url, `${req.headers["x-forwarded-proto"] || "https"}://${req.headers.host}`).pathname;
-  return decodeURIComponent(path.split("/").filter(Boolean).pop() || "");
+function decodeURIComponentSafely(value) {
+  try {
+    return decodeURIComponent(value);
+  } catch {
+    return value;
+  }
 }
 
-function sendHtml(res, statusCode, html) {
+function getSlug(req) {
+  const querySlug = req.query?.slug;
+  if (querySlug) return decodeURIComponentSafely(String(querySlug));
+
+  const protocol = req.headers["x-forwarded-proto"] || "https";
+  const host = req.headers.host || "biharfast.in";
+  const path = new URL(req.url, `${protocol}://${host}`).pathname;
+  return decodeURIComponentSafely(path.split("/").filter(Boolean).pop() || "");
+}
+
+function slugTitle(slug) {
+  const words = textContent(slug.replace(/[-_]+/g, " "));
+  return words ? words.charAt(0).toUpperCase() + words.slice(1) : "BiharFast Update";
+}
+
+function getAttribute(tag, name) {
+  const match = tag.match(new RegExp(`(?:^|\\s)${name}\\s*=\\s*(["'])(.*?)\\1`, "i"));
+  return match?.[2] ?? null;
+}
+
+function setAttribute(tag, name, value) {
+  const escapedValue = escapeHtml(value);
+  const attributePattern = new RegExp(`(\\s${name}\\s*=\\s*)(["'])(.*?)\\2`, "i");
+  if (attributePattern.test(tag)) {
+    return tag.replace(attributePattern, (_match, prefix) => `${prefix}"${escapedValue}"`);
+  }
+  return tag.replace(/\s*\/?>$/, (ending) => ` ${name}="${escapedValue}"${ending}`);
+}
+
+function insertIntoHead(html, markup) {
+  if (/<\/head\s*>/i.test(html)) {
+    return html.replace(/<\/head\s*>/i, `${markup}\n  </head>`);
+  }
+  return `${markup}\n${html}`;
+}
+
+function setTitle(html, title) {
+  const escapedTitle = escapeHtml(title);
+  if (/<title\b[^>]*>[\s\S]*?<\/title\s*>/i.test(html)) {
+    return html.replace(/<title\b[^>]*>[\s\S]*?<\/title\s*>/i, `<title>${escapedTitle}</title>`);
+  }
+  return insertIntoHead(html, `<title>${escapedTitle}</title>`);
+}
+
+function setMeta(html, key, value, content) {
+  const escapedContent = escapeHtml(content);
+  let found = false;
+  const updated = html.replace(/<meta\b[^>]*>/gi, (tag) => {
+    if (found || getAttribute(tag, key)?.toLowerCase() !== value.toLowerCase()) return tag;
+    found = true;
+    return setAttribute(tag, "content", content);
+  });
+  if (found) return updated;
+  return insertIntoHead(updated, `<meta ${key}="${escapeHtml(value)}" content="${escapedContent}">`);
+}
+
+function setCanonical(html, canonicalUrl) {
+  let found = false;
+  const updated = html.replace(/<link\b[^>]*>/gi, (tag) => {
+    if (found || getAttribute(tag, "rel")?.toLowerCase() !== "canonical") return tag;
+    found = true;
+    return setAttribute(tag, "href", canonicalUrl);
+  });
+  if (found) return updated;
+  return insertIntoHead(updated, `<link rel="canonical" href="${escapeHtml(canonicalUrl)}">`);
+}
+
+function readMeta(html, key, value) {
+  const tag = html.match(new RegExp(`<meta\\b(?=[^>]*\\b${key}=["']${value}["'])[^>]*>`, "i"))?.[0];
+  return tag ? getAttribute(tag, "content") : null;
+}
+
+function postMetadata(post, slug) {
+  const postTitle = typeof post?.title === "string" && post.title.trim()
+    ? post.title.trim()
+    : slugTitle(slug);
+  const metaTitle = typeof post?.meta_title === "string" ? post.meta_title.trim() : "";
+  const title = metaTitle || `${postTitle} - BiharFast`;
+
+  const metaDescription = typeof post?.meta_desc === "string" ? post.meta_desc.trim() : "";
+  const shortDescription = textContent(post?.short_desc || "").slice(0, 155);
+  const description = metaDescription
+    || shortDescription
+    || `${post?.department || "Bihar"}: ${postTitle}. Official details and updates on BiharFast.`;
+
+  return {
+    title,
+    description,
+    image: typeof post?.image_url === "string" ? post.image_url.trim() : "",
+  };
+}
+
+function fallbackMetadata(slug) {
+  const title = slugTitle(slug);
+  return {
+    title: `${title} - BiharFast`,
+    description: `Latest ${title} updates and official details from BiharFast.`,
+    image: "",
+  };
+}
+
+function applyPostMetadata(html, metadata, canonicalUrl, { noindex = false } = {}) {
+  const existingOgImage = readMeta(html, "property", "og:image");
+  const existingTwitterImage = readMeta(html, "name", "twitter:image");
+  let output = setTitle(html, metadata.title);
+  output = setMeta(output, "name", "description", metadata.description);
+  output = setCanonical(output, canonicalUrl);
+  output = setMeta(output, "property", "og:type", "article");
+  output = setMeta(output, "property", "og:title", metadata.title);
+  output = setMeta(output, "property", "og:description", metadata.description);
+  output = setMeta(output, "property", "og:url", canonicalUrl);
+  output = setMeta(output, "name", "twitter:card", "summary_large_image");
+  output = setMeta(output, "name", "twitter:title", metadata.title);
+  output = setMeta(output, "name", "twitter:description", metadata.description);
+  output = setMeta(output, "name", "twitter:url", canonicalUrl);
+  if (metadata.image) {
+    output = setMeta(output, "property", "og:image", metadata.image);
+    output = setMeta(output, "name", "twitter:image", metadata.image);
+  } else {
+    if (!existingOgImage) {
+      output = setMeta(output, "property", "og:image", existingTwitterImage || `${SITE_URL}/logo-512.png`);
+    }
+    if (!existingTwitterImage) {
+      output = setMeta(output, "name", "twitter:image", existingOgImage || `${SITE_URL}/logo-512.png`);
+    }
+  }
+  if (noindex) output = setMeta(output, "name", "robots", "noindex, nofollow");
+  return output;
+}
+
+function sendHtml(res, statusCode, html, { cacheable = false } = {}) {
   res.statusCode = statusCode;
   res.setHeader("Content-Type", "text/html; charset=utf-8");
-
-  if (statusCode === 200) {
-    res.setHeader("X-Robots-Tag", "index, follow, max-image-preview:large");
-    res.setHeader("Cache-Control", "public, s-maxage=300, stale-while-revalidate=600");
-  } else if (statusCode === 404) {
-    res.setHeader("X-Robots-Tag", "noindex, nofollow");
-    res.setHeader("Cache-Control", "no-cache, no-store, must-revalidate");
-  } else {
-    // 5xx / temporary upstream errors: DO NOT send noindex!
-    // Allows Googlebot to back off and retry later without dropping the page from search index
-    res.setHeader("Cache-Control", "no-cache, no-store, must-revalidate");
-  }
-
+  res.setHeader(
+    "Cache-Control",
+    statusCode === 200 && cacheable
+      ? "public, s-maxage=300, stale-while-revalidate=600"
+      : "no-cache, no-store, must-revalidate",
+  );
+  if (statusCode === 404) res.setHeader("X-Robots-Tag", "noindex, nofollow");
+  if (statusCode === 200) res.setHeader("X-Robots-Tag", "index, follow, max-image-preview:large");
   res.end(html);
 }
 
-function notFoundHtml() {
-  return `<!doctype html>
-<html lang="en">
-  <head>
-    <meta charset="utf-8">
-    <meta name="robots" content="noindex, nofollow">
-    <title>Post Not Found - BiharFast</title>
-  </head>
-  <body>
-    <main><h1>Post Not Found</h1><p>The requested post could not be found.</p></main>
-  </body>
-</html>`;
-}
-
-function serverErrorHtml() {
+function unavailableHtml(slug, canonicalUrl, { noindex = false } = {}) {
+  const metadata = fallbackMetadata(slug);
+  const robots = noindex ? '<meta name="robots" content="noindex, nofollow">' : "";
   return `<!doctype html>
 <html lang="hi">
   <head>
     <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>सेवा अस्थायी रूप से अनुपलब्ध है - BiharFast</title>
-  </head>
-  <body>
-    <main>
-      <h1>सेवा अस्थायी रूप से अनुपलब्ध है</h1>
-      <p>सर्वर लोड या नेटवर्क अपडेट के कारण यह सूचना अस्थायी रूप से उपलब्ध नहीं है। कृपया कुछ क्षणों बाद पुनः प्रयास करें।</p>
-    </main>
-  </body>
-</html>`;
-}
-
-function articleHtml(post, slug) {
-  const title = textContent(post.title || "BiharFast Update");
-  const description = textContent(
-    post.meta_desc ||
-      post.short_desc ||
-      `${post.department || "Bihar"}: ${title}. योग्यता, अंतिम तिथि और आवेदन लिंक यहाँ देखें।`
-  ).slice(0, 160);
-  const department = textContent(post.department || "Bihar Government");
-  const eligibility = textContent(post.eligibility || "विज्ञापन देखें");
-  const lastDate = textContent(post.last_date || post.lastDate || "सक्रिय सूचना");
-  const content = textContent(post.content || post.short_desc || description);
-  const canonicalUrl = `${SITE_URL}/post/${encodeURIComponent(slug)}`;
-  const schema = JSON.stringify({
-    "@context": "https://schema.org",
-    "@type": "NewsArticle",
-    headline: title,
-    description,
-    url: canonicalUrl,
-    datePublished: post.created_at || undefined,
-    dateModified: post.updated_at || post.created_at || undefined,
-    author: { "@type": "Organization", name: "BiharFast" },
-    publisher: { "@type": "Organization", name: "BiharFast", url: SITE_URL }
-  }).replace(/</g, "\\u003c");
-
-  return `<!doctype html>
-<html lang="hi">
-  <head>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>${escapeHtml(`${title} - BiharFast`)}</title>
-    <meta name="description" content="${escapeHtml(description)}">
-    <meta name="robots" content="index, follow, max-image-preview:large">
-    <meta property="og:type" content="article">
-    <meta property="og:title" content="${escapeHtml(`${title} - BiharFast`)}">
-    <meta property="og:description" content="${escapeHtml(description)}">
-    <meta property="og:url" content="${escapeHtml(canonicalUrl)}">
+    <title>${escapeHtml(metadata.title)}</title>
+    <meta name="description" content="${escapeHtml(metadata.description)}">
+    ${robots}
     <link rel="canonical" href="${escapeHtml(canonicalUrl)}">
-    <script type="application/ld+json">${schema}</script>
+    <meta property="og:url" content="${escapeHtml(canonicalUrl)}">
+    <meta name="twitter:url" content="${escapeHtml(canonicalUrl)}">
   </head>
-  <body>
-    <main>
-      <article>
-        <p>${escapeHtml(department)}</p>
-        <h1>${escapeHtml(title)}</h1>
-        <p><strong>योग्यता:</strong> ${escapeHtml(eligibility)}</p>
-        <p><strong>अंतिम तिथि:</strong> ${escapeHtml(lastDate)}</p>
-        <div><p>${escapeHtml(content)}</p></div>
-      </article>
-    </main>
-  </body>
+  <body><main><h1>${escapeHtml(metadata.title)}</h1><p>यह सूचना अस्थायी रूप से उपलब्ध नहीं है।</p></main></body>
 </html>`;
 }
 
-async function serveSpa(req, res) {
+async function fetchSpaShell(req) {
   const protocol = req.headers["x-forwarded-proto"] || "https";
   const host = req.headers.host;
-  if (!host) {
-    sendHtml(res, 500, "<!doctype html><title>Configuration Error</title>");
-    return;
-  }
+  if (!host) throw new Error("Request host is unavailable");
 
   const response = await fetch(`${protocol}://${host}/index.html`);
-  if (!response.ok) {
-    sendHtml(res, 502, "<!doctype html><title>Frontend Unavailable</title>");
-    return;
-  }
+  if (!response.ok) throw new Error(`SPA shell request failed with status ${response.status}`);
+  return response.text();
+}
 
-  res.statusCode = 200;
-  res.setHeader("Content-Type", "text/html; charset=utf-8");
-  res.end(await response.text());
+async function fetchPost(slug) {
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), UPSTREAM_TIMEOUT_MS);
+  try {
+    const response = await fetch(`${BACKEND_URL}/api/posts/${encodeURIComponent(slug)}`, {
+      signal: controller.signal,
+    });
+    const payload = response.ok ? await response.json() : null;
+    return { response, payload };
+  } finally {
+    clearTimeout(timeout);
+  }
 }
 
 export default async function handler(req, res) {
@@ -170,42 +220,42 @@ export default async function handler(req, res) {
     return;
   }
 
-  if (!isCrawler(req.headers["user-agent"])) {
-    try {
-      await serveSpa(req, res);
-    } catch (error) {
-      console.error("SPA fallback failed:", error);
-      sendHtml(res, 502, "<!doctype html><title>Frontend Unavailable</title>");
-    }
-    return;
-  }
-
   const slug = getSlug(req);
-  if (!slug || slug === "undefined") {
-    sendHtml(res, 404, notFoundHtml());
+  const canonicalUrl = `${SITE_URL}/post/${encodeURIComponent(slug)}`;
+  let post = null;
+  let notFound = !slug || slug === "undefined";
+  let cacheable = false;
+
+  if (!notFound) {
+    try {
+      const { response, payload } = await fetchPost(slug);
+      if (response.status === 404) {
+        notFound = true;
+      } else if (response.ok) {
+        if (payload?.success && payload.data) {
+          post = payload.data;
+          cacheable = true;
+        } else {
+          console.error("Post SEO upstream returned an invalid post payload");
+        }
+      } else {
+        console.error(`Post SEO upstream returned HTTP ${response.status}`);
+      }
+    } catch (error) {
+      console.error("Post SEO upstream fetch failed:", error);
+    }
+  }
+
+  let shell;
+  try {
+    shell = await fetchSpaShell(req);
+  } catch (error) {
+    console.error("Post SEO SPA shell fetch failed:", error);
+    sendHtml(res, notFound ? 404 : 502, unavailableHtml(slug, canonicalUrl, { noindex: notFound }));
     return;
   }
 
-  try {
-    const response = await fetch(`${BACKEND_URL}/api/posts/${encodeURIComponent(slug)}`);
-    if (response.status === 404) {
-      sendHtml(res, 404, notFoundHtml());
-      return;
-    }
-    if (!response.ok) {
-      sendHtml(res, 503, serverErrorHtml());
-      return;
-    }
-
-    const payload = await response.json();
-    if (!payload?.success || !payload.data) {
-      sendHtml(res, 404, notFoundHtml());
-      return;
-    }
-
-    sendHtml(res, 200, articleHtml(payload.data, slug));
-  } catch (error) {
-    console.error("Post SEO render failed:", error);
-    sendHtml(res, 503, serverErrorHtml());
-  }
+  const metadata = post ? postMetadata(post, slug) : fallbackMetadata(slug);
+  const html = applyPostMetadata(shell, metadata, canonicalUrl, { noindex: notFound });
+  sendHtml(res, notFound ? 404 : 200, html, { cacheable: cacheable && !notFound });
 }
