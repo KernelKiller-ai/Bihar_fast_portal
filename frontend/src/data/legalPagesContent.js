@@ -29,6 +29,28 @@ const contactForm = {
   success: "धन्यवाद! आपका संदेश सफलतापूर्वक भेज दिया गया है। हम जल्द ही आपसे संपर्क करेंगे।",
   error: "संदेश भेजा नहीं जा सका। कृपया कुछ देर बाद फिर प्रयास करें या support@biharfast.in पर ईमेल करें।",
 };
+const contactEditorialPolicies = [
+  {
+    heading: "Grievance Redressal Policy",
+    paragraphs: [
+      "We review reports about errors in examination circulars, admit-card details and corrections, result dates, eligibility information, broken official links, and typographical mistakes. When you contact us, include the BiharFast page URL, the relevant notice or application detail, and, where possible, the primary official source.",
+      "Our editorial team aims to acknowledge and review complete grievances within 24 to 48 working hours on business days. If a correction is verified, we update the page or add a clarification. Complex issues may require additional time while we confirm details with the issuing authority.",
+    ],
+  },
+  {
+    heading: "Content Disclaimer & Verification Advisory",
+    paragraphs: [
+      "BiharFast is an independent information portal and is not a recruitment agency or government office. We summarize public information for convenience and do not collect application fees, guarantee selection, or submit forms on an applicant's behalf.",
+      "Before submitting any recruitment application or paying a form fee, applicants must read and double-check the latest official notification, eligibility rules, dates, fees, and instructions on the issuing authority's website. The official notification and portal always take precedence over our summaries. Please report a suspected error with its official source so our editors can review it.",
+    ],
+  },
+  {
+    heading: "Working Hours & Location",
+    paragraphs: [
+      "Our editorial and support team is available Monday to Friday, 10:00 AM–6:00 PM IST, excluding public holidays. BiharFast operates from Patna / Sheikhpura, Bihar, India. Messages received outside working hours are reviewed on the next working day.",
+    ],
+  },
+];
 
 export const LEGAL_PAGES_CONTENT = {
   "/about": page("/about", {
@@ -140,8 +162,10 @@ export const LEGAL_PAGES_CONTENT = {
     sections: [
       { type: "cards", heading: "Contact channels", cards: contactCards },
       { heading: contactResponseHeading, paragraphs: [contactResponseText] },
+      ...contactEditorialPolicies,
       { type: "form", heading: contactForm.heading, fields: [contactForm.name, contactForm.email, contactForm.subject, contactForm.message] },
     ],
+    editorialPolicies: contactEditorialPolicies,
     form: contactForm,
     footer: "स्पैम-मुक्त सुरक्षित संचार",
   }),

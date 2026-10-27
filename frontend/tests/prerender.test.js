@@ -4,6 +4,7 @@ import path from "node:path";
 import test from "node:test";
 import { fileURLToPath } from "node:url";
 import { LEGAL_PAGES_CONTENT } from "../src/data/legalPagesContent.js";
+import { stripMarkdownArtifacts } from "../src/utils/sanitizeHtml.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const DIST_DIR = path.resolve(__dirname, "../dist");
@@ -18,8 +19,15 @@ const ROUTES = [
   {
     route: "/contact",
     h1: "हमसे संपर्क करें (Contact & Grievance Redressal)",
-    headings: ["आधिकारिक ईमेल", "प्रतिक्रिया समय-सीमा (Response Timeline):", "अपना संदेश प्रेषित करें"],
-    minWords: 200,
+    headings: [
+      "आधिकारिक ईमेल",
+      "प्रतिक्रिया समय-सीमा (Response Timeline):",
+      "Grievance Redressal Policy",
+      "Content Disclaimer & Verification Advisory",
+      "Working Hours & Location",
+      "अपना संदेश प्रेषित करें",
+    ],
+    minWords: 250,
   },
   {
     route: "/privacy-policy",
@@ -109,6 +117,21 @@ test("core static page output contains no raw Markdown syntax", () => {
     const root = readRoot(readPage(route.route));
     assert.doesNotMatch(root, /```|##|\]\(https?:\/\//, `${route.route} contains raw Markdown syntax`);
   }
+});
+
+test("post HTML sanitizer strips fenced and inline Markdown delimiters", () => {
+  const html = "```html\n<p>`Notice details`</p>\n``` and ``` plus &#96;inline&#96;";
+  const sanitized = stripMarkdownArtifacts(html);
+  assert.equal(sanitized, "<p>Notice details</p>\nand plus inline");
+  assert.doesNotMatch(sanitized, /`/);
+});
+
+test("unknown-route fallback provides noindex metadata and a 404 title", () => {
+  const component = fs.readFileSync(path.resolve(__dirname, "../src/pages/NotFound.jsx"), "utf8");
+  const app = fs.readFileSync(path.resolve(__dirname, "../src/App.jsx"), "utf8");
+  assert.match(component, /404 - Page Not Found \| BiharFast/);
+  assert.match(component, /noindex, nofollow/);
+  assert.match(app, /<Route path="\*" element=\{<NotFound \/>}/);
 });
 
 test("generated JSON-LD uses the exact Schema.org context", () => {

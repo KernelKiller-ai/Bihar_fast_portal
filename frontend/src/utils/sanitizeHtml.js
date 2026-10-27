@@ -1,10 +1,20 @@
+export function stripMarkdownArtifacts(html) {
+  return String(html)
+    .replace(/(?:&#96;|&grave;)/gi, "`")
+    .replace(/```[^\S\r\n]*(?:html?|markdown|md)?[^\S\r\n]*(?:\r?\n)?/gi, "")
+    .replace(/```/g, "")
+    .replace(/`([^`\r\n]+)`/g, "$1")
+    .replace(/`+/g, "");
+}
+
 export function addExternalLinkSafety(sanitizedHtml) {
+  const cleanHtml = stripMarkdownArtifacts(sanitizedHtml);
   if (typeof document === "undefined") {
-    return sanitizedHtml;
+    return cleanHtml;
   }
 
   const template = document.createElement("template");
-  template.innerHTML = sanitizedHtml;
+  template.innerHTML = cleanHtml;
 
   template.content.querySelectorAll("a[href]").forEach((anchor) => {
     const href = anchor.getAttribute("href");

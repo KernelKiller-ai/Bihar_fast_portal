@@ -104,6 +104,15 @@ export default function Contact() {
           </p>
         </div>
 
+        <div className="space-y-4 text-xs sm:text-sm text-slate-600 leading-relaxed">
+          {content.editorialPolicies.map((policy) => (
+            <section key={policy.heading} className="rounded-2xl border border-slate-200 bg-slate-50 p-4 space-y-2">
+              <h2 className="font-bold text-slate-900">{policy.heading}</h2>
+              {policy.paragraphs.map((paragraph, index) => <p key={index}>{paragraph}</p>)}
+            </section>
+          ))}
+        </div>
+
         {/* Contact Form */}
         <form onSubmit={handleSubmit} className="space-y-4 pt-2">
           <h3 className="text-sm font-bold text-slate-900 flex items-center gap-1.5">

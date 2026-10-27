@@ -43,6 +43,7 @@ const Contact = lazy(() => import("./pages/contact"));
 const Disclaimer = lazy(() => import("./pages/disclaimer"));
 const PrivacyPolicy = lazy(() => import("./pages/privacyPolicy"));
 const Terms = lazy(() => import("./pages/terms"));
+const NotFound = lazy(() => import("./pages/NotFound"));
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "https://bihar-fast-portal.onrender.com";
 
@@ -811,6 +812,7 @@ export default function App() {
             <Route path="/upcoming-2026" element={<Upcoming2026 />} />
             <Route path="/download" element={<DownloadApp />} />
             <Route path="/dashboard" element={<StudentDashboard />} />
+            <Route path="*" element={<NotFound />} />
           </Routes>
         </Suspense>
       </div>

@@ -79,7 +79,6 @@ function renderLegalPage(content) {
     ).join("");
     return `<section>${heading}${paragraphs}${lists}${emphasis}${links}</section>`;
   }).join("");
-
   const footerLinks = (content.footerLinks || []).map((link) =>
     `<a href="${escapeHtml(link.href)}">${escapeHtml(link.text)}</a>`
   ).join(" ");
