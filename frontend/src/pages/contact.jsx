@@ -1,6 +1,16 @@
 import { useState } from "react";
 import { Mail, MapPin, Send, MessageSquare, Clock, ShieldCheck, CheckCircle2, AlertCircle, Loader2 } from "lucide-react";
 import { Link } from "react-router-dom";
+import { getLegalPageContent } from "../data/legalPagesContent.js";
+
+const content = getLegalPageContent("/contact");
+
+function InlineContent({ value }) {
+  if (typeof value === "string") return value;
+  return value.map((part, index) => part.type === "strong"
+    ? <strong key={index}>{part.text}</strong>
+    : <span key={index}>{part.text}</span>);
+}
 
 export default function Contact() {
   const [formData, setFormData] = useState({ name: "", email: "", subject: "", message: "" });
@@ -38,12 +48,12 @@ export default function Contact() {
       setFormData({ name: "", email: "", subject: "", message: "" });
       setStatus({
         type: "success",
-        message: "धन्यवाद! आपका संदेश सफलतापूर्वक भेज दिया गया है। हम जल्द ही आपसे संपर्क करेंगे।",
+        message: content.form.success,
       });
     } catch {
       setStatus({
         type: "error",
-        message: "संदेश भेजा नहीं जा सका। कृपया कुछ देर बाद फिर प्रयास करें या support@biharfast.in पर ईमेल करें।",
+        message: content.form.error,
       });
     } finally {
       setIsSubmitting(false);
@@ -55,63 +65,55 @@ export default function Contact() {
       <div className="bg-white rounded-3xl p-6 sm:p-10 border border-slate-200 shadow-xs space-y-8">
         <div>
           <span className="text-xs font-bold uppercase tracking-wider text-emerald-700 bg-emerald-50 px-2.5 py-1 rounded-md border border-emerald-200">
-            सहायता एवं संपर्क केंद्र
+            {content.eyebrow}
           </span>
           <h1 className="text-2xl sm:text-3xl font-black text-slate-900 mt-2">
-            हमसे संपर्क करें (Contact & Grievance Redressal)
+            {content.title}
           </h1>
           <p className="text-slate-600 text-xs sm:text-sm mt-2 leading-relaxed">
-            यदि आपको पोर्टल पर प्रकाशित किसी अधिसूचना में कोई तथ्यात्मक त्रुटि दिखाई दे, कॉपीराइट संबंधित कोई आपत्ति हो, अथवा तकनीकी सहायता की आवश्यकता हो, तो नीचे दिए गए माध्यमों से संपर्क करें।
+            {content.intro}
           </p>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200 text-center">
-            <div className="w-10 h-10 rounded-xl bg-blue-600 text-white flex items-center justify-center mx-auto mb-2">
-              <Mail size={18} />
-            </div>
-            <h2 className="font-bold text-xs text-slate-900">आधिकारिक ईमेल</h2>
-            <a href="mailto:support@biharfast.in" className="text-[11px] text-blue-700 hover:underline mt-1 font-mono select-all">support@biharfast.in</a>
-          </div>
-
-          <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200 text-center">
-            <div className="w-10 h-10 rounded-xl bg-emerald-600 text-white flex items-center justify-center mx-auto mb-2">
-              <MessageSquare size={18} />
-            </div>
-            <h2 className="font-bold text-xs text-slate-900">कम्युनिटी चैनल</h2>
-            <p className="text-[11px] text-slate-500 mt-1">टेलीग्राम & व्हाट्सएप ग्रुप्स</p>
-          </div>
-
-          <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200 text-center">
-            <div className="w-10 h-10 rounded-xl bg-purple-600 text-white flex items-center justify-center mx-auto mb-2">
-              <MapPin size={18} />
-            </div>
-            <h2 className="font-bold text-xs text-slate-900">राज्य / क्षेत्र</h2>
-            <p className="text-[11px] text-slate-500 mt-1">पटना / शेखपुरा, बिहार (भारत)</p>
-          </div>
+          {content.contactCards.map((card, index) => {
+            const Icon = [Mail, MessageSquare, MapPin][index];
+            const color = ["bg-blue-600", "bg-emerald-600", "bg-purple-600"][index];
+            return (
+              <div key={card.title} className="p-4 rounded-2xl bg-slate-50 border border-slate-200 text-center">
+                <div className={`w-10 h-10 rounded-xl ${color} text-white flex items-center justify-center mx-auto mb-2`}>
+                  <Icon size={18} />
+                </div>
+                <h2 className="font-bold text-xs text-slate-900">{card.title}</h2>
+                {card.href
+                  ? <a href={card.href} className="text-[11px] text-blue-700 hover:underline mt-1 font-mono select-all">{card.text}</a>
+                  : <p className="text-[11px] text-slate-500 mt-1">{card.text}</p>}
+              </div>
+            );
+          })}
         </div>
 
         {/* Grievance & Response Timeline Notice */}
         <div className="bg-slate-50 border border-slate-200 rounded-2xl p-4 text-xs text-slate-600 space-y-1.5">
           <div className="flex items-center gap-1.5 font-bold text-slate-800">
             <Clock size={14} className="text-[#0B4F8A]" /> 
-            प्रतिक्रिया समय-सीमा (Response Timeline):
+            {content.responseHeading}
           </div>
           <p>
-            हमारी तकनीकी एवं संपादकीय टीम कार्यदिवसों में सामान्यतः <strong>24 से 48 व्यावसायिक घंटों</strong> के भीतर सभी प्राप्त ईमेल और संदेशों का संज्ञान लेकर उत्तर प्रेषित करती है।
+            <InlineContent value={content.responseText} />
           </p>
         </div>
 
         {/* Contact Form */}
         <form onSubmit={handleSubmit} className="space-y-4 pt-2">
           <h3 className="text-sm font-bold text-slate-900 flex items-center gap-1.5">
-            <Send size={15} className="text-[#0B4F8A]" /> अपना संदेश प्रेषित करें
+            <Send size={15} className="text-[#0B4F8A]" /> {content.form.heading}
           </h3>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <input
               type="text"
               name="name"
-              placeholder="आपका नाम (Full Name)"
+              placeholder={content.form.name}
               required
               value={formData.name}
               onChange={handleChange}
@@ -121,7 +123,7 @@ export default function Contact() {
             <input
               type="email"
               name="email"
-              placeholder="ईमेल आईडी (Valid Email)"
+              placeholder={content.form.email}
               required
               value={formData.email}
               onChange={handleChange}
@@ -132,7 +134,7 @@ export default function Contact() {
           <input
             type="text"
             name="subject"
-            placeholder="विषय (उदा. विज्ञापन में त्रुटि / विधिक सुझाव / कॉपीराइट)"
+            placeholder={content.form.subject}
             value={formData.subject}
             onChange={handleChange}
             disabled={isSubmitting}
@@ -141,7 +143,7 @@ export default function Contact() {
           <textarea
             name="message"
             rows={4}
-            placeholder="अपना संदेश स्पष्ट रूप से लिखें..."
+            placeholder={content.form.message}
             required
             value={formData.message}
             onChange={handleChange}
@@ -166,7 +168,7 @@ export default function Contact() {
             disabled={isSubmitting}
             className="inline-flex items-center gap-2 bg-[#0B4F8A] hover:bg-[#083c68] text-white text-xs font-bold px-6 py-2.5 rounded-xl transition cursor-pointer shadow-xs active:scale-95 disabled:cursor-not-allowed disabled:opacity-60"
           >
-            {isSubmitting ? <><Loader2 size={14} className="animate-spin" /> भेज रहे हैं... / Sending...</> : <><Send size={14} /> संदेश भेजें</>}
+            {isSubmitting ? <><Loader2 size={14} className="animate-spin" /> {content.form.submitting}</> : <><Send size={14} /> {content.form.submit}</>}
           </button>
         </form>
 
@@ -175,7 +177,7 @@ export default function Contact() {
             ← मुख्य पृष्ठ पर लौटें
           </Link>
           <span className="text-[11px] text-slate-400 flex items-center gap-1">
-            <ShieldCheck size={12} className="text-emerald-600" /> स्पैम-मुक्त सुरक्षित संचार
+            <ShieldCheck size={12} className="text-emerald-600" /> {content.footer}
           </span>
         </div>
       </div>

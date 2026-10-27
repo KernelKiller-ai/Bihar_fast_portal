@@ -3,7 +3,7 @@
  * Updates document.title, canonical, meta description, and social meta tags in-place.
  * Prevents conflicting duplicate tags in the DOM.
  */
-import { SITE_URL, DEFAULT_OG_IMAGE, DEFAULT_ROBOTS } from "./seoConfig";
+import { DEFAULT_OG_IMAGE, DEFAULT_ROBOTS } from "./seoConfig";
 
 function upsertMeta(attributeName, attributeValue, content) {
   if (typeof document === "undefined" || !content) return;
@@ -86,4 +86,3 @@ export function updateHeadMetadata({
     script.textContent = typeof schemaJson === "string" ? schemaJson : JSON.stringify(schemaJson);
   }
 }
-

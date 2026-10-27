@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { 
   ExternalLink, 
@@ -10,14 +10,11 @@ import {
   HelpCircle, 
   Sparkles,
   ShieldCheck,
-  CheckCircle2,
   Clock,
   ChevronRight
 } from "lucide-react";
 
 export default function RtpsBihar() {
-  const [appNumber, setAppNumber] = useState("");
-  const [applicantName, setApplicantName] = useState("");
   const [isCopied, setIsCopied] = useState(false);
 
   useEffect(() => {

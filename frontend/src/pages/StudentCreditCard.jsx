@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { 
   ExternalLink, 
@@ -6,12 +6,10 @@ import {
   Share2, 
   Server, 
   FileText, 
-  Calendar, 
   HelpCircle, 
   Sparkles,
   CreditCard,
   CheckCircle2,
-  GraduationCap,
   ChevronRight
 } from "lucide-react";
 

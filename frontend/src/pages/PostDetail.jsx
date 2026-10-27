@@ -49,8 +49,10 @@ export default function PostDetail({ notices = [] }) {
   // Always fetch fresh full detail (with content, faqs, meta tags)
   useEffect(() => {
     if (!slug || slug === "undefined") {
-      setLoading(false);
-      setHasError(true);
+      queueMicrotask(() => {
+        setLoading(false);
+        setHasError(true);
+      });
       return;
     }
 

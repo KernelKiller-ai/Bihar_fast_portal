@@ -1,3 +1,4 @@
+/* eslint-disable react-refresh/only-export-components */
 import { useEffect, useState } from "react";
 import { isSupabaseConfigured, supabase } from "../api/supabase";
 import { attachPendingStudentAttempt } from "../utils/studentHistory";

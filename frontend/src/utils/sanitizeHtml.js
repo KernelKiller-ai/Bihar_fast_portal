@@ -8,8 +8,7 @@ export function addExternalLinkSafety(sanitizedHtml) {
 
   template.content.querySelectorAll("a[href]").forEach((anchor) => {
     const href = anchor.getAttribute("href");
-    let isExternal = false;
-
+    let isExternal;
     try {
       const url = new URL(href, window.location.origin);
       isExternal = /^https?:$/.test(url.protocol) && url.origin !== window.location.origin;

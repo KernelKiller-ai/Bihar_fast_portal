@@ -324,7 +324,7 @@ function getExamCategoryCode(examId, subject) {
       submissionLockRef.current = false;
       setSubmitting(false);
     }
-  }, [quizMeta, activeQuestions.length, answers, student, profileName, demoMode, user, openLoginModal]);
+  }, [quizMeta, activeQuestions.length, answers, student, profileName, demoMode, user, openLoginModal, examId, quizId]);
 
   useEffect(() => {
     submitRef.current = handleSubmit;
