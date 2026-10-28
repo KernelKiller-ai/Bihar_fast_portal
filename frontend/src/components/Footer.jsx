@@ -366,19 +366,21 @@ export default function Footer() {
             </ul>
           </div>
 
-          {/* Column 5: Legal & Support (Span 2) */}
+          {/* Column 5: Legal & Compliance (Span 2) */}
           <div className="lg:col-span-2">
             <h2 className="text-slate-900 font-extrabold text-[13px] tracking-tight mb-3 border-b-2 border-slate-900 pb-1 inline-block">
-              Legal &amp; Support
+              Legal &amp; Compliance
             </h2>
-            <ul className="space-y-2.5 text-xs text-slate-600 font-medium">
-              <li><Link to="/about" className="hover:text-blue-700 transition">About Us</Link></li>
-              <li><Link to="/contact" className="hover:text-blue-700 transition">Contact Us</Link></li>
-              <li><Link to="/privacy-policy" className="hover:text-blue-700 transition">Privacy Policy</Link></li>
-              <li><Link to="/terms" className="hover:text-blue-700 transition">Terms &amp; Conditions</Link></li>
-              <li><Link to="/disclaimer" className="hover:text-blue-700 transition">Disclaimer</Link></li>
-              <li><Link to="/download" className="hover:text-blue-700 transition">Download App</Link></li>
-            </ul>
+            <nav aria-label="Legal & compliance links">
+              <ul className="space-y-2.5 text-xs text-slate-600 font-medium">
+                <li><Link to="/about" className="hover:text-blue-700 transition">About Us</Link></li>
+                <li><Link to="/contact" className="hover:text-blue-700 transition">Contact Us</Link></li>
+                <li><Link to="/privacy-policy" className="hover:text-blue-700 transition">Privacy Policy</Link></li>
+                <li><Link to="/terms-conditions" className="hover:text-blue-700 transition">Terms and Conditions</Link></li>
+                <li><Link to="/disclaimer" className="hover:text-blue-700 transition">Disclaimer</Link></li>
+                <li><Link to="/download" className="hover:text-blue-700 transition">Download App</Link></li>
+              </ul>
+            </nav>
           </div>
 
           {/* Column 6: Stay Connected (Span 3) */}
@@ -486,13 +488,18 @@ export default function Footer() {
             <p className="text-[10px] text-slate-400">
               Not affiliated with any government department.               We link to official portals where available; please confirm details with the issuing department.
             </p>
-            <nav className="mt-2 flex flex-wrap justify-center gap-x-3 gap-y-1 font-bold text-blue-200" aria-label="Legal and app links">
-              <Link to="/about" className="hover:text-white hover:underline">About</Link>
-              <Link to="/contact" className="hover:text-white hover:underline">Contact</Link>
-              <Link to="/privacy-policy" className="hover:text-white hover:underline">Privacy</Link>
-              <Link to="/terms" className="hover:text-white hover:underline">Terms</Link>
-              <Link to="/disclaimer" className="hover:text-white hover:underline">Disclaimer</Link>
-              <Link to="/download" className="hover:text-white hover:underline">Download App</Link>
+            <nav className="mt-3 flex flex-wrap items-center justify-center gap-x-3 gap-y-1.5 text-xs font-bold text-blue-200" aria-label="Mandatory legal pages">
+              <Link to="/about" className="transition hover:text-white hover:underline">About Us</Link>
+              <span className="text-white/30 text-[10px]" aria-hidden="true">•</span>
+              <Link to="/contact" className="transition hover:text-white hover:underline">Contact Us</Link>
+              <span className="text-white/30 text-[10px]" aria-hidden="true">•</span>
+              <Link to="/privacy-policy" className="transition hover:text-white hover:underline">Privacy Policy</Link>
+              <span className="text-white/30 text-[10px]" aria-hidden="true">•</span>
+              <Link to="/terms-conditions" className="transition hover:text-white hover:underline">Terms and Conditions</Link>
+              <span className="text-white/30 text-[10px]" aria-hidden="true">•</span>
+              <Link to="/disclaimer" className="transition hover:text-white hover:underline">Disclaimer</Link>
+              <span className="text-white/30 text-[10px]" aria-hidden="true">•</span>
+              <Link to="/download" className="transition hover:text-white hover:underline">Download App</Link>
             </nav>
           </div>
 

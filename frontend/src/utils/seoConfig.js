@@ -253,6 +253,13 @@ export const STATIC_ROUTE_METADATA = {
     robots: DEFAULT_ROBOTS,
     ogType: "website"
   },
+  "/terms-conditions": {
+    title: "उपयोग की शर्तें (Terms & Conditions) - BiharFast",
+    description: "BiharFast.in के नियम और शर्तें: वेबसाइट के उपयोग, सामग्री अधिकार और कानूनी दिशा-निर्देशों की जानकारी।",
+    canonical: `${SITE_URL}/terms`, // Alias points to /terms
+    robots: DEFAULT_ROBOTS,
+    ogType: "website"
+  },
   "/terms-and-conditions": {
     title: "उपयोग की शर्तें (Terms & Conditions) - BiharFast",
     description: "BiharFast.in के नियम और शर्तें: वेबसाइट के उपयोग, सामग्री अधिकार और कानूनी दिशा-निर्देशों की जानकारी।",

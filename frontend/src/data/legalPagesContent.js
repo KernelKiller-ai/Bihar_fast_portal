@@ -193,18 +193,47 @@ export const LEGAL_PAGES_CONTENT = {
         paragraphs: ["Information may be used to respond to support and correction requests, deliver voluntarily requested newsletter or push alerts, prevent abuse, secure the website, understand aggregated traffic, improve performance and usability, and comply with legal obligations. We do not sell personal information or use contact submissions for unrelated marketing."],
       },
       {
-        heading: "3. Cookies, Google AdSense and DoubleClick DART",
+        heading: "3. Cookies, Google AdSense, and Third-Party Advertising Compliance",
         paragraphs: [
-          "This website may use Google AdSense and other third-party advertising vendors. Third-party vendors, including Google, use cookies to serve ads based on a user's prior visits to this website or other websites.",
-          "Google may use advertising cookies, including the DoubleClick DART cookie, to enable Google and its partners to serve ads based on visits to this website and other websites. Advertising partners may process cookie identifiers, device information, and contextual or interest-based signals under their own policies.",
+          "BiharFast (biharfast.in) uses cookies and third-party advertising partners, prominently including Google AdSense, to deliver relevant advertisements and sustain our free educational and job notification platform.",
           [
-            { type: "text", text: "Users can opt out of personalized advertising through " },
-            { type: "link", text: "Google Ads Settings", href: "https://www.google.com/settings/ads", external: true },
-            { type: "text", text: " or by visiting " },
-            { type: "link", text: "www.aboutads.info", href: "https://www.aboutads.info/", external: true },
-            { type: "text", text: ". Where legally required, non-essential cookies and personalized advertising should be controlled through the site's consent choices." },
+            { type: "strong", text: "Google AdSense & DoubleClick DART Cookie: " },
+            { type: "text", text: "Google is a third-party advertising vendor on our website. Google uses cookies, including the DoubleClick DART cookie, to serve advertisements to visitors based on their visit to biharfast.in and other sites across the Internet. The DART cookie enables Google and its certified partner ad networks to serve targeted, interest-based advertisements based on prior visits." },
+          ],
+          [
+            { type: "strong", text: "Third-Party Ad Networks and Vendors: " },
+            { type: "text", text: "Other third-party advertising partners and ad networks may also use cookies, JavaScript, or Web Beacons within the advertisements and links displayed on BiharFast. These technologies automatically receive your IP address when ad impressions occur. They are utilized by advertising partners to gauge campaign performance and personalize ad content according to their own privacy standards." },
+          ],
+          [
+            { type: "strong", text: "No Access to Personal Information: " },
+            { type: "text", text: "BiharFast does not sell, rent, or provide any personally identifiable information (such as your name, email address, phone number, or government exam credentials) to third-party advertisers. BiharFast has no direct access to or control over cookies or tracking technologies deployed by third-party advertisers." },
+          ],
+          [
+            { type: "strong", text: "User Opt-Out and Cookie Control Options: " },
+            { type: "text", text: "Users have the complete right and technical ability to opt out of personalized advertising or disable cookies through the following verified resources:" },
           ],
         ],
+        lists: [{
+          items: [
+            [
+              { type: "text", text: "You can opt out of personalized Google advertising by visiting " },
+              { type: "link", text: "Google Ads Settings", href: "https://adssettings.google.com/", external: true },
+              { type: "text", text: " or reviewing " },
+              { type: "link", text: "Google's Advertising Privacy Principles", href: "https://policies.google.com/technologies/ads", external: true },
+              { type: "text", text: "." },
+            ],
+            [
+              { type: "text", text: "You can opt out of third-party vendor cookies for interest-based advertising through " },
+              { type: "link", text: "AboutAds Choices", href: "https://www.aboutads.info/choices/", external: true },
+              { type: "text", text: " or the " },
+              { type: "link", text: "Network Advertising Initiative (NAI)", href: "https://optout.networkadvertising.org/", external: true },
+              { type: "text", text: "." },
+            ],
+            [
+              { type: "text", text: "You can modify your browser settings (Chrome, Edge, Safari, Firefox) to block or delete cookies. Disabling cookies may affect certain session-based preferences on web portals." },
+            ],
+          ],
+        }],
       },
       {
         heading: "4. Analytics and Push Notifications",

@@ -78,6 +78,7 @@ function runTests() {
   assert.equal(getMetadataForPath("/about/").canonical, "https://biharfast.in/about");
   assert.equal(getMetadataForPath("/about-us").canonical, "https://biharfast.in/about");
   assert.equal(getMetadataForPath("/privacy").canonical, "https://biharfast.in/privacy-policy");
+  assert.equal(getMetadataForPath("/terms-conditions").canonical, "https://biharfast.in/terms");
   assert.equal(getMetadataForPath("/terms-and-conditions").canonical, "https://biharfast.in/terms");
   console.log("✔ Test 3 Passed: Route resolution and canonical aliasing work correctly.");
 

@@ -789,6 +789,7 @@ export default function App() {
             <Route path="/privacy-policy" element={<PrivacyPolicy />} />
             <Route path="/privacy" element={<PrivacyPolicy />} />
             <Route path="/terms" element={<Terms />} />
+            <Route path="/terms-conditions" element={<Terms />} />
             <Route path="/terms-and-conditions" element={<Terms />} />
             
             {/* Admin Gate Dual Routing */}
