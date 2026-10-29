@@ -200,6 +200,9 @@ export default function Navbar() {
         <div className="mx-auto max-w-7xl overflow-x-auto px-3 sm:px-6">
           <div className="flex min-w-max items-center gap-1 py-1.5 text-xs font-semibold">
             <Link to="/jobs" className="min-h-9 rounded-md bg-[#0B2545] px-3 py-2 text-white">Latest Jobs</Link>
+            <Link to="/bihar-district-wise-recruitment" className="min-h-9 rounded-md px-3 py-2 text-[#0B2545] font-bold bg-amber-50 border border-amber-300 hover:bg-amber-100 transition shadow-2xs">
+              District Jobs
+            </Link>
             <Link to="/admit-card" className="min-h-9 rounded-md px-3 py-2 text-[#475569] transition hover:bg-[#F1F5F9] hover:text-[#0B2545]">Admit Cards</Link>
             <Link to="/results" className="min-h-9 rounded-md px-3 py-2 text-[#475569] transition hover:bg-[#F1F5F9] hover:text-[#0B2545]">Results</Link>
             <Link to="/all-updates" className="min-h-9 rounded-md px-3 py-2 text-[#475569] transition hover:bg-[#F1F5F9] hover:text-[#0B2545]">All Updates</Link>

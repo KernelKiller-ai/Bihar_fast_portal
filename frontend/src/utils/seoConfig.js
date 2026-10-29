@@ -15,6 +15,13 @@ export const STATIC_ROUTE_METADATA = {
     robots: DEFAULT_ROBOTS,
     ogType: "website"
   },
+  "/bihar-district-wise-recruitment": {
+    title: "Bihar District Wise Recruitment 2026 | बिहार सभी 38 जिला भर्ती - BiharFast",
+    description: "बिहार के सभी 38 जिलों (Araria, Begusarai, Sheikhpura, Patna, Gaya आदि) की ब्लॉक, समाहरणालय और संविदा आधारित ताजा भर्ती सूचनाएं, पात्रता और आवेदन लिंक।",
+    canonical: `${SITE_URL}/bihar-district-wise-recruitment`,
+    robots: DEFAULT_ROBOTS,
+    ogType: "website"
+  },
   "/jobs": {
     title: "सरकारी नौकरी (Govt Jobs in Bihar 2026) | Latest Vacancies - BiharFast",
     description: "बिहार की नवीनतम सरकारी नौकरियां, BPSC, CSBC, BTSC, BSSC एवं रेलवे भर्ती की विस्तृत जानकारी और डायरेक्ट ऑनलाइन आवेदन लिंक।",

@@ -36,6 +36,7 @@ const DownloadApp = lazy(() => import("./pages/DownloadApp"));
 const StudentDashboard = lazy(() => import("./pages/StudentDashboard"));
 const CategoryPage = lazy(() => import("./pages/CategoryPage"));
 const UsefulToolsPage = lazy(() => import("./pages/UsefulToolsPage"));
+const DistrictRecruitment = lazy(() => import("./pages/DistrictRecruitment"));
 
 // Policy Pages (Lazy Loaded)
 const About = lazy(() => import("./pages/about"));
@@ -797,6 +798,7 @@ export default function App() {
             <Route path="/admin-portal" element={<Admin />} />
             
             {/* Dedicated High-Speed Hubs */}
+            <Route path="/bihar-district-wise-recruitment" element={<DistrictRecruitment />} />
             <Route path="/bseb-matric-10th" element={<BsebMatric />} />
             <Route path="/bseb-inter-12th" element={<BsebInter />} />
             <Route path="/cuet-ug-admission" element={<CuetUgAdmission />} />

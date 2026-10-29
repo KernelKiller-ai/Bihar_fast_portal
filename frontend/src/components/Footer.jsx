@@ -354,6 +354,11 @@ export default function Footer() {
                 </Link>
               </li>
               <li>
+                <Link to="/bihar-district-wise-recruitment" className="hover:text-blue-700 flex items-center gap-2 font-bold text-slate-800 transition">
+                  <Folder size={13} className="text-amber-600 shrink-0" /> District Jobs (38 Zila)
+                </Link>
+              </li>
+              <li>
                 <Link to="/category/social-welfare" className="hover:text-blue-700 flex items-center gap-2 transition">
                   <Folder size={13} className="text-slate-400 shrink-0" /> Social Welfare
                 </Link>
