@@ -10,6 +10,22 @@ export default function JobCard({ post }) {
   return (
     <div className="bg-white border border-slate-200 hover:border-[#0B4F8A] rounded-2xl p-4 transition-all duration-200 hover:shadow-md flex flex-col justify-between group">
       <div>
+        {/* Thumbnail with branded fallback */}
+        {post.thumbnail_url ? (
+          <img
+            src={post.thumbnail_url}
+            alt={post.title}
+            loading="lazy"
+            className="aspect-video w-full object-cover rounded-xl border border-slate-200/80 mb-3"
+          />
+        ) : (
+          <div className="aspect-video w-full rounded-xl border border-slate-200/80 bg-gradient-to-br from-slate-100 to-blue-50 mb-3 flex items-center justify-center">
+            <span className="text-lg font-black tracking-wide text-[#0B4F8A]/80 bg-white/70 border border-blue-100 px-4 py-1.5 rounded-lg shadow-xs">
+              {post.department || "Bihar Govt"}
+            </span>
+          </div>
+        )}
+
         <div className="flex items-center justify-between gap-2 mb-2">
           <span className="text-[11px] font-bold text-[#0B4F8A] bg-blue-50 px-2.5 py-0.5 rounded-full border border-blue-100">
             {post.department || "बिहार सरकार"}
@@ -79,5 +95,6 @@ JobCard.propTypes = {
     eligibility: PropTypes.string,
     last_date: PropTypes.string,
     lastDate: PropTypes.string,
+    thumbnail_url: PropTypes.string,
   }).isRequired,
 };

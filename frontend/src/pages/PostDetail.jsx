@@ -292,6 +292,16 @@ export default function PostDetail({ notices = [] }) {
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 py-4">
+      {/* Featured Thumbnail (if available) */}
+      {post?.thumbnail_url && (
+        <img
+          src={post.thumbnail_url}
+          alt={post.title}
+          loading="lazy"
+          className="max-h-72 w-full object-cover rounded-2xl border border-slate-200/80 mb-6"
+        />
+      )}
+
       {/* 1. Accessible Breadcrumb Navigation */}
       <nav aria-label="Breadcrumb" className="flex items-center gap-1.5 text-xs text-slate-600 font-semibold mb-4 overflow-x-auto pb-1">
         <Link to="/" className="hover:text-blue-700 transition flex items-center gap-1 shrink-0">

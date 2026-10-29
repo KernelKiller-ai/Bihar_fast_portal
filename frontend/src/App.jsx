@@ -2,6 +2,8 @@ import { useState, useEffect, Suspense, lazy } from "react";
 import { Routes, Route, Link } from "react-router-dom";
 import Navbar from "./components/Navbar";
 import DownloadAppBanner from "./components/DownloadAppBanner";
+import TopBanner from "./components/TopBanner";
+import AdminBannerControl from "./components/AdminBannerControl";
 import NotificationCard from "./components/NotificationCard";
 import LoginModal from "./components/LoginModal";
 import ScrollToTop from "./components/ScrollToTop";
@@ -184,6 +186,7 @@ export default function App() {
       <LoginModal />
       <RouteSEO />
       <div>
+        <TopBanner />
         <Navbar />
         <DownloadAppBanner />
 
@@ -794,8 +797,8 @@ export default function App() {
             <Route path="/terms-and-conditions" element={<Terms />} />
             
             {/* Admin Gate Dual Routing */}
-            <Route path="/admin" element={<Admin />} />
-            <Route path="/admin-portal" element={<Admin />} />
+            <Route path="/admin" element={<><Admin /><AdminBannerControl /></>} />
+            <Route path="/admin-portal" element={<><Admin /><AdminBannerControl /></>} />
             
             {/* Dedicated High-Speed Hubs */}
             <Route path="/bihar-district-wise-recruitment" element={<DistrictRecruitment />} />
