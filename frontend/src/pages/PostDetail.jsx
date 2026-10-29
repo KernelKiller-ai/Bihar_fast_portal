@@ -18,7 +18,8 @@ import {
   Share2,
   Check,
   Copy,
-  Send
+  Send,
+  MessageCircle
 } from "lucide-react";
 import { generateSlug } from "../utils/slug";
 
@@ -210,7 +211,6 @@ export default function PostDetail({ notices = [] }) {
   }, [post, slug]);
 
   const handleCopyLink = () => {
-    const postUrl = `https://biharfast.in/post/${post?.slug || slug}`;
     if (navigator.clipboard) {
       navigator.clipboard.writeText(postUrl);
       setCopied(true);
@@ -336,74 +336,63 @@ export default function PostDetail({ notices = [] }) {
       {/* 2. Main Post Content Layout (Details, Articles, Tables, FAQs) */}
       {renderActiveLayout()}
 
-      {/* 3. Social Share & Community Join Widget */}
-      <section className="mt-8 bg-white border border-slate-200 rounded-2xl p-5 sm:p-6 shadow-xs space-y-4">
-        {/* Top Row: Quick Share Links */}
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-100 pb-4">
-          <div className="flex items-center gap-2.5">
-            <div className="w-9 h-9 rounded-full bg-blue-50 text-blue-700 flex items-center justify-center shrink-0 border border-blue-200">
-              <Share2 size={17} />
-            </div>
-            <div>
-              <p className="text-xs sm:text-sm font-black text-slate-900 leading-tight">
-                दोस्तों के साथ शेयर करें (Share Update)
-              </p>
-              <p className="text-[11px] text-slate-600 font-medium mt-0.5">
-                जरूरतमंद साथियों तक यह आधिकारिक जानकारी तुरंत पहुंचाएं
+      {/* 3. Community Join + Quick Share — Single Compact Card */}
+      <section className="mt-8 bg-slate-50/60 border border-slate-200/80 rounded-2xl p-4 sm:p-5 shadow-xs hover:scale-[1.02] transition-transform duration-300">
+        <div className="flex flex-col lg:flex-row lg:items-stretch gap-4">
+          {/* Left Zone: Community Join */}
+          <div className="lg:flex-1 bg-white border border-blue-200/80 rounded-xl p-4 flex flex-col sm:flex-row lg:flex-col xl:flex-row sm:items-center gap-3">
+            <div className="flex items-center gap-3 flex-1 min-w-0">
+              <span className="w-10 h-10 shrink-0 rounded-full bg-emerald-50 border border-emerald-200 text-emerald-600 flex items-center justify-center">
+                <MessageCircle size={18} className="animate-pulse" />
+              </span>
+              <p className="text-xs font-black text-slate-900 leading-relaxed">
+                ⚡ बिहार के सभी जॉब अपडेट सबसे पहले पाएं
+                <span className="block text-[11px] text-slate-600 font-semibold">ऑफिशियल ग्रुप्स से जुड़ें — 100% फ्री</span>
               </p>
             </div>
+            <div className="flex items-center gap-2 shrink-0">
+              <a
+                href="https://whatsapp.com/channel/0029Vb7wN5n3bbV2H6f"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex-1 sm:flex-none bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold h-10 px-4 rounded-xl flex items-center justify-center gap-1.5 shadow-xs transition"
+              >
+                <MessageCircle size={14} /> Join WhatsApp
+              </a>
+              <a
+                href="https://t.me/biharfast_official"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex-1 sm:flex-none bg-sky-500 hover:bg-sky-600 text-white text-xs font-bold h-10 px-4 rounded-xl flex items-center justify-center gap-1.5 shadow-xs transition"
+              >
+                <Send size={14} /> Join Telegram
+              </a>
+            </div>
           </div>
-          <div className="flex flex-wrap items-center gap-2 text-xs">
-            <a
-              href={`https://api.whatsapp.com/send?text=${shareText}`}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="bg-[#25D366] hover:bg-[#20bd5a] text-white font-extrabold px-3.5 py-2 rounded-xl transition flex items-center gap-1.5 shadow-xs hover:scale-105"
-            >
-              <span>WhatsApp</span>
-            </a>
-            <a
-              href={`https://t.me/share/url?url=${encodeURIComponent(postUrl)}&text=${shareText}`}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="bg-[#0088cc] hover:bg-[#0077b3] text-white font-extrabold px-3.5 py-2 rounded-xl transition flex items-center gap-1.5 shadow-xs hover:scale-105"
-            >
-              <Send size={13} />
-              <span>Telegram</span>
-            </a>
-            <button
-              type="button"
-              onClick={handleCopyLink}
-              className="bg-slate-100 hover:bg-slate-200 text-slate-800 font-bold px-3.5 py-2 rounded-xl border border-slate-300 transition flex items-center gap-1.5 cursor-pointer"
-            >
-              {copied ? <Check size={14} className="text-emerald-600" /> : <Copy size={14} className="text-slate-600" />}
-              <span>{copied ? "कॉपी हो गया!" : "लिंक कॉपी करें"}</span>
-            </button>
-          </div>
-        </div>
 
-        {/* Bottom Row: Official Community Group Join Banner */}
-        <div className="bg-linear-to-r from-blue-50 via-slate-50 to-indigo-50 border border-blue-200/80 rounded-xl p-3.5 sm:p-4 flex flex-col sm:flex-row items-center justify-between gap-3">
-          <p className="text-xs font-bold text-slate-800 text-center sm:text-left leading-relaxed">
-            ⚡ बिहार के सभी जॉब कार्ड व परीक्षा अपडेट सबसे पहले पाने के लिए हमारे ऑफिशियल ग्रुप्स से जुड़ें:
-          </p>
-          <div className="flex items-center gap-2 shrink-0">
-            <a
-              href="https://whatsapp.com/channel/0029Vb7wN5n3bbV2H6f"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="bg-[#128C7E] hover:bg-[#0e7065] text-white text-[11px] font-black px-3.5 py-2 rounded-xl transition shadow-xs hover:scale-105"
-            >
-              Join WhatsApp Channel
-            </a>
-            <a
-              href="https://t.me/biharfast_official"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="bg-[#24A1DE] hover:bg-[#1f8ec4] text-white text-[11px] font-black px-3.5 py-2 rounded-xl transition shadow-xs hover:scale-105"
-            >
-              Join Telegram Group
-            </a>
+          {/* Right Zone: Quick Share */}
+          <div className="lg:border-l lg:border-slate-200/80 lg:pl-4 flex flex-col justify-center gap-2">
+            <p className="text-[11px] font-black uppercase tracking-wider text-slate-500 flex items-center gap-1.5">
+              <Share2 size={12} /> Quick Share
+            </p>
+            <div className="flex items-center gap-2">
+              <a
+                href={`https://api.whatsapp.com/send?text=${shareText}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex-1 sm:flex-none bg-white hover:bg-slate-100 border border-slate-200 text-slate-800 text-xs font-bold h-9 px-3.5 rounded-xl flex items-center justify-center gap-1.5 transition"
+              >
+                <MessageCircle size={14} className="text-emerald-600" /> Share on WhatsApp
+              </a>
+              <button
+                type="button"
+                onClick={handleCopyLink}
+                className="flex-1 sm:flex-none bg-white hover:bg-slate-100 border border-slate-200 text-slate-800 text-xs font-bold h-9 px-3.5 rounded-xl flex items-center justify-center gap-1.5 transition cursor-pointer"
+              >
+                {copied ? <Check size={14} className="text-emerald-600" /> : <Copy size={14} className="text-slate-600" />}
+                {copied ? "लिंक कॉपी हो गया" : "Copy Link"}
+              </button>
+            </div>
           </div>
         </div>
       </section>
