@@ -15,6 +15,7 @@ import {
 } from "lucide-react";
 import { Link } from "react-router-dom";
 import { addExternalLinkSafety } from "../../utils/sanitizeHtml";
+import PostBanner from "./PostBanner";
 
 export default function AdmitCardLayout({ post }) {
   const downloadUrl = post.apply_url || post.applyUrl || null;
@@ -40,22 +41,27 @@ export default function AdmitCardLayout({ post }) {
     : null;
 
   return (
-    <article className="max-w-4xl mx-auto bg-white rounded-2xl border border-slate-300 shadow-sm overflow-hidden my-6">
+    <article className="max-w-4xl mx-auto bg-white rounded-3xl border border-slate-200/90 shadow-[0_10px_35px_-10px_rgba(15,23,42,0.1)] overflow-hidden my-6">
       {/* Top Header */}
-      <header className="bg-linear-to-r from-[#073663] via-[#0B3B66] to-[#073663] text-white p-5 sm:p-6 border-b-4 border-amber-500">
-        <div className="flex items-center justify-between gap-2 mb-2">
+      <header className="relative bg-linear-to-br from-[#073663] via-[#0B4F8A] to-[#073663] text-white">
+        <div className="h-1.5 w-full bg-linear-to-r from-amber-400 via-orange-300 to-amber-400 shadow-[0_2px_10px_rgba(251,191,36,0.6)]" />
+        <div className="pointer-events-none absolute -top-16 -right-16 h-56 w-56 rounded-full bg-sky-400/10 blur-3xl" />
+        <div className="relative p-5 sm:p-6">
+          <PostBanner post={post} label="प्रवेश पत्र बैनर" />
+          <div className="flex items-center justify-between gap-2 mb-2 mt-5">
           <span className="text-[10px] font-black uppercase tracking-wider bg-amber-400 text-slate-900 px-2.5 py-0.5 rounded font-mono shadow-xs">
             प्रवेश पत्र (Admit Card)
           </span>
           <Link 
             to="/" 
-            className="text-xs text-sky-200 hover:text-white flex items-center gap-1 font-bold transition bg-white/10 px-3 py-1 rounded-lg hover:bg-white/20"
+            className="text-xs text-sky-200 hover:text-white flex items-center gap-1 font-bold transition bg-white/10 px-3 py-1 rounded-lg hover:bg-white/20 active:scale-[0.98]"
           >
             <ArrowLeft size={14} /> वापस होम पेज
           </Link>
         </div>
         <h1 className="text-xl sm:text-2xl font-black leading-tight drop-shadow-xs">{title}</h1>
         <p className="text-xs text-sky-200 mt-1.5 font-medium">विभाग: {dept} • परीक्षा केंद्र एवं रोल नंबर विवरण</p>
+        </div>
       </header>
 
       {/* Main Content Body Container */}
@@ -70,7 +76,7 @@ export default function AdmitCardLayout({ post }) {
                   href={downloadUrl}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="inline-flex items-center gap-2 bg-emerald-700 hover:bg-emerald-800 text-white font-black text-sm px-6 py-2.5 rounded-xl shadow transition active:scale-95 cursor-pointer"
+                  className="inline-flex items-center gap-2 bg-emerald-700 hover:bg-emerald-800 text-white font-black text-sm px-6 py-2.5 rounded-xl shadow-[0_6px_18px_rgba(5,150,105,0.35)] transition-all duration-200 hover:shadow-[0_10px_24px_rgba(5,150,105,0.45)] active:scale-[0.98] cursor-pointer"
                 >
                   <Download size={16} /> डाउनलोड एडमिट कार्ड (Server 1)
                 </a>
@@ -80,7 +86,7 @@ export default function AdmitCardLayout({ post }) {
                   href={noticeUrl}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="inline-flex items-center gap-2 bg-white hover:bg-emerald-100 text-emerald-900 border border-emerald-300 font-bold text-sm px-6 py-2.5 rounded-xl shadow-xs transition"
+                  className="inline-flex items-center gap-2 bg-white hover:bg-emerald-100 text-emerald-900 border border-emerald-300 font-bold text-sm px-6 py-2.5 rounded-xl shadow-[0_4px_12px_rgba(15,23,42,0.1)] transition-all duration-200 active:scale-[0.98]"
                 >
                   <ExternalLink size={16} /> परीक्षा सूचना / दिशा-निर्देश
                 </a>
@@ -110,8 +116,9 @@ export default function AdmitCardLayout({ post }) {
 
         {/* Schedule & Guidelines Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">
-          <div className="border border-slate-200 rounded-xl p-4 bg-slate-50">
-            <h3 className="font-black flex items-center gap-1.5 mb-2.5 text-[#0B3B66] text-sm">
+          <div className="relative rounded-2xl border border-slate-200/90 shadow-[0_8px_24px_-8px_rgba(15,23,42,0.14)] p-4 bg-white transition-transform duration-300 hover:-translate-y-1">
+            <div className="absolute inset-1 rounded-xl border border-sky-100/80 pointer-events-none" />
+            <h3 className="font-black flex items-center gap-1.5 mb-2.5 text-[#0B4F8A] text-sm relative">
               <Calendar size={15} /> परीक्षा कार्यक्रम (Exam Schedule)
             </h3>
             <ul className="space-y-2.5 divide-y divide-slate-200">
@@ -136,8 +143,9 @@ export default function AdmitCardLayout({ post }) {
             </ul>
           </div>
 
-          <div className="border border-slate-200 rounded-xl p-4 bg-slate-50">
-            <h3 className="font-black flex items-center gap-1.5 mb-2.5 text-[#0B3B66] text-sm">
+          <div className="relative rounded-2xl border border-slate-200/90 shadow-[0_8px_24px_-8px_rgba(15,23,42,0.14)] p-4 bg-white transition-transform duration-300 hover:-translate-y-1">
+            <div className="absolute inset-1 rounded-xl border border-emerald-100/80 pointer-events-none" />
+            <h3 className="font-black flex items-center gap-1.5 mb-2.5 text-[#0B4F8A] text-sm relative">
               <FileCheck size={15} /> परीक्षा केंद्र पर ले जाने हेतु दस्तावेज
             </h3>
             <ul className="list-disc list-inside space-y-1.5 text-slate-700 font-medium leading-relaxed">
@@ -261,6 +269,10 @@ AdmitCardLayout.propTypes = {
     pdfUrl: PropTypes.string,
     pdf_url: PropTypes.string,
     short_desc: PropTypes.string,
+    thumbnail_url: PropTypes.string,
+    banner_url: PropTypes.string,
+    image_url: PropTypes.string,
+    photo_url: PropTypes.string,
     how_to_apply: PropTypes.arrayOf(PropTypes.string),
     selection_process: PropTypes.arrayOf(PropTypes.string),
     extra_links: PropTypes.arrayOf(

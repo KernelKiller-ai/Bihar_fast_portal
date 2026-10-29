@@ -60,7 +60,7 @@ export default function Footer() {
   };
 
   return (
-    <footer className="site-footer relative w-full select-none border-t border-[#E2E8F0] bg-[#F8FAFC] pt-8 text-[#475569]">
+    <footer className="site-footer relative w-full select-none border-t border-civic-border bg-civic-canvas pt-8 text-[#475569]">
       
       {/* 1. Top Feature Highlights Pill Bar */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 mb-8">
@@ -68,7 +68,7 @@ export default function Footer() {
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
             
             <div className="flex items-center gap-3">
-              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-[#EFF4FF] text-[#0B2545]">
+              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-[#EFF4FF] text-civic-navy">
                 <ShieldCheck size={20} />
               </div>
               <div>
@@ -88,7 +88,7 @@ export default function Footer() {
             </div>
 
             <div className="flex items-center gap-3">
-              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-[#ECFDF5] text-[#15803D]">
+              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-[#ECFDF5] text-civic-green">
                 <Users size={20} />
               </div>
               <div>
@@ -151,8 +151,8 @@ export default function Footer() {
             </p>
 
             <div className="mt-4 mb-3 inline-block">
-              <span className="block text-base font-bold tracking-wide text-[#0B2545] sm:text-lg">
-                बढ़ता बिहार, <span className="text-[#E65100]">बनता भविष्य</span>
+              <span className="block text-base font-bold tracking-wide text-civic-navy sm:text-lg">
+                बढ़ता बिहार, <span className="text-civic-orange">बनता भविष्य</span>
               </span>
               <svg className="w-full h-2.5 text-[#F97316] mt-0.5" viewBox="0 0 200 9" fill="none" preserveAspectRatio="none">
                 <path d="M2.5 6.5C45 2.5 120 1.5 197.5 5.5" stroke="currentColor" strokeWidth="3" strokeLinecap="round" />
@@ -422,7 +422,7 @@ export default function Footer() {
               <button
                 type="submit"
                 disabled={loading}
-                className="flex w-full items-center justify-center gap-1.5 rounded-md bg-[#0B2545] py-2 text-xs font-semibold text-white shadow-sm transition hover:bg-[#091E3A] disabled:opacity-60"
+                className="flex w-full items-center justify-center gap-1.5 rounded-md bg-civic-navy py-2 text-xs font-semibold text-white shadow-sm transition hover:bg-civic-navy-dark disabled:opacity-60"
               >
                 {loading ? (
                   <>
@@ -470,7 +470,7 @@ export default function Footer() {
       </div>
 
       {/* 3. Bottom Royal Navy Strip: Sovereign Ashok Stambh & Tiranga Tagline */}
-      <div className="relative z-20 border-t-2 border-[#E65100] bg-[#091E3A] px-4 py-4 text-white sm:px-6">
+      <div className="relative z-20 border-t-2 border-civic-orange bg-civic-navy-dark px-4 py-4 text-white sm:px-6">
         <div className="max-w-7xl mx-auto flex flex-col md:flex-row items-center justify-between gap-4 text-xs">
           
           <div className="flex items-center gap-3">

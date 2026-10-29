@@ -1,20 +1,21 @@
 import PropTypes from "prop-types";
 import DOMPurify from "dompurify";
-import { 
-  Calendar, 
-  GraduationCap, 
-  ExternalLink, 
-  Download, 
-  ArrowLeft, 
+import {
+  Calendar,
+  GraduationCap,
+  ExternalLink,
+  Download,
+  ArrowLeft,
   Users,
   CheckCircle2,
   FileText,
   HelpCircle,
   Briefcase,
-  BookOpen
+  BookOpen,
 } from "lucide-react";
 import { Link } from "react-router-dom";
 import { addExternalLinkSafety } from "../../utils/sanitizeHtml";
+import PostBanner from "./PostBanner";
 
 export default function JobLayout({ post }) {
   if (!post) return null;
@@ -35,75 +36,90 @@ export default function JobLayout({ post }) {
   const shortDesc = post.short_desc || null;
   const howToApply = Array.isArray(post.how_to_apply) && post.how_to_apply.length > 0 ? post.how_to_apply : null;
   const selectionProcess = Array.isArray(post.selection_process) && post.selection_process.length > 0 ? post.selection_process : null;
-  
+
   // Dynamic FAQs
-  const faqs = (Array.isArray(post.faqs) && post.faqs.length > 0) 
-    ? post.faqs 
+  const faqs = (Array.isArray(post.faqs) && post.faqs.length > 0)
+    ? post.faqs
     : (Array.isArray(post.extra_links) && post.extra_links.length > 0 ? post.extra_links : null);
 
   return (
-    <article className="max-w-4xl mx-auto bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden my-6">
-      {/* Header Banner */}
-      <header className="bg-linear-to-r from-[#0F2A4A] via-[#16406E] to-[#0F2A4A] text-white p-6 sm:p-8 border-b-4 border-amber-400">
-        <div className="flex items-center justify-between gap-2 mb-3">
-          <span className="text-[11px] font-black uppercase tracking-wider bg-amber-400 text-slate-950 px-2.5 py-1 rounded font-mono shadow-xs">
-            सरकारी भर्ती (Live Recruitment)
-          </span>
-          <Link 
-            to="/" 
-            className="text-xs text-sky-200 hover:text-white flex items-center gap-1.5 font-bold transition bg-white/10 hover:bg-white/20 px-3 py-1.5 rounded-lg"
-          >
-            <ArrowLeft size={14} /> वापस होम पेज
-          </Link>
-        </div>
-        
-        <h1 className="text-xl sm:text-2xl md:text-3xl font-black leading-snug drop-shadow-xs [overflow-wrap:anywhere]">
-          {title}
-        </h1>
+    <article className="max-w-4xl mx-auto bg-white rounded-3xl border border-slate-200/90 shadow-[0_10px_35px_-10px_rgba(15,23,42,0.1)] overflow-hidden my-6">
+      {/* Header: multi-layer gradient + 3D glow accent bar */}
+      <header className="relative bg-linear-to-br from-[#0F2A4A] via-[#16406E] to-[#0B4F8A] text-white">
+        {/* 3D glow accent bar */}
+        <div className="h-1.5 w-full bg-linear-to-r from-amber-400 via-orange-300 to-amber-400 shadow-[0_2px_10px_rgba(251,191,36,0.6)]" />
+        {/* Glow blob accent */}
+        <div className="pointer-events-none absolute -top-16 -right-16 h-56 w-56 rounded-full bg-sky-400/10 blur-3xl" />
 
-        <div className="flex min-w-0 flex-wrap items-center gap-y-2 gap-x-4 text-xs text-sky-100 mt-4 pt-3 border-t border-white/10 font-medium">
-          {dept && (
-            <span className="flex min-w-0 items-center gap-1.5 [overflow-wrap:anywhere]">
-              <Briefcase size={15} className="text-amber-400" /> 
-              विभाग: <strong className="text-white font-bold">{dept}</strong>
+        <div className="relative p-6 sm:p-8">
+          <PostBanner post={post} label="सरकारी भर्ती बैनर" />
+
+          <div className="flex items-center justify-between gap-2 mt-5 mb-3">
+            <span className="text-[11px] font-black uppercase tracking-wider bg-amber-400 text-slate-950 px-2.5 py-1 rounded font-mono shadow-[0_3px_10px_rgba(251,191,36,0.4)]">
+              सरकारी भर्ती (Live Recruitment)
             </span>
-          )}
-          <span className="text-sky-100">
-            स्वतंत्र सूचना पोर्टल • आधिकारिक स्रोतों के लिंक
-          </span>
+            <Link
+              to="/"
+              className="text-xs text-sky-200 hover:text-white flex items-center gap-1.5 font-bold transition bg-white/10 hover:bg-white/20 px-3 py-1.5 rounded-lg active:scale-[0.98]"
+            >
+              <ArrowLeft size={14} /> वापस होम पेज
+            </Link>
+          </div>
+
+          <h1 className="text-xl sm:text-2xl md:text-3xl font-black leading-snug drop-shadow-xs wrap-anywhere">
+            {title}
+          </h1>
+
+          <div className="flex min-w-0 flex-wrap items-center gap-y-2 gap-x-4 text-xs text-sky-100 mt-4 pt-3 border-t border-white/10 font-medium">
+            {dept && (
+              <span className="flex min-w-0 items-center gap-1.5 wrap-anywhere">
+                <Briefcase size={15} className="text-amber-400" />
+                विभाग: <strong className="text-white font-bold">{dept}</strong>
+              </span>
+            )}
+            <span className="text-sky-100">
+              स्वतंत्र सूचना पोर्टल • आधिकारिक स्रोतों के लिंक
+            </span>
+          </div>
         </div>
       </header>
 
       <div className="p-5 sm:p-8 space-y-7">
-        {/* Dynamic Highlights Grid */}
+        {/* Info Matrix — 3D elevated floating tiles */}
         {(totalPosts || lastDate || eligibility) && (
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
             {totalPosts && (
-              <div className="min-w-0 bg-slate-50 border border-slate-200 rounded-xl p-4 flex items-start gap-3">
+              <div className="min-w-0 relative rounded-2xl border border-slate-200/90 shadow-[0_8px_24px_-8px_rgba(15,23,42,0.14)] p-4 flex items-start gap-3 bg-white transition-transform duration-300 hover:-translate-y-1 hover:shadow-[0_14px_30px_-8px_rgba(11,79,138,0.25)]">
+                {/* Dual border glow */}
+                <div className="absolute inset-1 rounded-xl border border-blue-100/70 pointer-events-none" />
                 <Users size={18} className="text-[#0F3966] shrink-0 mt-0.5" />
-                <div className="min-w-0">
+                <div className="min-w-0 relative">
                   <p className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">कुल पद (Vacancies)</p>
-                  <p className="text-sm font-black text-slate-900 mt-0.5 [overflow-wrap:anywhere]">{totalPosts}</p>
+                  <p className="text-sm font-black text-[#0B4F8A] mt-0.5 wrap-anywhere">{totalPosts}</p>
                 </div>
               </div>
             )}
 
             {lastDate && (
-              <div className="min-w-0 bg-rose-50/70 border border-rose-200 rounded-xl p-4 flex items-start gap-3">
-                <Calendar size={18} className="text-rose-600 shrink-0 mt-0.5" />
-                <div className="min-w-0">
+              <div className="min-w-0 relative rounded-2xl border border-rose-200/90 shadow-[0_8px_24px_-8px_rgba(225,29,72,0.18)] p-4 flex items-start gap-3 bg-white transition-transform duration-300 hover:-translate-y-1 hover:shadow-[0_14px_30px_-8px_rgba(225,29,72,0.3)]">
+                <div className="absolute inset-1 rounded-xl border border-rose-100/80 pointer-events-none" />
+                {/* Rose glow accent */}
+                <div className="absolute -top-2 -right-2 h-10 w-10 rounded-full bg-rose-400/20 blur-md pointer-events-none" />
+                <Calendar size={18} className="text-rose-600 shrink-0 mt-0.5 relative" />
+                <div className="min-w-0 relative">
                   <p className="text-[11px] font-bold text-rose-700 uppercase tracking-wider">अंतिम तिथि (Last Date)</p>
-                  <p className="text-sm font-black text-rose-900 mt-0.5 [overflow-wrap:anywhere]">{lastDate}</p>
+                  <p className="text-sm font-black text-rose-900 mt-0.5 wrap-anywhere">{lastDate}</p>
                 </div>
               </div>
             )}
 
             {eligibility && (
-              <div className="min-w-0 bg-slate-50 border border-slate-200 rounded-xl p-4 flex items-start gap-3">
-                <GraduationCap size={18} className="text-[#0F3966] shrink-0 mt-0.5" />
-                <div className="min-w-0">
-                  <p className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">अनिवार्य योग्यता</p>
-                  <p className="text-xs font-bold text-slate-800 mt-0.5 leading-snug [overflow-wrap:anywhere]">{eligibility}</p>
+              <div className="min-w-0 relative rounded-2xl border border-emerald-200/90 shadow-[0_8px_24px_-8px_rgba(22,101,52,0.16)] p-4 flex items-start gap-3 bg-white transition-transform duration-300 hover:-translate-y-1 hover:shadow-[0_14px_30px_-8px_rgba(22,101,52,0.28)]">
+                <div className="absolute inset-1 rounded-xl border border-emerald-100/80 pointer-events-none" />
+                <GraduationCap size={18} className="text-emerald-700 shrink-0 mt-0.5" />
+                <div className="min-w-0 relative">
+                  <p className="text-[11px] font-bold text-emerald-700 uppercase tracking-wider">अनिवार्य योग्यता</p>
+                  <p className="text-xs font-bold text-slate-800 mt-0.5 leading-snug wrap-anywhere">{eligibility}</p>
                 </div>
               </div>
             )}
@@ -112,7 +128,7 @@ export default function JobLayout({ post }) {
 
         {/* Action Callout Hub */}
         {(applyLink !== "#" || pdfLink !== "#") && (
-          <div className="bg-linear-to-br from-blue-50/90 to-indigo-50/70 border-2 border-blue-200/90 rounded-2xl p-4 sm:p-6 text-center space-y-4 shadow-xs">
+          <div className="bg-linear-to-br from-blue-50/90 to-indigo-50/70 border-2 border-blue-200/90 rounded-2xl p-4 sm:p-6 text-center space-y-4 shadow-[inset_0_1px_0_rgba(255,255,255,0.8),0_8px_24px_-10px_rgba(11,79,138,0.2)]">
             <p className="text-sm sm:text-base font-black text-slate-900">
               सीधे आधिकारिक पोर्टल से ऑनलाइन आवेदन करें अथवा अधिसूचना पीडीएफ डाउनलोड करें
             </p>
@@ -122,7 +138,7 @@ export default function JobLayout({ post }) {
                   href={applyLink}
                   target="_blank"
                   rel="noreferrer"
-                  className="inline-flex w-full sm:w-auto items-center justify-center gap-2 bg-[#0F3966] hover:bg-[#0b2b4d] text-white font-black text-xs sm:text-sm px-4 sm:px-6 py-3 rounded-xl shadow-md transition active:scale-95 cursor-pointer"
+                  className="inline-flex w-full sm:w-auto items-center justify-center gap-2 bg-[#0B4F8A] hover:bg-blue-800 text-white font-black text-xs sm:text-sm px-4 sm:px-6 py-3 rounded-xl shadow-[0_6px_18px_rgba(11,79,138,0.35)] transition-all duration-200 hover:shadow-[0_10px_24px_rgba(11,79,138,0.45)] active:scale-[0.98] cursor-pointer"
                 >
                   <ExternalLink size={16} /> ऑनलाइन आवेदन करें (Apply Online)
                 </a>
@@ -132,7 +148,7 @@ export default function JobLayout({ post }) {
                   href={pdfLink}
                   target="_blank"
                   rel="noreferrer"
-                  className="inline-flex w-full sm:w-auto items-center justify-center gap-2 bg-white hover:bg-slate-50 text-slate-800 border border-slate-300 font-bold text-xs sm:text-sm px-4 sm:px-6 py-3 rounded-xl shadow-xs transition active:scale-95 cursor-pointer"
+                  className="inline-flex w-full sm:w-auto items-center justify-center gap-2 bg-white hover:bg-slate-50 text-slate-800 border border-slate-300 font-bold text-xs sm:text-sm px-4 sm:px-6 py-3 rounded-xl shadow-[0_4px_12px_rgba(15,23,42,0.1)] transition-all duration-200 hover:shadow-[0_8px_18px_rgba(15,23,42,0.16)] active:scale-[0.98] cursor-pointer"
                 >
                   <Download size={16} /> आधिकारिक विज्ञापन (Official PDF)
                 </a>
@@ -143,7 +159,7 @@ export default function JobLayout({ post }) {
 
         {/* Dynamic Overview */}
         {shortDesc && (
-          <section className="bg-slate-50 border border-slate-200 rounded-2xl p-5 space-y-2">
+          <section className="bg-slate-50 border border-slate-200/90 rounded-2xl p-5 space-y-2 shadow-[0_4px_16px_-6px_rgba(15,23,42,0.08)]">
             <h2 className="text-sm font-black text-[#0F3966] uppercase tracking-wider flex items-center gap-2">
               <FileText size={16} className="text-[#0F3966]" />
               संक्षिप्त विवरण (Recruitment Overview)
@@ -159,7 +175,7 @@ export default function JobLayout({ post }) {
           <section className="border-t border-slate-200 pt-7">
             <div
               className="
-                min-w-0 max-w-full text-slate-800 text-xs sm:text-sm leading-relaxed space-y-5 [overflow-wrap:anywhere]
+                min-w-0 max-w-full text-slate-800 text-xs sm:text-sm leading-relaxed space-y-5 wrap-anywhere
                 [&_h2]:text-base [&_h2]:sm:text-lg [&_h2]:font-black [&_h2]:text-[#0F3966] [&_h2]:border-l-4 [&_h2]:border-amber-500 [&_h2]:pl-3 [&_h2]:mt-6 [&_h2]:mb-2
                 [&_h3]:text-sm [&_h3]:sm:text-base [&_h3]:font-black [&_h3]:text-slate-900 [&_h3]:mt-5 [&_h3]:mb-2
                 [&_p]:text-slate-700 [&_p]:leading-relaxed [&_p]:my-2.5
@@ -170,7 +186,7 @@ export default function JobLayout({ post }) {
                 [&_table]:block [&_table]:w-full [&_table]:max-w-full [&_table]:overflow-x-auto [&_table]:overscroll-x-contain [&_table]:border-collapse [&_table]:my-4
                 [&_th]:border [&_th]:border-slate-300 [&_th]:bg-slate-100 [&_th]:p-2 [&_th]:text-left [&_th]:font-bold
                 [&_td]:border [&_td]:border-slate-300 [&_td]:p-2 [&_td]:align-top
-                [&_a]:text-blue-700 [&_a]:underline [&_img]:max-w-full [&_img]:h-auto
+                [&_a]:text-blue-700 [&_a]:underline [&_img]:max-w-full [&_img]:h-auto [&_img]:rounded-xl [&_img]:shadow-md
               "
               dangerouslySetInnerHTML={{ __html: sanitizedContent }}
             />
@@ -222,9 +238,9 @@ export default function JobLayout({ post }) {
                 const rawA = faq.a || faq.answer || "";
 
                 return (
-                  <div key={idx} className="bg-slate-50 border border-slate-200 rounded-xl p-4 transition hover:border-slate-300">
+                  <div key={idx} className="bg-slate-50 border border-slate-200/90 rounded-xl p-4 transition hover:border-slate-300 hover:shadow-[0_6px_18px_-8px_rgba(15,23,42,0.15)]">
                     <h3 className="font-bold text-xs sm:text-sm text-slate-900 flex items-start gap-2">
-                      <span className="bg-[#0F3966] text-white text-[10px] font-black px-1.5 py-0.5 rounded shrink-0 mt-0.5">
+                      <span className="bg-[#0B4F8A] text-white text-[10px] font-black px-1.5 py-0.5 rounded shrink-0 mt-0.5 shadow-[0_2px_6px_rgba(11,79,138,0.35)]">
                         Q{idx + 1}
                       </span>
                       <span>{rawQ}</span>
@@ -239,7 +255,7 @@ export default function JobLayout({ post }) {
           </section>
         )}
 
-        
+
 
       </div>
     </article>
@@ -259,6 +275,10 @@ JobLayout.propTypes = {
     applyUrl: PropTypes.string,
     pdf_url: PropTypes.string,
     pdfUrl: PropTypes.string,
+    thumbnail_url: PropTypes.string,
+    banner_url: PropTypes.string,
+    image_url: PropTypes.string,
+    photo_url: PropTypes.string,
     short_desc: PropTypes.string,
     content: PropTypes.string,
     how_to_apply: PropTypes.arrayOf(PropTypes.string),

@@ -97,7 +97,7 @@ export default function DistrictRecruitment() {
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder="Search by District (e.g. Araria, Begusarai, Patna) or Post Name..."
-              className="w-full pl-10 pr-10 py-2.5 text-sm bg-slate-50 border border-slate-200 rounded-xl text-slate-800 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-[#0B2545]/20 focus:border-[#0B2545] transition"
+              className="w-full pl-10 pr-10 py-2.5 text-sm bg-slate-50 border border-slate-200 rounded-xl text-slate-800 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-[#0B2545]/20 focus:border-civic-navy transition"
               aria-label="Search by district or job title"
             />
             {searchQuery && (
@@ -118,7 +118,7 @@ export default function DistrictRecruitment() {
               value={selectedDistrict}
               onChange={(e) => setSelectedDistrict(e.target.value)}
               aria-label="Filter by District"
-              className="w-full px-3 py-2.5 text-sm bg-slate-50 border border-slate-200 rounded-xl text-slate-800 font-medium focus:outline-none focus:ring-2 focus:ring-[#0B2545]/20 focus:border-[#0B2545] cursor-pointer"
+              className="w-full px-3 py-2.5 text-sm bg-slate-50 border border-slate-200 rounded-xl text-slate-800 font-medium focus:outline-none focus:ring-2 focus:ring-[#0B2545]/20 focus:border-civic-navy cursor-pointer"
             >
               <option value="ALL">All 38 Districts (सभी जिले)</option>
               {BIHAR_DISTRICTS.map((dist) => (
@@ -136,7 +136,7 @@ export default function DistrictRecruitment() {
                 onClick={() => setStatusFilter(st)}
                 className={`px-3 py-1.5 rounded-lg text-xs font-bold transition cursor-pointer ${
                   statusFilter === st 
-                    ? "bg-[#0B2545] text-white shadow-xs" 
+                    ? "bg-civic-navy text-white shadow-xs"
                     : "text-slate-600 hover:text-slate-900"
                 }`}
               >
@@ -181,7 +181,7 @@ export default function DistrictRecruitment() {
             <button
               type="button"
               onClick={clearFilters}
-              className="mt-4 inline-flex items-center gap-1.5 px-4 py-2 bg-[#0B2545] text-white text-xs font-bold rounded-xl hover:bg-[#091E3A] transition cursor-pointer"
+              className="mt-4 inline-flex items-center gap-1.5 px-4 py-2 bg-civic-navy text-white text-xs font-bold rounded-xl hover:bg-civic-navy-dark transition cursor-pointer"
             >
               View All Districts
             </button>
@@ -267,7 +267,7 @@ export default function DistrictRecruitment() {
                             href={item.officialUrl}
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="inline-flex items-center gap-1 px-2.5 py-1.5 bg-[#0B2545] hover:bg-[#091E3A] text-white font-bold rounded-lg text-xs transition shadow-2xs"
+                            className="inline-flex items-center gap-1 px-2.5 py-1.5 bg-civic-navy hover:bg-civic-navy-dark text-white font-bold rounded-lg text-xs transition shadow-2xs"
                             aria-label={`Official notice for ${item.postName} in ${item.district}`}
                           >
                             <span>Notice</span>
@@ -333,7 +333,7 @@ export default function DistrictRecruitment() {
                       href={item.officialUrl}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="flex-1 inline-flex items-center justify-center gap-1.5 py-2 bg-[#0B2545] hover:bg-[#091E3A] text-white font-bold rounded-xl text-xs transition shadow-2xs text-center"
+                      className="flex-1 inline-flex items-center justify-center gap-1.5 py-2 bg-civic-navy hover:bg-civic-navy-dark text-white font-bold rounded-xl text-xs transition shadow-2xs text-center"
                     >
                       <span>Official Notice</span>
                       <ExternalLink size={12} />
@@ -353,7 +353,7 @@ export default function DistrictRecruitment() {
             ℹ️
           </div>
           <div>
-            <h2 className="text-sm font-extrabold text-[#0B2545] mb-1">
+            <h2 className="text-sm font-extrabold text-civic-navy mb-1">
               बिहार जिला स्तरीय भर्ती आवेदन दिशा-निर्देश (Important Advisory)
             </h2>
             <p className="mb-2">
@@ -423,7 +423,7 @@ export default function DistrictRecruitment() {
                 href={activeModalJob.officialUrl}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="flex-1 inline-flex items-center justify-center gap-1.5 py-2.5 bg-[#0B2545] hover:bg-[#091E3A] text-white font-bold rounded-xl text-xs transition shadow-sm"
+                className="flex-1 inline-flex items-center justify-center gap-1.5 py-2.5 bg-civic-navy hover:bg-civic-navy-dark text-white font-bold rounded-xl text-xs transition shadow-sm"
               >
                 <span>Open {activeModalJob.district} NIC Portal</span>
                 <ExternalLink size={13} />

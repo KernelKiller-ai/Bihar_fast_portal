@@ -12,6 +12,7 @@ import {
 } from "lucide-react";
 import { Link } from "react-router-dom";
 import { addExternalLinkSafety } from "../../utils/sanitizeHtml";
+import PostBanner from "./PostBanner";
 
 export default function ResultLayout({ post }) {
   if (!post) return null;
@@ -33,32 +34,37 @@ export default function ResultLayout({ post }) {
     : (Array.isArray(post.extra_links) && post.extra_links.length > 0 ? post.extra_links : null);
 
   return (
-    <article className="max-w-4xl mx-auto bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden my-6">
+    <article className="max-w-4xl mx-auto bg-white rounded-3xl border border-slate-200/90 shadow-[0_10px_35px_-10px_rgba(15,23,42,0.1)] overflow-hidden my-6">
       {/* Header Banner */}
-      <header className="bg-linear-to-r from-[#0F2A4A] via-[#16406E] to-[#0F2A4A] text-white p-6 sm:p-8 border-b-4 border-amber-400">
-        <div className="flex items-center justify-between gap-2 mb-3">
-          <span className="text-[11px] font-black uppercase tracking-wider bg-amber-400 text-slate-950 px-2.5 py-1 rounded font-mono shadow-xs">
-            परीक्षा परिणाम एवं स्कोरकार्ड
-          </span>
-          <Link 
-            to="/" 
-            className="text-xs text-sky-200 hover:text-white flex items-center gap-1.5 font-bold transition bg-white/10 hover:bg-white/20 px-3 py-1.5 rounded-lg"
-          >
-            <ArrowLeft size={14} /> वापस होम पेज
-          </Link>
-        </div>
-        
-        <h1 className="text-xl sm:text-2xl md:text-3xl font-black leading-snug drop-shadow-xs">
-          {title}
-        </h1>
+      <header className="relative bg-linear-to-br from-[#0F2A4A] via-[#16406E] to-[#0B4F8A] text-white">
+        <div className="h-1.5 w-full bg-linear-to-r from-amber-400 via-orange-300 to-amber-400 shadow-[0_2px_10px_rgba(251,191,36,0.6)]" />
+        <div className="pointer-events-none absolute -top-16 -right-16 h-56 w-56 rounded-full bg-sky-400/10 blur-3xl" />
+        <div className="relative p-6 sm:p-8">
+          <PostBanner post={post} label="परिणाम बैनर" />
+          <div className="flex items-center justify-between gap-2 mb-3 mt-5">
+            <span className="text-[11px] font-black uppercase tracking-wider bg-amber-400 text-slate-950 px-2.5 py-1 rounded font-mono shadow-xs">
+              परीक्षा परिणाम एवं स्कोरकार्ड
+            </span>
+            <Link
+              to="/"
+              className="text-xs text-sky-200 hover:text-white flex items-center gap-1.5 font-bold transition bg-white/10 hover:bg-white/20 px-3 py-1.5 rounded-lg active:scale-[0.98]"
+            >
+              <ArrowLeft size={14} /> वापस होम पेज
+            </Link>
+          </div>
 
-        <div className="flex flex-wrap items-center gap-y-2 gap-x-4 text-xs text-sky-100 mt-4 pt-3 border-t border-white/10 font-medium">
-          <span className="flex items-center gap-1.5">
-            <Award size={15} className="text-amber-400" /> विभाग: <strong className="text-white font-bold">{dept}</strong>
-          </span>
-          <span className="flex items-center gap-1.5">
-            <ShieldCheck size={15} className="text-emerald-400" /> 100% सत्यापित आधिकारिक लिंक
-          </span>
+          <h1 className="text-xl sm:text-2xl md:text-3xl font-black leading-snug drop-shadow-xs">
+            {title}
+          </h1>
+
+          <div className="flex flex-wrap items-center gap-y-2 gap-x-4 text-xs text-sky-100 mt-4 pt-3 border-t border-white/10 font-medium">
+            <span className="flex items-center gap-1.5">
+              <Award size={15} className="text-amber-400" /> विभाग: <strong className="text-white font-bold">{dept}</strong>
+            </span>
+            <span className="flex items-center gap-1.5">
+              <ShieldCheck size={15} className="text-emerald-400" /> 100% सत्यापित आधिकारिक लिंक
+            </span>
+          </div>
         </div>
       </header>
 
@@ -80,7 +86,7 @@ export default function ResultLayout({ post }) {
                 href={resultUrl}
                 target="_blank"
                 rel="noreferrer"
-                className="inline-flex items-center gap-2 bg-[#0F3966] hover:bg-[#0b2b4d] text-white font-black text-xs sm:text-sm px-6 py-3 rounded-xl shadow-md transition active:scale-95 cursor-pointer"
+                className="inline-flex items-center gap-2 bg-[#0B4F8A] hover:bg-blue-800 text-white font-black text-xs sm:text-sm px-6 py-3 rounded-xl shadow-[0_6px_18px_rgba(11,79,138,0.35)] transition-all duration-200 hover:shadow-[0_10px_24px_rgba(11,79,138,0.45)] active:scale-[0.98] cursor-pointer"
               >
                 <ExternalLink size={16} /> फाइनल आंसर-की / मार्क्स लॉगिन लिंक
               </a>
@@ -90,7 +96,7 @@ export default function ResultLayout({ post }) {
                 href={pdfUrl}
                 target="_blank"
                 rel="noreferrer"
-                className="inline-flex items-center gap-2 bg-white hover:bg-slate-50 text-slate-800 border border-slate-300 font-bold text-xs sm:text-sm px-6 py-3 rounded-xl shadow-xs transition active:scale-95 cursor-pointer"
+                className="inline-flex items-center gap-2 bg-white hover:bg-slate-50 text-slate-800 border border-slate-300 font-bold text-xs sm:text-sm px-6 py-3 rounded-xl shadow-[0_4px_12px_rgba(15,23,42,0.1)] transition-all duration-200 active:scale-[0.98] cursor-pointer"
               >
                 <Download size={16} /> आधिकारिक सूचना (Official PDF)
               </a>
@@ -148,9 +154,9 @@ export default function ResultLayout({ post }) {
                 const rawA = faq.a || faq.answer || "";
 
                 return (
-                  <div key={idx} className="bg-slate-50 border border-slate-200 rounded-xl p-4 transition hover:border-slate-300">
+                  <div key={idx} className="bg-slate-50 border border-slate-200/90 rounded-xl p-4 transition hover:border-slate-300 hover:shadow-[0_6px_18px_-8px_rgba(15,23,42,0.15)]">
                     <h3 className="font-bold text-xs sm:text-sm text-slate-900 flex items-start gap-2">
-                      <span className="bg-[#0F3966] text-white text-[10px] font-black px-1.5 py-0.5 rounded shrink-0 mt-0.5">
+                      <span className="bg-[#0B4F8A] text-white text-[10px] font-black px-1.5 py-0.5 rounded shrink-0 mt-0.5 shadow-[0_2px_6px_rgba(11,79,138,0.35)]">
                         Q{idx + 1}
                       </span>
                       <span>{rawQ}</span>
@@ -182,6 +188,10 @@ ResultLayout.propTypes = {
     download_url: PropTypes.string,
     pdf_url: PropTypes.string,
     pdfUrl: PropTypes.string,
+    thumbnail_url: PropTypes.string,
+    banner_url: PropTypes.string,
+    image_url: PropTypes.string,
+    photo_url: PropTypes.string,
     short_desc: PropTypes.string,
     content: PropTypes.string,
     faqs: PropTypes.array,
