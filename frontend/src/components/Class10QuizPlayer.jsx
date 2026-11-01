@@ -14,11 +14,13 @@ import {
   Send
 } from "lucide-react";
 import Leaderboard from "./Leaderboard";
-import { useAuth } from "../context/AuthContext.jsx";
-import { supabase, isSupabaseConfigured } from "../api/supabase";
-import { savePendingStudentAttempt, saveStudentAttempt } from "../utils/studentHistory";
-
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "https://bihar-fast-portal.onrender.com";
+import {
+  clearQuizProgress,
+  getQuizProgress,
+  saveQuizProgress,
+  saveStudentAttempt,
+} from "../utils/studentHistory";
+import { API_BASE_URL } from "../api/config";
 
 // Bihar ke sabhi 38 Official Districts (Alphabetically Organized)
 const BIHAR_DISTRICTS = [
@@ -42,7 +44,6 @@ function shuffleQuestions(questions) {
 }
 
 export default function Class10QuizPlayer({ examId = "class_10", quizId = null }) {
-  const { user, openLoginModal } = useAuth();
   const studentNameId = useId();
   const districtId = useId();
   const phoneId = useId();
@@ -63,7 +64,6 @@ export default function Class10QuizPlayer({ examId = "class_10", quizId = null }
   const [result, setResult] = useState(null);
   const [loadingQuiz, setLoadingQuiz] = useState(true);
   const [quizLoadMessage, setQuizLoadMessage] = useState("");
-  const [failedAvatarUrl, setFailedAvatarUrl] = useState("");
   const [timeExpired, setTimeExpired] = useState(false);
   const [submitError, setSubmitError] = useState("");
   const [attemptDate, setAttemptDate] = useState(null);
@@ -73,9 +73,6 @@ export default function Class10QuizPlayer({ examId = "class_10", quizId = null }
   const remainingTimeRef = useRef(0);
   const startedAtRef = useRef(null);
   const activeQuestions = demoMode ? questions.slice(0, 5) : questions;
-  const profileName = user?.user_metadata?.full_name || user?.user_metadata?.name || user?.email?.split("@")[0] || "";
-  const profileAvatar = user?.user_metadata?.avatar_url || user?.user_metadata?.picture || "";
-
   useEffect(() => {
     document.title = "Bihar State Live Mock Test & Quiz Hub | BiharFast";
 
@@ -89,9 +86,9 @@ export default function Class10QuizPlayer({ examId = "class_10", quizId = null }
       element.setAttribute("content", content);
     };
 
-    setMetaTag("name", "description", "अभ्यास करें बिहार बोर्ड मैट्रिक, इंटर व बिहार पुलिस, BSSC लाइव मॉक टेस्ट और क्विज़। पाएं तुरंत रिजल्ट, विस्तृत समाधान और लीडरबोर्ड रैंकिंग।");
+    setMetaTag("name", "description", "बिना लॉगिन बिहार बोर्ड मैट्रिक, इंटर व प्रतियोगी परीक्षाओं के मॉक टेस्ट दें। पाएं तुरंत रिजल्ट और इस डिवाइस पर सेव स्कोर इतिहास।");
     setMetaTag("property", "og:title", "Bihar State Live Mock Test & Quiz Hub | BiharFast");
-    setMetaTag("property", "og:description", "अभ्यास करें बिहार बोर्ड मैट्रिक, इंटर व बिहार पुलिस, BSSC लाइव मॉक टेस्ट और क्विज़। पाएं तुरंत रिजल्ट, विस्तृत समाधान और लीडरबोर्ड रैंकिंग।");
+    setMetaTag("property", "og:description", "बिना लॉगिन बिहार बोर्ड मैट्रिक, इंटर व प्रतियोगी परीक्षाओं के मॉक टेस्ट दें। पाएं तुरंत रिजल्ट और इस डिवाइस पर सेव स्कोर इतिहास।");
 
     let canonicalTag = document.querySelector('link[rel="canonical"]');
     if (!canonicalTag) {
@@ -124,11 +121,38 @@ export default function Class10QuizPlayer({ examId = "class_10", quizId = null }
         
         if (isMounted && data.is_live && data.quiz) {
           setQuizMeta(data.quiz);
-          setQuestions(data.questions || []);
+          const fetchedQuestions = data.questions || [];
+          const savedProgress = getQuizProgress(data.quiz.id);
+          const questionMap = new Map(fetchedQuestions.map((question) => [String(question.id), question]));
+          const savedOrder = savedProgress?.questionOrder;
+          const canRestore = savedProgress?.step === "playing"
+            && Array.isArray(savedOrder)
+            && savedOrder.length === fetchedQuestions.length
+            && savedOrder.every((questionId) => questionMap.has(String(questionId)))
+            && Number.isFinite(savedProgress.timeLeft)
+            && savedProgress.timeLeft >= 0;
+
+          if (canRestore) {
+            setQuestions(savedOrder.map((questionId) => questionMap.get(String(questionId))));
+            setAnswers(savedProgress.answers && typeof savedProgress.answers === "object" ? savedProgress.answers : {});
+            setStudent(savedProgress.student || { name: "", district: "Patna", phone: "" });
+            setDemoMode(Boolean(savedProgress.demoMode));
+            remainingTimeRef.current = savedProgress.timeLeft;
+            setTimeLeft(savedProgress.timeLeft);
+            setTimeExpired(savedProgress.timeLeft === 0);
+            startedAtRef.current = Number.isFinite(savedProgress.startedAt) ? savedProgress.startedAt : Date.now();
+            setStep("playing");
+          } else {
+            setQuestions(fetchedQuestions);
+            setTimeExpired(false);
+            if (savedProgress) clearQuizProgress(data.quiz.id);
+          }
           setQuizLoadMessage("");
           const durationSeconds = (data.quiz.duration_minutes || 15) * 60;
-          remainingTimeRef.current = durationSeconds;
-          setTimeLeft(durationSeconds);
+          if (!canRestore) {
+            remainingTimeRef.current = durationSeconds;
+            setTimeLeft(durationSeconds);
+          }
         } else if (isMounted) {
           setQuizMeta(null);
           setQuestions([]);
@@ -152,12 +176,22 @@ export default function Class10QuizPlayer({ examId = "class_10", quizId = null }
     };
   }, [examId, quizId]);
 
+  useEffect(() => {
+    if (step !== "playing" || !quizMeta) return;
+    saveQuizProgress(quizMeta.id, {
+      step,
+      answers,
+      student,
+      demoMode,
+      timeLeft,
+      startedAt: startedAtRef.current,
+      questionOrder: questions.map((question) => String(question.id)),
+    });
+  }, [step, quizMeta, answers, student, demoMode, timeLeft, questions]);
+
   const startTest = (isDemo) => {
-    if (!isDemo && !user) {
-      openLoginModal();
-      return;
-    }
     setQuestions(shuffleQuestions(questions));
+    setStudent((previous) => ({ ...previous, name: previous.name.trim() || "छात्र" }));
     setDemoMode(isDemo);
     setAnswers({});
     setResult(null);
@@ -197,34 +231,6 @@ function getExamCategoryCode(examId, subject) {
 
     try {
       // ==================== AUTH (Bearer token for competitive mode) ====================
-      // The hardened backend verifies the Supabase session server-side and
-      // rejects non-demo submissions without a valid bearer token. Fetch the
-      // FRESH session here (not a cached user object) so an expired token is
-      // caught before the API call instead of after.
-      let accessToken = null;
-      if (!demoMode) {
-        if (!isSupabaseConfigured || !supabase) {
-          submissionLockRef.current = false;
-          setSubmitting(false);
-          setSubmitError("लॉगिन सिस्टम उपलब्ध नहीं है। कृपया बाद में प्रयास करें।");
-          return;
-        }
-
-        const { data, error: sessionError } = await supabase.auth.getSession();
-        accessToken = data?.session?.access_token || null;
-
-        if (sessionError || !accessToken) {
-          submissionLockRef.current = false;
-          setSubmitting(false);
-          // No valid session: stop the timer from auto-submitting again and
-          // ask the student to re-authenticate instead of firing a doomed API
-          // call that would burn one of their 6 daily attempts.
-          openLoginModal();
-          setSubmitError("सत्र समाप्त हो गया है। कृपया पुनः लॉगिन करें और टेस्ट जमा करें।");
-          return;
-        }
-      }
-
       const timeTaken = startedAtRef.current ? Math.max(0, Math.round((Date.now() - startedAtRef.current) / 1000)) : 0;
 
       // Align registration state & quiz reference
@@ -234,13 +240,11 @@ function getExamCategoryCode(examId, subject) {
       const validQuizId = String(quizMeta?.id || quiz?.id || quizId || "").trim();
       const answersPayload = (answers && typeof answers === "object" && !Array.isArray(answers)) ? answers : {};
       const isDemo = demoMode;
-      const studentName = (registration?.name || "").trim() || profileName || "Student";
+      const studentName = (registration?.name || "").trim() || "Student";
       const studentDistrict = (registration?.district || "").trim() || "Bihar";
       const studentPhone = (registration?.phone && String(registration.phone).trim()) ? String(registration.phone).trim() : null;
 
-      // NOTE: user_id is intentionally NOT sent. The backend derives identity
-      // exclusively from the verified bearer token, so any client-controlled
-      // user_id would be ignored (or flagged) server-side.
+      // Public practice attempts do not carry a student account identity.
       const payload = {
         quiz_id: validQuizId,
         answers: answersPayload,
@@ -250,14 +254,11 @@ function getExamCategoryCode(examId, subject) {
         district: studentDistrict,
         exam_category: getExamCategoryCode(examId, quizMeta?.subject),
         phone: studentPhone,
-        time_taken_seconds: timeTaken
+        time_taken_seconds: timeTaken,
+        anonymous_mode: !demoMode,
       };
 
       const headers = { "Content-Type": "application/json" };
-      if (!demoMode && accessToken) {
-        headers.Authorization = `Bearer ${accessToken}`;
-      }
-      // Demo mode stays fully anonymous: no Authorization header at all.
 
       // Temporary logging to verify payload structure during local testing
       console.log("[Quiz Submit Payload]:", payload);
@@ -269,12 +270,9 @@ function getExamCategoryCode(examId, subject) {
       });
 
       if (res.status === 401) {
-        // Session expired / invalid credentials: force re-authentication and
-        // keep the local answers intact so the student can resubmit.
         submissionLockRef.current = false;
         setSubmitting(false);
-        openLoginModal();
-        setSubmitError("आपका सत्र समाप्त हो गया है। कृपया पुनः लॉगिन करें — आपके उत्तर सुरक्षित हैं।");
+        setSubmitError("टेस्ट जमा नहीं हो सका। कृपया थोड़ी देर बाद पुनः प्रयास करें — आपके उत्तर इस डिवाइस पर सुरक्षित हैं।");
         return;
       }
 
@@ -300,20 +298,20 @@ function getExamCategoryCode(examId, subject) {
       setResult(resultJson);
       const completedAt = new Date();
       setAttemptDate(completedAt);
-      if (!demoMode && user) {
-        saveStudentAttempt(user.id, {
-          id: `${quizMeta.id}-${completedAt.getTime()}`,
-          quiz_id: quizMeta.id,
-          title: quizMeta.title,
-          subject: quizMeta.subject,
-          attempted_at: completedAt.toISOString(),
-          score: resultJson.score,
-          total_questions: resultJson.total_questions,
-          accuracy_percentage: resultJson.accuracy_percentage,
-          practice_seconds: startedAtRef.current ? Math.max(0, Math.round((completedAt.getTime() - startedAtRef.current) / 1000)) : 0,
-          results: resultJson.results,
-        });
-      }
+      const attempt = {
+        id: `${quizMeta.id}-${completedAt.getTime()}`,
+        quiz_id: quizMeta.id,
+        title: quizMeta.title,
+        subject: quizMeta.subject,
+        attempted_at: completedAt.toISOString(),
+        score: resultJson.score,
+        total_questions: resultJson.total_questions,
+        accuracy_percentage: resultJson.accuracy_percentage,
+        practice_seconds: timeTaken,
+        results: resultJson.results,
+      };
+      saveStudentAttempt(null, attempt);
+      clearQuizProgress(quizMeta.id);
       setStep("result");
     } catch (err) {
       setSubmitError(err.status === 429
@@ -324,7 +322,7 @@ function getExamCategoryCode(examId, subject) {
       submissionLockRef.current = false;
       setSubmitting(false);
     }
-  }, [quizMeta, activeQuestions.length, answers, student, profileName, demoMode, user, openLoginModal, examId, quizId]);
+  }, [quizMeta, activeQuestions.length, answers, student, demoMode, examId, quizId]);
 
   useEffect(() => {
     submitRef.current = handleSubmit;
@@ -372,7 +370,7 @@ function getExamCategoryCode(examId, subject) {
 📅 *दिनांक:* ${dateText}
 
 🔥 *क्या आप मुझसे ज्यादा अंक ला सकते हैं?*
-अभी टेस्ट दें और अपना नाम बिहार के स्टेट लीडरबोर्ड पर देखें:
+अभी टेस्ट दें और अपना स्कोर इस डिवाइस पर सहेजें:
 👉 ${shareUrl}`;
 
     window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(text)}`, "_blank");
@@ -391,28 +389,6 @@ function getExamCategoryCode(examId, subject) {
     if (accuracy >= 75) return { label: "बहुत अच्छा / Good", className: "bg-emerald-100 text-emerald-900 border-emerald-300" };
     if (accuracy >= 50) return { label: "अच्छा प्रयास / Well Tried", className: "bg-sky-100 text-sky-900 border-sky-300" };
     return { label: "अभ्यास जारी रखें / Keep Practicing", className: "bg-orange-100 text-orange-900 border-orange-300" };
-  };
-
-  const saveDemoResult = () => {
-    if (!result || !demoMode) return;
-    const completedAt = attemptDate || new Date();
-    const attempt = {
-      id: `${quizMeta.id}-${completedAt.getTime()}`,
-      quiz_id: quizMeta.id,
-      title: quizMeta.title,
-      subject: quizMeta.subject,
-      attempted_at: completedAt.toISOString(),
-      score: result.score,
-      total_questions: result.total_questions,
-      accuracy_percentage: result.accuracy_percentage,
-      practice_seconds: startedAtRef.current ? Math.max(0, Math.round((completedAt.getTime() - startedAtRef.current) / 1000)) : 0,
-      results: result.results,
-    };
-    if (user) saveStudentAttempt(user.id, attempt);
-    else {
-      savePendingStudentAttempt(attempt);
-      openLoginModal();
-    }
   };
 
   const formatTimer = (secs) => {
@@ -450,18 +426,14 @@ function getExamCategoryCode(examId, subject) {
           </span>
           <h1 className="text-2xl font-black text-slate-900 mt-3">{quizMeta.title}</h1>
           <p className="text-xs text-slate-500 mt-1">
-            पूरा टेस्ट और स्कोर इतिहास आपके छात्र लॉगिन के साथ उपलब्ध है
+            बिना लॉगिन टेस्ट दें — उत्तर और स्कोर इसी डिवाइस पर सहेजे जाएंगे
           </p>
         </div>
 
         <form
           onSubmit={(e) => {
             e.preventDefault();
-            if (!user) {
-              openLoginModal();
-              return;
-            }
-            if (student.name.trim() || profileName) startTest(false);
+            startTest(false);
           }}
           className="space-y-4 text-xs font-bold"
         >
@@ -472,9 +444,8 @@ function getExamCategoryCode(examId, subject) {
             <input
               id={studentNameId}
               type="text"
-              required={Boolean(user)}
               placeholder="उदा. राहुल कुमार"
-              value={student.name || profileName}
+              value={student.name}
               onChange={(e) => setStudent({ ...student, name: e.target.value })}
               className="w-full px-4 py-3 rounded-xl border border-slate-300 focus:ring-2 focus:ring-blue-600 focus:outline-none text-sm font-semibold"
             />
@@ -514,7 +485,7 @@ function getExamCategoryCode(examId, subject) {
             type="submit"
             className="w-full mt-2 py-3.5 bg-linear-to-r from-blue-700 to-indigo-700 hover:from-blue-800 hover:to-indigo-800 text-white font-extrabold rounded-xl shadow-lg transition flex items-center justify-center gap-2 cursor-pointer"
           >
-            <span>{user ? `पूरा टेस्ट शुरू करें (${questions.length} प्रश्न)` : "लॉगिन करके पूरा टेस्ट शुरू करें"}</span>
+            <span>पूरा टेस्ट शुरू करें ({questions.length} प्रश्न)</span>
             <ArrowRight size={16} />
           </button>
         </form>
@@ -527,7 +498,7 @@ function getExamCategoryCode(examId, subject) {
           >
             बिना लॉगिन 5 प्रश्नों का फ्री डेमो दें
           </button>
-          <p className="mt-2 text-center text-[11px] text-slate-500">डेमो स्कोर निजी रहेगा और लीडरबोर्ड में नहीं जोड़ा जाएगा।</p>
+          <p className="mt-2 text-center text-[11px] text-slate-500">डेमो स्कोर इसी डिवाइस पर सहेजा जाएगा।</p>
         </div>
 
         <div className="mt-8 border-t border-slate-100 pt-4">
@@ -661,20 +632,10 @@ function getExamCategoryCode(examId, subject) {
           </div>
 
           <div className="my-6">
-            {profileAvatar && profileAvatar !== failedAvatarUrl ? (
-              <img
-                src={profileAvatar}
-                alt={`${student.name || profileName} की प्रोफाइल फोटो`}
-                referrerPolicy="no-referrer"
-                onError={() => setFailedAvatarUrl(profileAvatar)}
-                className="w-16 h-16 rounded-full object-cover mx-auto mb-3 border-2 border-amber-200 shadow-inner"
-              />
-            ) : (
-              <div className="w-16 h-16 bg-amber-100 text-amber-600 rounded-full flex items-center justify-center mx-auto mb-3 shadow-inner">
-                <Trophy size={32} />
-              </div>
-            )}
-            <h2 className="text-2xl font-black text-slate-900">{student.name}</h2>
+            <div className="w-16 h-16 bg-amber-100 text-amber-600 rounded-full flex items-center justify-center mx-auto mb-3 shadow-inner">
+              <Trophy size={32} />
+            </div>
+            <h2 className="text-2xl font-black text-slate-900">{student.name || "छात्र"}</h2>
             <p className="text-xs text-slate-500 font-semibold flex items-center justify-center gap-1 mt-0.5">
               <MapPin size={12} className="text-rose-500" />
               <span>जिला: {student.district}</span>
@@ -701,13 +662,9 @@ function getExamCategoryCode(examId, subject) {
 
           <div className="space-y-3">
             {demoMode && (
-              <button
-                type="button"
-                onClick={saveDemoResult}
-                className="w-full rounded-xl border border-sky-300 bg-sky-50 py-3 text-sm font-black text-sky-900 transition hover:bg-sky-100"
-              >
-                {user ? "डेमो परिणाम इतिहास में सहेजें" : "डेमो परिणाम सहेजने के लिए Student Login करें"}
-              </button>
+              <p className="rounded-xl border border-sky-300 bg-sky-50 py-3 text-sm font-bold text-sky-900">
+                आपका परिणाम इस डिवाइस पर सहेजा गया है।
+              </p>
             )}
             <button
               type="button"

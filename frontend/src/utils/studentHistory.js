@@ -1,11 +1,11 @@
 const HISTORY_PREFIX = "biharfast_student_attempts_";
 const DISTRICT_PREFIX = "biharfast_student_district_";
-const PENDING_ATTEMPT_KEY = "biharfast_pending_student_attempt";
+const LOCAL_USER_KEY = "local";
+const QUIZ_PROGRESS_PREFIX = "biharfast_quiz_progress_";
 
 export function getStudentAttempts(userId) {
-  if (!userId) return [];
   try {
-    const attempts = JSON.parse(localStorage.getItem(`${HISTORY_PREFIX}${userId}`) || "[]");
+    const attempts = JSON.parse(localStorage.getItem(`${HISTORY_PREFIX}${userId || LOCAL_USER_KEY}`) || "[]");
     return Array.isArray(attempts) ? attempts : [];
   } catch {
     return [];
@@ -13,49 +13,55 @@ export function getStudentAttempts(userId) {
 }
 
 export function saveStudentAttempt(userId, attempt) {
-  if (!userId) return;
   try {
     const attempts = getStudentAttempts(userId);
     attempts.unshift(attempt);
-    localStorage.setItem(`${HISTORY_PREFIX}${userId}`, JSON.stringify(attempts.slice(0, 50)));
+    localStorage.setItem(`${HISTORY_PREFIX}${userId || LOCAL_USER_KEY}`, JSON.stringify(attempts.slice(0, 50)));
   } catch (error) {
     console.warn("Unable to save student test history:", error);
   }
 }
 
-export function savePendingStudentAttempt(attempt) {
+export function getQuizProgress(quizId) {
+  if (!quizId) return null;
   try {
-    localStorage.setItem(PENDING_ATTEMPT_KEY, JSON.stringify(attempt));
+    const progress = localStorage.getItem(`${QUIZ_PROGRESS_PREFIX}${quizId}`);
+    return progress ? JSON.parse(progress) : null;
   } catch (error) {
-    console.warn("Unable to keep the pending demo result:", error);
+    console.warn("Unable to restore saved quiz progress:", error);
+    return null;
   }
 }
 
-export function attachPendingStudentAttempt(userId) {
-  if (!userId) return;
+export function saveQuizProgress(quizId, progress) {
+  if (!quizId) return;
   try {
-    const pendingAttempt = JSON.parse(localStorage.getItem(PENDING_ATTEMPT_KEY) || "null");
-    if (!pendingAttempt) return;
-    saveStudentAttempt(userId, pendingAttempt);
-    localStorage.removeItem(PENDING_ATTEMPT_KEY);
+    localStorage.setItem(`${QUIZ_PROGRESS_PREFIX}${quizId}`, JSON.stringify(progress));
   } catch (error) {
-    console.warn("Unable to attach the pending demo result:", error);
+    console.warn("Unable to save quiz progress:", error);
+  }
+}
+
+export function clearQuizProgress(quizId) {
+  if (!quizId) return;
+  try {
+    localStorage.removeItem(`${QUIZ_PROGRESS_PREFIX}${quizId}`);
+  } catch (error) {
+    console.warn("Unable to clear saved quiz progress:", error);
   }
 }
 
 export function getStudentDistrict(userId) {
-  if (!userId) return "Patna";
   try {
-    return localStorage.getItem(`${DISTRICT_PREFIX}${userId}`) || "Patna";
+    return localStorage.getItem(`${DISTRICT_PREFIX}${userId || LOCAL_USER_KEY}`) || "Patna";
   } catch {
     return "Patna";
   }
 }
 
 export function saveStudentDistrict(userId, district) {
-  if (!userId) return;
   try {
-    localStorage.setItem(`${DISTRICT_PREFIX}${userId}`, district);
+    localStorage.setItem(`${DISTRICT_PREFIX}${userId || LOCAL_USER_KEY}`, district);
   } catch (error) {
     console.warn("Unable to save student district:", error);
   }

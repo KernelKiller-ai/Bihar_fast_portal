@@ -1,0 +1,238 @@
+- generic [ref=f12e3]:
+  - generic [ref=f12e4]:
+    - navigation [ref=f12e5]:
+      - generic [ref=f12e6]: BiharFast is an independent public-interest information portal — not affiliated with any government agency.
+      - generic [ref=f12e9]:
+        - link "BiharFast BIHARFAST INDEPENDENT Bihar information portal • links to official sources" [ref=f12e10] [cursor=pointer]:
+          - /url: /
+          - img "BiharFast" [ref=f12e13]
+          - generic [ref=f12e14]:
+            - generic [ref=f12e15]:
+              - generic [ref=f12e16]: BIHARFAST
+              - generic [ref=f12e17]: INDEPENDENT
+            - generic [ref=f12e18]: Bihar information portal • links to official sources
+        - generic [ref=f12e19]:
+          - generic [ref=f12e20]: Bihar jobs & public services
+          - generic [aria-hidden] [ref=f12e21]: ·
+          - generic [ref=f12e22]: Independent information portal
+        - generic [ref=f12e23]:
+          - link "सभी पोर्टल्स (2026)" [ref=f12e24] [cursor=pointer]:
+            - /url: /upcoming-2026
+          - link "Download App (3 MB)" [ref=f12e29] [cursor=pointer]:
+            - /url: /biharfast.apk
+            - generic [aria-hidden] [ref=f12e30]: 📲
+          - link "Join official WhatsApp channel" [ref=f12e32] [cursor=pointer]:
+            - /url: https://whatsapp.com/channel/0029VbDwc7KLNSa91goX3m1B
+            - generic [ref=f12e35]: व्हाट्सएप चैनल
+      - generic [ref=f12e38]:
+        - link "Latest Jobs" [ref=f12e39] [cursor=pointer]:
+          - /url: /jobs
+        - link "District Jobs" [ref=f12e40] [cursor=pointer]:
+          - /url: /bihar-district-wise-recruitment
+        - link "Admit Cards" [ref=f12e41] [cursor=pointer]:
+          - /url: /admit-card
+        - link "Results" [ref=f12e42] [cursor=pointer]:
+          - /url: /results
+        - link "All Updates" [ref=f12e43] [cursor=pointer]:
+          - /url: /all-updates
+        - link "RTPS Services" [ref=f12e44] [cursor=pointer]:
+          - /url: /rtps-bihar
+        - link "Useful Tools" [ref=f12e45] [cursor=pointer]:
+          - /url: /useful-tools
+    - paragraph [ref=f12e49]: पेज लोड हो रहा है...
+  - contentinfo [ref=f12e50]:
+    - generic [ref=f12e53]:
+      - generic [ref=f12e59]:
+        - paragraph [ref=f12e60]: Official source links
+        - paragraph [ref=f12e61]: Check the issuing department
+      - generic [ref=f12e66]:
+        - paragraph [ref=f12e67]: Quick access
+        - paragraph [ref=f12e68]: Jobs, services and tools
+      - generic [ref=f12e76]:
+        - paragraph [ref=f12e77]: For every aspirant
+        - paragraph [ref=f12e78]: Jobs · Welfare · Information
+      - generic [ref=f12e84]:
+        - paragraph [ref=f12e85]: Bilingual support
+        - paragraph [ref=f12e86]: English · हिंदी
+      - generic [ref=f12e91]:
+        - paragraph [ref=f12e92]: A brighter Bihar
+        - paragraph [ref=f12e93]: Together we grow
+    - generic [ref=f12e95]:
+      - generic [ref=f12e96]:
+        - generic [ref=f12e97]:
+          - img "BiharFast Logo" [ref=f12e98]
+          - paragraph [ref=f12e99]: Jobs | Welfare | Information
+          - paragraph [ref=f12e100]: — सही जानकारी, बेहतर बिहार —
+        - paragraph [ref=f12e101]: BiharFast is a citizen-first platform to bring all Bihar government job, welfare scheme and useful information in one place. Simple. Fast. Reliable.
+        - generic [ref=f12e102]: बढ़ता बिहार, बनता भविष्य
+        - generic [ref=f12e106]:
+          - link "YouTube" [ref=f12e107] [cursor=pointer]:
+            - /url: https://youtube.com
+            - text: ▶
+          - link "X (Twitter)" [ref=f12e108] [cursor=pointer]:
+            - /url: https://x.com
+            - text: 𝕏
+          - link "Instagram" [ref=f12e109] [cursor=pointer]:
+            - /url: https://instagram.com
+            - text: 📷
+          - link "Facebook" [ref=f12e110] [cursor=pointer]:
+            - /url: https://facebook.com
+            - text: f
+          - link "LinkedIn" [ref=f12e111] [cursor=pointer]:
+            - /url: https://linkedin.com
+            - text: in
+      - generic [ref=f12e112]:
+        - heading "Explore" [level=2] [ref=f12e113]
+        - list [ref=f12e114]:
+          - listitem [ref=f12e115]:
+            - link "Home" [ref=f12e116] [cursor=pointer]:
+              - /url: /
+          - listitem [ref=f12e120]:
+            - link "Government Jobs" [ref=f12e121] [cursor=pointer]:
+              - /url: /jobs
+          - listitem [ref=f12e125]:
+            - link "Welfare Schemes" [ref=f12e126] [cursor=pointer]:
+              - /url: /category/welfare-schemes
+          - listitem [ref=f12e132]:
+            - link "Scholarships" [ref=f12e133] [cursor=pointer]:
+              - /url: /category/scholarships
+          - listitem [ref=f12e137]:
+            - link "Results" [ref=f12e138] [cursor=pointer]:
+              - /url: /results
+          - listitem [ref=f12e142]:
+            - link "Useful Tools" [ref=f12e143] [cursor=pointer]:
+              - /url: /useful-tools
+          - listitem [ref=f12e146]:
+            - link "Alerts & Updates" [ref=f12e147] [cursor=pointer]:
+              - /url: /all-updates
+      - generic [ref=f12e151]:
+        - heading "Quick Links & Archives" [level=2] [ref=f12e152]
+        - list [ref=f12e153]:
+          - listitem [ref=f12e154]:
+            - link "All Updates & Archive" [ref=f12e155] [cursor=pointer]:
+              - /url: /sitemap
+          - listitem [ref=f12e158]:
+            - link "Government Jobs" [ref=f12e159] [cursor=pointer]:
+              - /url: /jobs
+          - listitem [ref=f12e163]:
+            - link "Admit Cards" [ref=f12e164] [cursor=pointer]:
+              - /url: /admit-card
+          - listitem [ref=f12e168]:
+            - link "Results" [ref=f12e169] [cursor=pointer]:
+              - /url: /results
+          - listitem [ref=f12e173]:
+            - link "BSEB Matric Hub" [ref=f12e174] [cursor=pointer]:
+              - /url: /bseb-matric-10th
+          - listitem [ref=f12e177]:
+            - link "BSEB Inter Hub" [ref=f12e178] [cursor=pointer]:
+              - /url: /bseb-inter-12th
+          - listitem [ref=f12e181]:
+            - link "RTPS Bihar Hub" [ref=f12e182] [cursor=pointer]:
+              - /url: /rtps-bihar
+          - listitem [ref=f12e185]:
+            - link "Udyami Yojana Hub" [ref=f12e186] [cursor=pointer]:
+              - /url: /udyami-yojana
+          - listitem [ref=f12e189]:
+            - link "KYP Bihar Hub" [ref=f12e190] [cursor=pointer]:
+              - /url: /kyp-bihar
+          - listitem [ref=f12e193]:
+            - link "Student Credit Card Hub" [ref=f12e194] [cursor=pointer]:
+              - /url: /student-credit-card
+          - listitem [ref=f12e197]:
+            - link "CUET UG Hub" [ref=f12e198] [cursor=pointer]:
+              - /url: /cuet-ug-admission
+      - generic [ref=f12e201]:
+        - heading "Popular Categories" [level=2] [ref=f12e202]
+        - list [ref=f12e203]:
+          - listitem [ref=f12e204]:
+            - link "BPSC Jobs" [ref=f12e205] [cursor=pointer]:
+              - /url: /category/bpsc-jobs
+          - listitem [ref=f12e208]:
+            - link "Bihar Police" [ref=f12e209] [cursor=pointer]:
+              - /url: /category/bihar-police
+          - listitem [ref=f12e212]:
+            - link "Teacher Recruitment" [ref=f12e213] [cursor=pointer]:
+              - /url: /category/teacher-recruitment
+          - listitem [ref=f12e216]:
+            - link "Health Department" [ref=f12e217] [cursor=pointer]:
+              - /url: /category/health-department
+          - listitem [ref=f12e220]:
+            - link "Panchayati Raj" [ref=f12e221] [cursor=pointer]:
+              - /url: /category/panchayati-raj
+          - listitem [ref=f12e224]:
+            - link "Student Schemes" [ref=f12e225] [cursor=pointer]:
+              - /url: /category/student-schemes
+          - listitem [ref=f12e228]:
+            - link "District Jobs (38 Zila)" [ref=f12e229] [cursor=pointer]:
+              - /url: /bihar-district-wise-recruitment
+          - listitem [ref=f12e232]:
+            - link "Social Welfare" [ref=f12e233] [cursor=pointer]:
+              - /url: /category/social-welfare
+          - listitem [ref=f12e236]:
+            - link "All Categories" [ref=f12e237] [cursor=pointer]:
+              - /url: /sitemap
+      - generic [ref=f12e240]:
+        - heading "Legal & Compliance" [level=2] [ref=f12e241]
+        - navigation "Legal & compliance links" [ref=f12e242]:
+          - list [ref=f12e243]:
+            - listitem [ref=f12e244]:
+              - link "About Us" [ref=f12e245] [cursor=pointer]:
+                - /url: /about
+            - listitem [ref=f12e246]:
+              - link "Contact Us" [ref=f12e247] [cursor=pointer]:
+                - /url: /contact
+            - listitem [ref=f12e248]:
+              - link "Privacy Policy" [ref=f12e249] [cursor=pointer]:
+                - /url: /privacy-policy
+            - listitem [ref=f12e250]:
+              - link "Terms and Conditions" [ref=f12e251] [cursor=pointer]:
+                - /url: /terms-conditions
+            - listitem [ref=f12e252]:
+              - link "Disclaimer" [ref=f12e253] [cursor=pointer]:
+                - /url: /disclaimer
+            - listitem [ref=f12e254]:
+              - link "Download App" [ref=f12e255] [cursor=pointer]:
+                - /url: /download
+      - generic [ref=f12e256]:
+        - heading "Stay Connected" [level=2] [ref=f12e257]
+        - paragraph [ref=f12e258]: Get the latest updates directly to your inbox.
+        - generic [ref=f12e259]:
+          - textbox "Enter your email address" [ref=f12e264]
+          - button "Subscribe" [ref=f12e265]
+        - link "💬 Join Our WhatsApp Channel Get instant updates" [ref=f12e266] [cursor=pointer]:
+          - /url: https://whatsapp.com/channel/0029VbDwc7KLNSa91goX3m1B
+          - generic [ref=f12e267]:
+            - generic [ref=f12e268]: 💬
+            - generic [ref=f12e269]:
+              - paragraph [ref=f12e270]: Join Our WhatsApp Channel
+              - paragraph [ref=f12e271]: Get instant updates
+    - generic [ref=f12e275]:
+      - generic [ref=f12e276]:
+        - generic [aria-hidden] [ref=f12e277]: BF
+        - generic [ref=f12e278]:
+          - paragraph [ref=f12e279]: BiharFast • A People's Information Platform
+          - paragraph [ref=f12e280]: जनता के लिए, बिहार के लिए
+      - generic [ref=f12e281]:
+        - paragraph [ref=f12e282]: © 2026 BiharFast. All rights reserved.
+        - paragraph [ref=f12e283]: Not affiliated with any government department. We link to official portals where available; please confirm details with the issuing department.
+        - navigation "Mandatory legal pages" [ref=f12e284]:
+          - link "About Us" [ref=f12e285] [cursor=pointer]:
+            - /url: /about
+          - generic [aria-hidden] [ref=f12e286]: •
+          - link "Contact Us" [ref=f12e287] [cursor=pointer]:
+            - /url: /contact
+          - generic [aria-hidden] [ref=f12e288]: •
+          - link "Privacy Policy" [ref=f12e289] [cursor=pointer]:
+            - /url: /privacy-policy
+          - generic [aria-hidden] [ref=f12e290]: •
+          - link "Terms and Conditions" [ref=f12e291] [cursor=pointer]:
+            - /url: /terms-conditions
+          - generic [aria-hidden] [ref=f12e292]: •
+          - link "Disclaimer" [ref=f12e293] [cursor=pointer]:
+            - /url: /disclaimer
+          - generic [aria-hidden] [ref=f12e294]: •
+          - link "Download App" [ref=f12e295] [cursor=pointer]:
+            - /url: /download
+      - generic [ref=f12e297]:
+        - paragraph [ref=f12e298]: Informed Citizens
+        - paragraph [ref=f12e299]: Build a Stronger Bihar

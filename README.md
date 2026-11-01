@@ -76,6 +76,16 @@ cd ../backend
 # Install dependencies and start local server
 npm install # or pip install -r requirements.txt
 npm run dev # or uvicorn main:app --reload
+
+## 🔐 Admin Access Configuration
+
+Student mock tests and practice are public; Google OAuth is only available from `/admin-login`.
+Configure the same administrator email in the frontend deployment (`VITE_ADMIN_EMAIL`)
+and backend environment (`ADMIN_EMAIL`). Set `VITE_SUPABASE_URL` and
+`VITE_SUPABASE_ANON_KEY` for the frontend, and enable Google as an OAuth provider
+in Supabase with `/admin-login` registered as a redirect URL. The matching
+Supabase `profiles` row must have the `admin` role. Apply the site-settings
+migrations in `supabase/migrations/` so banner updates are restricted by RLS.
 📈 Performance & Core Web Vitals
 Lighthouse Performance Score: 95+
 

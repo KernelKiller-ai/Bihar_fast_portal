@@ -4,11 +4,10 @@ Lives in its own module so both backend.main (posts admin) and
 backend.quiz_router (quiz admin) can import it without a circular import
 (main.py imports quiz_router at startup).
 
-Auth flow (Supabase JWT + profiles.role):
+Auth flow (Supabase JWT + ADMIN_EMAIL + profiles.role):
   1. Extract the Bearer JWT from the Authorization header.
   2. Verify it against Supabase Auth (supabase.auth.get_user(token)).
-  3. Load the caller's row from the `profiles` table and require
-     role in {admin, creator}.
+  3. Require the configured administrator email and an `admin` profile role.
   4. Invalid token / missing profile / insufficient role => 403 Forbidden.
 """
 
@@ -28,7 +27,8 @@ logger = logging.getLogger("biharfast_admin_auth")
 
 bearer_scheme = HTTPBearer(auto_error=False)
 
-ADMIN_ROLES = {"admin", "creator"}
+ADMIN_EMAIL = os.getenv("ADMIN_EMAIL", "").strip().casefold()
+ADMIN_ROLES = {"admin"}
 ADMIN_API_TOKEN = os.getenv("ADMIN_API_TOKEN", "").strip()
 
 
@@ -91,6 +91,21 @@ def get_current_admin(
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Invalid or expired admin session.",
+        )
+
+    # Fail closed unless the deployment has configured its single admin account.
+    if not ADMIN_EMAIL:
+        logger.error("ADMIN_EMAIL is not configured; refusing dynamic admin access")
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="Admin account is not configured.",
+        )
+
+    if (user.email or "").strip().casefold() != ADMIN_EMAIL:
+        logger.warning(f"Non-allowlisted user {user.id} attempted admin action")
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="You do not have permission to perform this action.",
         )
 
     # 2. Load the profile and check the role.

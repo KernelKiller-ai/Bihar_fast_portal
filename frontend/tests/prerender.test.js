@@ -5,6 +5,7 @@ import test from "node:test";
 import { fileURLToPath } from "node:url";
 import { LEGAL_PAGES_CONTENT } from "../src/data/legalPagesContent.js";
 import { stripMarkdownArtifacts } from "../src/utils/sanitizeHtml.js";
+import { STATIC_ROUTE_METADATA } from "../src/utils/seoConfig.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const DIST_DIR = path.resolve(__dirname, "../dist");
@@ -32,7 +33,7 @@ const ROUTES = [
   {
     route: "/privacy-policy",
     h1: "Privacy Policy",
-    headings: ["1. Information We Collect", "3. Cookies, Google AdSense and DoubleClick DART", "9. Children's Privacy and Policy Updates"],
+    headings: ["1. Information We Collect", "3. Cookies, Google AdSense, and Third-Party Advertising Compliance", "9. Children's Privacy and Policy Updates"],
     minWords: 350,
   },
   {
@@ -102,6 +103,26 @@ test("build output has full initial HTML for every core static page", () => {
     const words = wordCount(root);
     assert.ok(words >= route.minWords, `${route.route} has only ${words} initial-HTML words`);
     assert.equal(readCanonical(html), LEGAL_PAGES_CONTENT[route.route].canonical);
+  }
+});
+
+test("all configured public routes have substantive semantic initial HTML", () => {
+  for (const route of Object.keys(STATIC_ROUTE_METADATA)) {
+    const html = readPage(route);
+    const root = readRoot(html);
+    const words = wordCount(root);
+    assert.ok(words >= 300, `${route} has only ${words} initial-HTML words`);
+    assert.match(root, /<main\b[\s\S]*?<article\b[\s\S]*?<h1\b/i, `${route} is missing semantic article structure`);
+  }
+});
+
+test("internal route snapshots are explicitly noindex", () => {
+  for (const route of ["/admin", "/admin-login", "/admin-portal", "/dashboard"]) {
+    const file = path.join(DIST_DIR, route.slice(1), "index.html");
+    assert.ok(fs.existsSync(file), `Expected internal snapshot at ${file}; run npm run build first`);
+    const html = fs.readFileSync(file, "utf8");
+    assert.match(html, /<meta name="robots" content="noindex, nofollow"\s*\/?>/i, `${route} must be noindex`);
+    assert.match(readRoot(html), /<h1\b/i, `${route} must have a useful initial heading`);
   }
 });
 

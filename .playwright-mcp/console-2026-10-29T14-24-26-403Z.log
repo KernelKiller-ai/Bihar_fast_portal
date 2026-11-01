@@ -1,0 +1,23 @@
+[     362ms] [INFO] %cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold @ http://127.0.0.1:5173/node_modules/.vite/deps/react-dom_client.js?v=46b4524d:15802
+[  121193ms] [ERROR] Leaderboard load failed: TypeError: Cannot read properties of null (reading 'from')
+    at loadRanks (http://127.0.0.1:5173/src/components/Leaderboard.jsx:18:26)
+    at http://127.0.0.1:5173/src/components/Leaderboard.jsx:40:3
+    at Object.react_stack_bottom_frame (http://127.0.0.1:5173/node_modules/.vite/deps/react-dom_client.js?v=46b4524d:14176:13)
+    at runWithFiberInDEV (http://127.0.0.1:5173/node_modules/.vite/deps/react-dom_client.js?v=46b4524d:942:66)
+    at commitHookEffectListMount (http://127.0.0.1:5173/node_modules/.vite/deps/react-dom_client.js?v=46b4524d:6899:153)
+    at commitHookPassiveMountEffects (http://127.0.0.1:5173/node_modules/.vite/deps/react-dom_client.js?v=46b4524d:6934:55)
+    at commitPassiveMountOnFiber (http://127.0.0.1:5173/node_modules/.vite/deps/react-dom_client.js?v=46b4524d:8311:22)
+    at recursivelyTraversePassiveMountEffects (http://127.0.0.1:5173/node_modules/.vite/deps/react-dom_client.js?v=46b4524d:8298:313)
+    at commitPassiveMountOnFiber (http://127.0.0.1:5173/node_modules/.vite/deps/react-dom_client.js?v=46b4524d:8370:14)
+    at recursivelyTraversePassiveMountEffects (http://127.0.0.1:5173/node_modules/.vite/deps/react-dom_client.js?v=46b4524d:8298:313) @ http://127.0.0.1:5173/@vite/client:367
+[  121200ms] [ERROR] Leaderboard load failed: TypeError: Cannot read properties of null (reading 'from')
+    at loadRanks (http://127.0.0.1:5173/src/components/Leaderboard.jsx:18:26)
+    at http://127.0.0.1:5173/src/components/Leaderboard.jsx:40:3
+    at Object.react_stack_bottom_frame (http://127.0.0.1:5173/node_modules/.vite/deps/react-dom_client.js?v=46b4524d:14176:13)
+    at runWithFiberInDEV (http://127.0.0.1:5173/node_modules/.vite/deps/react-dom_client.js?v=46b4524d:942:66)
+    at commitHookEffectListMount (http://127.0.0.1:5173/node_modules/.vite/deps/react-dom_client.js?v=46b4524d:6899:153)
+    at commitHookPassiveMountEffects (http://127.0.0.1:5173/node_modules/.vite/deps/react-dom_client.js?v=46b4524d:6934:55)
+    at reconnectPassiveEffects (http://127.0.0.1:5173/node_modules/.vite/deps/react-dom_client.js?v=46b4524d:8399:6)
+    at recursivelyTraverseReconnectPassiveEffects (http://127.0.0.1:5173/node_modules/.vite/deps/react-dom_client.js?v=46b4524d:8386:5)
+    at reconnectPassiveEffects (http://127.0.0.1:5173/node_modules/.vite/deps/react-dom_client.js?v=46b4524d:8411:14)
+    at doubleInvokeEffectsOnFiber (http://127.0.0.1:5173/node_modules/.vite/deps/react-dom_client.js?v=46b4524d:9697:181) @ http://127.0.0.1:5173/@vite/client:367

@@ -1,4 +1,5 @@
 import { useState, useMemo, useRef, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { 
   PlusCircle, CheckCircle, AlertCircle, Loader2, 
   FileText, Edit3, Check, RefreshCw,
@@ -6,9 +7,11 @@ import {
   ImagePlus, Lock, LogIn
 } from "lucide-react";
 import AdminQuizManager from "../components/AdminQuizManager";
+import AdminBannerControl from "../components/AdminBannerControl";
 import { supabase, isSupabaseConfigured } from "../api/supabase";
+import { API_BASE_URL } from "../api/config";
 
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "https://bihar-fast-portal.onrender.com";
+const ADMIN_EMAIL = (import.meta.env.VITE_ADMIN_EMAIL || "").trim().toLowerCase();
 
 const categoryFieldConfig = {
   jobs: {
@@ -105,6 +108,7 @@ const schemeDepartments = [
 ];
 
 export default function Admin() {
+  const navigate = useNavigate();
   // ==================== AUTH STATE (Supabase session + role gate) ====================
   // The static PIN was removed: identity now comes from the Supabase session
   // and the backend verifies role via the profiles table.
@@ -201,6 +205,18 @@ export default function Admin() {
         }
 
         const session = data.session;
+        if (!ADMIN_EMAIL || (session.user.email || "").trim().toLowerCase() !== ADMIN_EMAIL) {
+          const { error: signOutError } = await supabase.auth.signOut();
+          if (signOutError) console.error("Unable to sign out unauthorized account:", signOutError.message);
+          if (isMounted) {
+            navigate("/", {
+              replace: true,
+              state: { accessDenied: "Access Denied. This account is not authorized to access the admin control room." },
+            });
+          }
+          return;
+        }
+
         accessTokenRef.current = session.access_token;
         setAuthorToken(session.access_token);
         const meta = session.user?.user_metadata || {};
@@ -226,13 +242,25 @@ export default function Admin() {
         }
 
         const role = (profile?.role || "").toLowerCase();
+        if (role !== "admin") {
+          const { error: signOutError } = await supabase.auth.signOut();
+          if (signOutError) console.error("Unable to sign out non-admin account:", signOutError.message);
+          if (isMounted) {
+            navigate("/", {
+              replace: true,
+              state: { accessDenied: "Access Denied. The configured account does not have the admin role." },
+            });
+          }
+          return;
+        }
+
         if (isMounted) {
           setAuthor((prev) => ({
             ...prev,
             role: role || "—",
             name: profile?.full_name || prev.name,
           }));
-          setAuthState(role === "admin" || role === "creator" ? "authorized" : "forbidden");
+          setAuthState("authorized");
         }
       } catch (err) {
         console.error("Admin auth check failed:", err);
@@ -245,7 +273,7 @@ export default function Admin() {
 
     checkAdminAccess();
     return () => { isMounted = false; };
-  }, []);
+  }, [navigate]);
 
   // ==================== IMAGE UPLOAD (Supabase Storage: post-images) ====================
   const handleImageUpload = async (event) => {
@@ -570,45 +598,9 @@ export default function Admin() {
     });
   }, [posts, searchQuery]);
 
-  // ==================== AUTH TRIGGER ====================
-  // Supabase JS v2 has NO supabase.auth.signInWithGoogle() — the official
-  // method is auth.signInWithOAuth({ provider: 'google' }). Calling the
-  // non-existent method throws TypeError (caught previously as an unhandled
-  // promise rejection crashing the click handler).
   const handleAdminAuthAction = async () => {
-    if (!supabase) {
-      setAuthError("Supabase login is not configured for this deployment.");
-      return;
-    }
-    try {
-      if (authState === "forbidden") {
-        const { error } = await supabase.auth.signOut();
-        if (error) {
-          console.error("Sign out failed:", error.message);
-        }
-        window.location.reload();
-        return;
-      }
-
-      const { error } = await supabase.auth.signInWithOAuth({
-        provider: "google",
-        options: {
-          redirectTo: `${window.location.origin}/admin`,
-        },
-      });
-      if (error) {
-        console.error("Google sign-in failed:", error.message);
-        setAuthError(`Google sign-in failed: ${error.message}`);
-      }
-    } catch (err) {
-      // Never crash the UI on an auth error — log it and surface a banner.
-      console.error("Admin auth action failed:", err);
-      setAuthError(
-        err instanceof Error
-          ? `Authentication error: ${err.message}`
-          : "Authentication error. Please try again."
-      );
-    }
+    if (authState === "forbidden") await supabase?.auth.signOut();
+    navigate("/admin-login");
   };
 
   // ==================== AUTH GATE SCREENS ====================
@@ -636,7 +628,7 @@ export default function Admin() {
             </h2>
             <p className="text-xs text-slate-500 mt-1.5 font-medium">
               {forbidden
-                ? "यह क्षेत्र केवल admin या creator भूमिका वाले खातों के लिए है। आपके खाते को प्रवेश अनुमति नहीं है।"
+                ? "यह क्षेत्र केवल निर्धारित admin खाते के लिए है। आपके खाते को प्रवेश अनुमति नहीं है।"
                 : (authError || "सुरक्षित प्रकाशन केंद्र में प्रवेश के लिए लॉगिन करें।")}
             </p>
             {forbidden && author.email && (
@@ -649,7 +641,7 @@ export default function Admin() {
             onClick={handleAdminAuthAction}
             className="w-full bg-[#0B4F8A] hover:bg-[#083b66] text-white font-bold py-3.5 rounded-xl transition shadow-md cursor-pointer text-sm tracking-wide"
           >
-            {forbidden ? "Sign Out & Switch Account" : "Continue with Google"}
+            {forbidden ? "Sign Out & Switch Account" : "Open Admin Login"}
           </button>
         </div>
       </div>
@@ -684,6 +676,8 @@ export default function Admin() {
             </div>
           </div>
         </div>
+
+        <AdminBannerControl />
 
         {/* Action Tabs Strip */}
         <div className="flex flex-wrap items-center justify-between gap-3 bg-white p-2.5 rounded-2xl border border-slate-200 shadow-xs">

@@ -20,8 +20,7 @@ import {
   Loader2,
   AlertCircle
 } from "lucide-react";
-
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "http://localhost:5000";
+import { API_BASE_URL } from "../api/config";
 
 export default function Footer() {
   const [email, setEmail] = useState("");

@@ -1,11 +1,9 @@
 import { useState, useEffect, Suspense, lazy } from "react";
-import { Routes, Route, Link } from "react-router-dom";
+import { Routes, Route, Link, useLocation } from "react-router-dom";
 import Navbar from "./components/Navbar";
 import DownloadAppBanner from "./components/DownloadAppBanner";
 import TopBanner from "./components/TopBanner";
-import AdminBannerControl from "./components/AdminBannerControl";
 import NotificationCard from "./components/NotificationCard";
-import LoginModal from "./components/LoginModal";
 import ScrollToTop from "./components/ScrollToTop";
 import ImageResizer from "./components/ImageResizer";
 import AgeCalculator from "./components/AgeCalculator";
@@ -13,6 +11,7 @@ import Footer from "./components/Footer";
 import { generateSlug } from "./utils/slug";
 import SiteMapPage from "./pages/SiteMapPage";
 import RouteSEO from "./components/RouteSEO";
+import { API_BASE_URL } from "./api/config";
 
 // Icons
 import { 
@@ -25,6 +24,7 @@ import {
 // Lazy Loaded Pages (Bundle Size Optimization)
 const PostDetail = lazy(() => import("./pages/PostDetail"));
 const Admin = lazy(() => import("./pages/Admin"));
+const AdminLogin = lazy(() => import("./pages/AdminLogin"));
 const BsebMatric = lazy(() => import("./pages/BsebMatric"));
 const BsebInter = lazy(() => import("./pages/BsebInter"));
 const CuetUgAdmission = lazy(() => import("./pages/CuetUgAdmission"));
@@ -48,7 +48,16 @@ const PrivacyPolicy = lazy(() => import("./pages/privacyPolicy"));
 const Terms = lazy(() => import("./pages/terms"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "https://bihar-fast-portal.onrender.com";
+function AccessDeniedNotice({ message }) {
+  const [dismissed, setDismissed] = useState(false);
+  if (!message || dismissed) return null;
+  return (
+    <div role="alert" className="mx-auto mt-3 flex max-w-7xl items-center justify-between gap-3 rounded-xl border border-rose-300 bg-rose-50 px-4 py-3 text-sm font-bold text-rose-900">
+      <span>{message}</span>
+      <button type="button" onClick={() => setDismissed(true)} aria-label="Dismiss access denied message">×</button>
+    </div>
+  );
+}
 
 // Only dynamic circular tabs
 const CATEGORY_TABS = [
@@ -79,6 +88,7 @@ const DIRECT_LINKS = [
 ];
 
 export default function App() {
+  const location = useLocation();
   const [activeTab, setActiveTab] = useState("all");
   const [activeTool, setActiveTool] = useState(null);
   const [searchQuery, setSearchQuery] = useState("");
@@ -183,7 +193,7 @@ export default function App() {
   return (
     <div className="flex min-h-screen w-full min-w-0 max-w-full flex-col justify-between overflow-x-hidden bg-[#F8FAFC] font-sans text-[#0F172A] antialiased">
       <ScrollToTop />
-      <LoginModal />
+      <AccessDeniedNotice key={location.key} message={location.state?.accessDenied} />
       <RouteSEO />
       <div>
         <TopBanner />
@@ -796,9 +806,10 @@ export default function App() {
             <Route path="/terms-conditions" element={<Terms />} />
             <Route path="/terms-and-conditions" element={<Terms />} />
             
-            {/* Admin Gate Dual Routing */}
-            <Route path="/admin" element={<><Admin /><AdminBannerControl /></>} />
-            <Route path="/admin-portal" element={<><Admin /><AdminBannerControl /></>} />
+            {/* Admin-only control room */}
+            <Route path="/admin-login" element={<AdminLogin />} />
+            <Route path="/admin" element={<Admin />} />
+            <Route path="/admin-portal" element={<Admin />} />
             
             {/* Dedicated High-Speed Hubs */}
             <Route path="/bihar-district-wise-recruitment" element={<DistrictRecruitment />} />
@@ -813,7 +824,9 @@ export default function App() {
             {/* Dual Routes for Class 10th Mock Test */}
             <Route path="/class-10-quiz" element={<MockTestPage />} />
             <Route path="/mock-test/class-10" element={<MockTestPage />} />
+            <Route path="/mock-test/:id" element={<MockTestPage />} />
             <Route path="/mock-test" element={<MockTestPage />} />
+            <Route path="/practice" element={<MockTestPage />} />
             
             <Route path="/upcoming-2026" element={<Upcoming2026 />} />
             <Route path="/download" element={<DownloadApp />} />

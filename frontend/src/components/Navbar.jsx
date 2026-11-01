@@ -1,27 +1,7 @@
-import { useState, useEffect, useRef } from "react";
 import { Link } from "react-router-dom";
-import { ChevronDown, LogOut, Sparkles, UserRound } from "lucide-react";
-import { useAuth } from "../context/AuthContext.jsx";
+import { Sparkles } from "lucide-react";
 
 export default function Navbar() {
-  const { user, loading, openLoginModal, signOut } = useAuth();
-  const [profileMenuOpen, setProfileMenuOpen] = useState(false);
-  const menuRef = useRef(null);
-
-  const displayName = user?.user_metadata?.full_name || user?.user_metadata?.name || user?.email?.split("@")[0] || "छात्र";
-  const initials = displayName.split(/\s+/).slice(0, 2).map((part) => part[0]).join("").toUpperCase();
-
-  // Bahar click karne par menu band karne ke liye
-  useEffect(() => {
-    function handleClickOutside(e) {
-      if (menuRef.current && !menuRef.current.contains(e.target)) {
-        setProfileMenuOpen(false);
-      }
-    }
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, []);
-
   return (
     <nav className="sticky top-0 z-50 w-full select-none border-b border-[#E2E8F0] bg-white">
       <div className="bg-[#091E3A] px-4 py-1.5 text-center text-[10px] leading-relaxed text-slate-100 sm:text-xs">
@@ -77,86 +57,6 @@ export default function Navbar() {
 
           {/* Right Action Buttons */}
           <div className="flex items-center gap-2 sm:gap-2.5 shrink-0">
-            {!loading && !user && (
-              <button
-                type="button"
-                onClick={openLoginModal}
-                aria-label="Student login"
-                className="inline-flex min-h-10 items-center justify-center gap-1.5 rounded-md border border-[#0B2545] bg-[#0B2545] p-2 text-xs font-semibold text-white transition hover:bg-[#091E3A] sm:px-3.5 sm:py-2"
-              >
-                <UserRound size={15} />
-                <span className="hidden sm:inline">Student Login</span>
-              </button>
-            )}
-
-            {!loading && user && (
-              <div className="relative" ref={menuRef}>
-                <button
-                  type="button"
-                  onClick={() => setProfileMenuOpen((prev) => !prev)}
-                  aria-expanded={profileMenuOpen}
-                  aria-haspopup="menu"
-                  className="inline-flex min-h-10 max-w-48 items-center gap-2 rounded-md border border-[#E2E8F0] bg-white p-1.5 pr-2.5 text-left text-[#0F172A] transition hover:bg-[#F8FAFC] sm:px-2.5"
-                >
-                  {user.user_metadata?.avatar_url || user.user_metadata?.picture ? (
-                    <img
-                      src={user.user_metadata.avatar_url || user.user_metadata.picture}
-                      alt=""
-                      referrerPolicy="no-referrer"
-                      className="h-8 w-8 rounded-full border border-white/40 object-cover shrink-0"
-                    />
-                  ) : (
-                    <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[#F1F5F9] text-xs font-black text-[#0B2545]">
-                      {initials || <UserRound size={15} />}
-                    </span>
-                  )}
-                  <span className="hidden min-w-0 sm:block">
-                    <span className="block max-w-28 truncate text-xs font-extrabold">{displayName}</span>
-                    <span className="block text-[10px] text-[#64748B]">Student</span>
-                  </span>
-                  <ChevronDown 
-                    size={14} 
-                    className={`hidden sm:block transition-transform duration-200 ${profileMenuOpen ? "rotate-180" : ""}`} 
-                  />
-                </button>
-
-                {profileMenuOpen && (
-                  <div 
-                    role="menu" 
-                    className="absolute right-0 top-full mt-2 w-52 overflow-hidden rounded-xl border border-slate-200 bg-white py-1 shadow-2xl z-50 animate-in fade-in slide-in-from-top-1 duration-150"
-                  >
-                    <Link
-                      to="/dashboard"
-                      role="menuitem"
-                      onClick={() => setProfileMenuOpen(false)}
-                      className="block px-4 py-2.5 text-xs font-bold text-slate-700 transition hover:bg-sky-50 hover:text-sky-800"
-                    >
-                      ⚡ मेरी तैयारी (My Prep & Rank)
-                    </Link>
-                    <Link
-                      to="/mock-test"
-                      role="menuitem"
-                      onClick={() => setProfileMenuOpen(false)}
-                      className="block px-4 py-2.5 text-xs font-bold text-slate-700 transition hover:bg-sky-50 hover:text-sky-800"
-                    >
-                      🏆 स्टेट लाइव मॉक टेस्ट
-                    </Link>
-                    <button
-                      type="button"
-                      role="menuitem"
-                      onClick={async () => {
-                        setProfileMenuOpen(false);
-                        await signOut();
-                      }}
-                      className="flex w-full items-center gap-2 border-t border-slate-100 px-4 py-2.5 text-left text-xs font-bold text-rose-600 transition hover:bg-rose-50 cursor-pointer"
-                    >
-                      <LogOut size={14} /> लॉगआउट (Logout)
-                    </button>
-                  </div>
-                )}
-              </div>
-            )}
-
             {/* Quick Hubs Badge */}
             <Link
               to="/upcoming-2026"

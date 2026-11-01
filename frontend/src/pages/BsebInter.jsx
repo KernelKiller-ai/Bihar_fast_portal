@@ -237,11 +237,6 @@ export default function BsebInter() {
           </div>
         </section>
 
-        {/* In-Article Ad Slot */}
-        <div className="my-6 p-3 bg-slate-100 border border-dashed border-slate-300 rounded-xl text-center text-xs text-slate-400">
-          [ Clean In-Article Responsive Ad Slot - Google AdSense ]
-        </div>
-
         {/* Stream-wise Details */}
         <section className="bg-white rounded-xl shadow-sm border border-slate-200 p-5 mb-6">
           <div className="flex items-center gap-2 mb-4">

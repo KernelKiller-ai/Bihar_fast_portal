@@ -234,11 +234,6 @@ export default function BsebMatric() {
           </div>
         </section>
 
-        {/* Clean AdSense Slot Placeholder */}
-        <div className="my-6 p-3 bg-slate-100 border border-dashed border-slate-300 rounded-xl text-center text-xs text-slate-400">
-          [ Clean In-Article Responsive Ad Slot - Google AdSense ]
-        </div>
-
         {/* Important Dates Table */}
         <section className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden mb-6">
           <div className="bg-slate-100 px-5 py-3 border-b border-slate-200 flex items-center gap-2">

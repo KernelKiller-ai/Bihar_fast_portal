@@ -1,49 +1,41 @@
 import { useEffect, useState } from "react";
-import { Save, CheckCircle2, Loader2, AlertCircle, Lock } from "lucide-react";
+import { Save, CheckCircle2, Loader2, AlertCircle } from "lucide-react";
 import { supabase, isSupabaseConfigured } from "../api/supabase";
 
 const BANNER_ID = "top_banner";
-// Set VITE_ADMIN_BANNER_PIN in your .env — this is a lightweight gate, not real security.
-const ADMIN_PIN = import.meta.env.VITE_ADMIN_BANNER_PIN || "";
 
 const EMPTY = { banner_active: false, banner_text: "", banner_link: "", banner_bg: "bg-[#0B4F8A]" };
 
 export default function AdminBannerControl() {
-  const [unlocked, setUnlocked] = useState(() => sessionStorage.getItem("bf_banner_admin") === "1");
-  const [pin, setPin] = useState("");
   const [form, setForm] = useState(EMPTY);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
   const [error, setError] = useState("");
 
   useEffect(() => {
-    if (!unlocked || !isSupabaseConfigured) return;
+    if (!isSupabaseConfigured || !supabase) return;
     let cancelled = false;
     supabase
       .from("site_settings")
       .select("*")
       .eq("id", BANNER_ID)
       .single()
-      .then(({ data }) => {
+      .then(({ data, error: loadError }) => {
+        if (loadError) throw loadError;
         if (cancelled) return;
         if (data) setForm({ ...EMPTY, ...data });
-        setLoading(false);
+      })
+      .catch((loadError) => {
+        if (!cancelled) setError(`Unable to load site banner: ${loadError.message}`);
+      })
+      .finally(() => {
+        if (!cancelled) setLoading(false);
       });
     return () => {
       cancelled = true;
     };
-  }, [unlocked]);
-
-  const handleUnlock = (e) => {
-    e.preventDefault();
-    if (!ADMIN_PIN || pin === ADMIN_PIN) {
-      sessionStorage.setItem("bf_banner_admin", "1");
-      setUnlocked(true);
-    } else {
-      setError("गलत PIN — दोबारा कोशिश करें");
-    }
-  };
+  }, []);
 
   const handleSave = async () => {
     setSaving(true);
@@ -71,27 +63,6 @@ export default function AdminBannerControl() {
       <div className="rounded-2xl border border-amber-200 bg-amber-50 p-4 text-xs font-bold text-amber-800 flex items-center gap-2">
         <AlertCircle size={16} /> Supabase configured नहीं है (.env में VITE_SUPABASE_URL सेट करें)।
       </div>
-    );
-  }
-
-  if (!unlocked) {
-    return (
-      <form onSubmit={handleUnlock} className="rounded-2xl border border-slate-200/80 bg-white p-5 max-w-sm space-y-3">
-        <p className="flex items-center gap-2 text-sm font-black text-slate-900">
-          <Lock size={15} className="text-[#0B4F8A]" /> Banner Admin Access
-        </p>
-        <input
-          type="password"
-          value={pin}
-          onChange={(e) => setPin(e.target.value)}
-          placeholder="Admin PIN"
-          className="w-full h-10 px-3 rounded-xl border border-slate-200 text-sm font-bold focus:outline-none focus:ring-2 focus:ring-[#0B4F8A]/40"
-        />
-        {error && <p className="text-xs font-bold text-rose-600 flex items-center gap-1"><AlertCircle size={13} /> {error}</p>}
-        <button type="submit" className="w-full h-10 rounded-xl bg-[#0B4F8A] hover:bg-[#093f6e] text-white text-sm font-black transition">
-          Unlock
-        </button>
-      </form>
     );
   }
 

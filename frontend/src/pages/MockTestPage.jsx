@@ -1,12 +1,11 @@
 import { useState, useEffect } from "react";
-import { Link, useSearchParams } from "react-router-dom";
+import { Link, useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { 
   ArrowLeft, Trophy, Clock, ShieldCheck, ChevronRight, Sparkles,
   BookOpen, Flame, Compass, ArrowRight
 } from "lucide-react";
 import Class10QuizPlayer from "../components/Class10QuizPlayer";
-
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "https://bihar-fast-portal.onrender.com";
+import { API_BASE_URL } from "../api/config";
 
 const EXAM_CATEGORIES = [
   {
@@ -100,9 +99,12 @@ const EXAM_CATEGORIES = [
 ];
 
 export default function MockTestPage() {
+  const { id } = useParams();
+  const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
-  const selectedExamId = searchParams.get("exam");
-  const selectedQuizId = searchParams.get("quiz_id");
+  const directQuizId = id && id !== "class-10" ? id : null;
+  const selectedExamId = searchParams.get("exam") || (directQuizId ? "class_10" : null);
+  const selectedQuizId = searchParams.get("quiz_id") || directQuizId;
 
   const [availableQuizzes, setAvailableQuizzes] = useState([]);
   const [loadedExamId, setLoadedExamId] = useState(null);
@@ -113,7 +115,7 @@ export default function MockTestPage() {
   const currentExam = EXAM_CATEGORIES.find((e) => e.id === selectedExamId);
 
   useEffect(() => {
-    document.title = "Bihar All Exam Free Live Mock Test & Leaderboard | BiharFast";
+    document.title = "Bihar Free Live Mock Tests & Practice | BiharFast";
 
     const setMetaTag = (attrName, attrValue, content) => {
       let element = document.querySelector(`meta[${attrName}="${attrValue}"]`);
@@ -125,9 +127,9 @@ export default function MockTestPage() {
       element.setAttribute("content", content);
     };
 
-    setMetaTag("name", "description", "अभ्यास करें बिहार बोर्ड (10th/12th) एवं बिहार पुलिस, BSSC, SSC भर्ती परीक्षाओं के लिए ऑनलाइन लाइव मॉक टेस्ट। पाएं तुरंत रिजल्ट व लीडरबोर्ड रैंकिंग।");
-    setMetaTag("property", "og:title", "Bihar All Exam Free Live Mock Test & Leaderboard | BiharFast");
-    setMetaTag("property", "og:description", "अभ्यास करें बिहार बोर्ड (10th/12th) एवं बिहार पुलिस, BSSC, SSC भर्ती परीक्षाओं के लिए ऑनलाइन लाइव मॉक टेस्ट। पाएं तुरंत रिजल्ट व लीडरबोर्ड रैंकिंग।");
+    setMetaTag("name", "description", "बिहार बोर्ड (10th/12th), बिहार पुलिस, BSSC और SSC परीक्षाओं के लिए बिना लॉगिन मुफ्त मॉक टेस्ट। तुरंत परिणाम और इसी डिवाइस पर सेव स्कोर इतिहास।");
+    setMetaTag("property", "og:title", "Bihar Free Live Mock Tests & Practice | BiharFast");
+    setMetaTag("property", "og:description", "बिहार बोर्ड (10th/12th), बिहार पुलिस, BSSC और SSC परीक्षाओं के लिए बिना लॉगिन मुफ्त मॉक टेस्ट। तुरंत परिणाम और इसी डिवाइस पर सेव स्कोर इतिहास।");
     setMetaTag("property", "og:url", `https://biharfast.in${window.location.pathname}`);
 
     let canonicalTag = document.querySelector('link[rel="canonical"]');
@@ -284,10 +286,10 @@ export default function MockTestPage() {
                 ✔️ <strong>वास्तविक परीक्षा पैटर्न:</strong> आधिकारिक मॉडल पेपर्स और पूर्ववर्ती प्रश्नों का संकलन।
               </div>
               <div className="p-3 bg-slate-50 rounded-xl border border-slate-100">
-                ✔️ <strong>दैनिक प्रयास सीमा:</strong> स्पैम से बचाव हेतु 1 IP पते से प्रति दिन 6 प्रयास अनुमत।
+                ✔️ <strong>तुरंत अभ्यास:</strong> लॉगिन की जरूरत नहीं; उत्तर और प्रगति इसी डिवाइस पर सुरक्षित।
               </div>
               <div className="p-3 bg-slate-50 rounded-xl border border-slate-100">
-                ✔️ <strong>राज्य स्तरीय लीडरबोर्ड:</strong> टेस्ट सबमिट करते ही जिलावार रैंक और स्कोरकार्ड।
+                ✔️ <strong>व्यक्तिगत स्कोर इतिहास:</strong> टेस्ट परिणाम ब्राउज़र में सेव करें और बाद में समीक्षा करें।
               </div>
             </div>
           </div>
@@ -308,7 +310,10 @@ export default function MockTestPage() {
           <div className="flex items-center justify-between bg-white p-3.5 rounded-2xl border border-slate-200 shadow-xs">
             <button
               type="button"
-              onClick={() => setSearchParams({ exam: selectedExamId })}
+              onClick={() => {
+                if (directQuizId) navigate(`/mock-test?exam=${encodeURIComponent(selectedExamId)}`);
+                else setSearchParams({ exam: selectedExamId });
+              }}
               className="flex items-center gap-1.5 text-xs font-bold text-slate-600 hover:text-blue-700 transition cursor-pointer"
             >
               <ArrowLeft size={14} /> विषय सूची पर वापस जाएं (Back to Papers)

@@ -22,8 +22,7 @@ import {
   MessageCircle
 } from "lucide-react";
 import { generateSlug } from "../utils/slug";
-
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "https://bihar-fast-portal.onrender.com";
+import { API_BASE_URL } from "../api/config";
 
 const DEDICATED_HUBS = [
   { match: ["rtps", "caste", "income", "residential", "niwas", "aay", "jati"], link: "/rtps-bihar", title: "RTPS Bihar Direct Portal" },

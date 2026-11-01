@@ -179,6 +179,7 @@ class SubmitAnswersRequest(BaseModel):
     answers: Dict[str, Any] = Field(default_factory=dict, max_length=150)
     time_taken_seconds: Optional[int] = Field(0, ge=0)
     demo_mode: bool = False
+    anonymous_mode: bool = False
 
     @field_validator("student_name", "district", mode="before")
     @classmethod
@@ -484,7 +485,7 @@ def submit_quiz_answers(
     # session, which prevents forging submissions on behalf of other students.
     verified_user_id = verify_authenticated_user(credentials, supabase)
 
-    if not sub.demo_mode and not verified_user_id:
+    if not sub.demo_mode and not sub.anonymous_mode and not verified_user_id:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Login required to submit a full test. Please sign in and try again.",
@@ -499,7 +500,11 @@ def submit_quiz_answers(
 
     client_ip = extract_client_ip(request)
     ip_hash = get_secure_ip_hash(client_ip, today_str)
-    attempts_used = 0 if sub.demo_mode else enforce_ip_rate_limit(supabase, ip_hash, today_str)
+    attempts_used = (
+        0
+        if sub.demo_mode or sub.anonymous_mode
+        else enforce_ip_rate_limit(supabase, ip_hash, today_str)
+    )
     remaining_attempts = max(0, DAILY_ATTEMPT_LIMIT - attempts_used)
 
     clean_quiz_id = sub.quiz_id.strip()
@@ -589,7 +594,7 @@ def submit_quiz_answers(
 
     accuracy = round((correct / (correct + wrong)) * 100, 1) if (correct + wrong) > 0 else 0.0
 
-    if not sub.demo_mode:
+    if not sub.demo_mode and not sub.anonymous_mode and verified_user_id:
         try:
             supabase.table("master_leaderboard").insert({
                 "quiz_id": clean_quiz_id,

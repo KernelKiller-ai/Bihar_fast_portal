@@ -8,13 +8,11 @@ import {
   ChartNoAxesColumnIncreasing,
   CheckCircle2,
   Clock3,
-  GraduationCap,
   MapPin,
   Target,
   Trophy,
   XCircle,
 } from "lucide-react";
-import { useAuth } from "../context/AuthContext.jsx";
 import { getStudentAttempts, getStudentDistrict, saveStudentDistrict } from "../utils/studentHistory";
 
 const DISTRICTS = [
@@ -32,10 +30,6 @@ const SUBJECTS = [
   { label: "सामाजिक विज्ञान", match: /social|सामाजिक|111|history|geography|polity/i, color: "bg-amber-500" },
   { label: "हिंदी", match: /hindi|हिंदी|101|106/i, color: "bg-rose-500" },
 ];
-
-function getDisplayName(user) {
-  return user.user_metadata?.full_name || user.user_metadata?.name || user.email?.split("@")[0] || "छात्र";
-}
 
 function formatPracticeTime(totalSeconds) {
   const hours = Math.floor(totalSeconds / 3600);
@@ -67,41 +61,13 @@ function DashboardStat({ label, value, detail, icon: Icon, tone }) {
 }
 
 export default function StudentDashboard() {
-  const { user, loading, openLoginModal } = useAuth();
   const [districtOverride, setDistrictOverride] = useState(null);
   const [expandedAttemptId, setExpandedAttemptId] = useState(null);
 
-  if (loading) {
-    return <div className="grid min-h-[55vh] place-items-center text-sm font-bold text-slate-600">प्रोफ़ाइल लोड हो रही है...</div>;
-  }
-
-  if (!user) {
-    return (
-      <main className="min-h-[70vh] bg-slate-50 px-4 py-12 sm:py-20">
-        <section className="mx-auto max-w-3xl border-y-4 border-sky-800 bg-white px-6 py-10 text-center shadow-sm sm:px-12">
-          <GraduationCap size={38} className="mx-auto text-sky-800" />
-          <p className="mt-4 text-xs font-black uppercase tracking-wider text-sky-700">Student Portal</p>
-          <h1 className="mt-2 text-3xl font-black text-slate-950">आपकी तैयारी, आपकी प्रगति</h1>
-          <p className="mx-auto mt-3 max-w-xl text-sm leading-relaxed text-slate-600">
-            टेस्ट इतिहास और विषयवार प्रदर्शन देखने के लिए Google से लॉगिन करें। बिना लॉगिन पाँच प्रश्नों का डेमो टेस्ट आज़माएँ।
-          </p>
-          <div className="mt-7 flex flex-col justify-center gap-3 sm:flex-row">
-            <button type="button" onClick={openLoginModal} className="rounded-xl bg-sky-800 px-5 py-3 text-sm font-black text-white transition hover:bg-sky-900">
-              Student Login
-            </button>
-            <Link to="/mock-test" className="inline-flex items-center justify-center gap-2 rounded-xl border border-slate-300 px-5 py-3 text-sm font-black text-slate-800 transition hover:bg-slate-50">
-              5 प्रश्नों का फ्री डेमो <ArrowRight size={16} />
-            </Link>
-          </div>
-        </section>
-      </main>
-    );
-  }
-
-  const displayName = getDisplayName(user);
-  const email = user.email || "ईमेल उपलब्ध नहीं";
-  const attempts = getStudentAttempts(user.id);
-  const district = districtOverride ?? getStudentDistrict(user.id);
+  const displayName = "छात्र";
+  const email = "इस डिवाइस पर सहेजा गया";
+  const attempts = getStudentAttempts();
+  const district = districtOverride ?? getStudentDistrict();
   const averageAccuracy = attempts.length
     ? attempts.reduce((sum, attempt) => sum + Number(attempt.accuracy_percentage || 0), 0) / attempts.length
     : 0;
@@ -135,13 +101,9 @@ export default function StudentDashboard() {
 
         <section className="grid grid-cols-1 gap-4 border-b border-slate-200 pb-6 md:grid-cols-[1.2fr_2fr]">
           <article className="flex items-center gap-4 bg-[#0e3b64] p-5 text-white shadow-sm">
-            {user.user_metadata?.avatar_url || user.user_metadata?.picture ? (
-              <img src={user.user_metadata.avatar_url || user.user_metadata.picture} alt="" className="h-16 w-16 rounded-full border-2 border-white/70 object-cover" />
-            ) : (
-              <div className="grid h-16 w-16 shrink-0 place-items-center rounded-full bg-amber-400 text-xl font-black text-slate-950">
-                {displayName.split(/\s+/).slice(0, 2).map((part) => part[0]).join("").toUpperCase()}
-              </div>
-            )}
+            <div className="grid h-16 w-16 shrink-0 place-items-center rounded-full bg-amber-400 text-xl font-black text-slate-950">
+              छा
+            </div>
             <div className="min-w-0">
               <h2 className="truncate text-lg font-black">{displayName}</h2>
               <p className="truncate text-xs text-sky-100">{email}</p>
@@ -151,7 +113,7 @@ export default function StudentDashboard() {
                   value={district}
                   onChange={(event) => {
                     setDistrictOverride(event.target.value);
-                    saveStudentDistrict(user.id, event.target.value);
+                    saveStudentDistrict(null, event.target.value);
                   }}
                   className="max-w-52 rounded-md border border-white/30 bg-white px-2 py-1 text-xs font-bold text-slate-900"
                 >
