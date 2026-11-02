@@ -1,3 +1,5 @@
+import { formatSeoTitle } from "../src/utils/seoConfig.js";
+
 const BACKEND_URL = (globalThis.process?.env?.VITE_API_BASE_URL || "https://bihar-fast-portal.onrender.com").replace(/\/+$/, "");
 const SITE_URL = "https://biharfast.in";
 const UPSTREAM_TIMEOUT_MS = 4500;
@@ -161,7 +163,7 @@ function setJsonLd(html, schema) {
 function postMetadata(post, slug) {
   const postTitle = plainText(post?.title, slug.replace(/[-_]+/g, " "));
   const metaTitle = plainText(post?.meta_title);
-  const title = metaTitle || `${postTitle || "BiharFast Update"} - BiharFast`;
+  const title = formatSeoTitle(metaTitle || `${postTitle || "BiharFast Update"} - BiharFast`);
   const metaDescription = plainText(post?.meta_desc);
   const shortDescription = plainText(post?.short_desc).slice(0, 155);
   const description = (metaDescription || shortDescription

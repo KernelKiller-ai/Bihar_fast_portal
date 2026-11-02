@@ -59,6 +59,7 @@ function runTests() {
     const meta = STATIC_ROUTE_METADATA[route];
     assert.ok(meta, `Missing metadata configuration for route: ${route}`);
     assert.ok(meta.title && meta.title.length > 10, `Title too short or missing for route: ${route}`);
+    assert.ok(meta.title.length >= 35 && meta.title.length <= 65, `Title length out of range for route: ${route}`);
     assert.ok(meta.description && meta.description.length > 20, `Description too short or missing for route: ${route}`);
     assert.ok(meta.canonical.startsWith("https://biharfast.in"), `Canonical must be absolute on https://biharfast.in for route: ${route}`);
   }

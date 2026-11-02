@@ -23,6 +23,7 @@ import {
 } from "lucide-react";
 import { generateSlug } from "../utils/slug";
 import { API_BASE_URL } from "../api/config";
+import { formatSeoTitle } from "../utils/seoConfig";
 
 const DEDICATED_HUBS = [
   { match: ["rtps", "caste", "income", "residential", "niwas", "aay", "jati"], link: "/rtps-bihar", title: "RTPS Bihar Direct Portal" },
@@ -124,9 +125,11 @@ export default function PostDetail({ notices = [] }) {
     const currentSlug = post.slug || slug;
     
     // 1. Dynamic Unique Page Title
-    const cleanTitle = (post.meta_title && post.meta_title.trim()) 
-      ? post.meta_title.trim() 
-      : `${post.title.trim()} - BiharFast`;
+    const cleanTitle = formatSeoTitle(
+      (post.meta_title && post.meta_title.trim())
+        ? post.meta_title.trim()
+        : `${post.title.trim()} - BiharFast`,
+    );
       
     document.title = cleanTitle;
 

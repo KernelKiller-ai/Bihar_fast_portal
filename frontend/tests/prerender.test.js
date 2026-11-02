@@ -5,10 +5,31 @@ import test from "node:test";
 import { fileURLToPath } from "node:url";
 import { LEGAL_PAGES_CONTENT } from "../src/data/legalPagesContent.js";
 import { stripMarkdownArtifacts } from "../src/utils/sanitizeHtml.js";
-import { STATIC_ROUTE_METADATA } from "../src/utils/seoConfig.js";
+import { formatSeoTitle, STATIC_ROUTE_METADATA } from "../src/utils/seoConfig.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const DIST_DIR = path.resolve(__dirname, "../dist");
+
+test("post SEO titles are capped at 65 characters without dropping the brand suffix", () => {
+  const formatted = formatSeoTitle(
+    "BPSC APO Recruitment Notification and Eligibility Details 2026 Official Apply Link - BiharFast",
+  );
+  assert.ok(formatted.length <= 65);
+  assert.ok(formatted.endsWith(" - BiharFast"));
+  assert.equal(formatted, "BPSC APO Recruitment Notification and Eligibility - BiharFast");
+  assert.ok(formatSeoTitle("Short post title - BiharFast").length <= 65);
+});
+
+test("all configured static titles stay within the 35–65 character audit range", () => {
+  for (const [route, metadata] of Object.entries(STATIC_ROUTE_METADATA)) {
+    assert.ok(
+      metadata.title.length >= 35 && metadata.title.length <= 65,
+      `${route} has a ${metadata.title.length}-character title`,
+    );
+  }
+  assert.equal(STATIC_ROUTE_METADATA["/terms"].title, STATIC_ROUTE_METADATA["/terms-conditions"].title);
+  assert.equal(STATIC_ROUTE_METADATA["/terms"].title, STATIC_ROUTE_METADATA["/terms-and-conditions"].title);
+});
 
 const ROUTES = [
   {
@@ -149,6 +170,8 @@ test("internal route snapshots are explicitly noindex", () => {
     const html = fs.readFileSync(file, "utf8");
     assert.match(html, /<meta name="robots" content="noindex, nofollow"\s*\/?>/i, `${route} must be noindex`);
     assert.match(readRoot(html), /<h1\b/i, `${route} must have a useful initial heading`);
+    const title = html.match(/<title>([\s\S]*?)<\/title>/i)?.[1];
+    assert.ok(title && title.length >= 35 && title.length <= 65, `${route} has an invalid title length`);
   }
 });
 

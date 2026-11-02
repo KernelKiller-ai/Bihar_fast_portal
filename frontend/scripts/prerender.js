@@ -3,7 +3,7 @@ import path from "node:path";
 import process from "node:process";
 import { fileURLToPath } from "node:url";
 import { getLegalPageContent } from "../src/data/legalPagesContent.js";
-import { STATIC_ROUTE_METADATA } from "../src/utils/seoConfig.js";
+import { formatSeoTitle, STATIC_ROUTE_METADATA } from "../src/utils/seoConfig.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -397,10 +397,10 @@ const CATEGORY_CONTENT = {
 };
 
 const INTERNAL_ROUTES = {
-  "/admin": ["Admin Console", "प्रशासनिक क्षेत्र में प्रवेश के लिए अधिकृत लॉगिन आवश्यक है।"],
-  "/admin-login": ["Admin Login", "यह लॉगिन केवल BiharFast के अधिकृत प्रशासकों के लिए है।"],
-  "/admin-portal": ["Admin Portal", "प्रशासनिक पोर्टल तक पहुंच सत्यापित उपयोगकर्ताओं तक सीमित है।"],
-  "/dashboard": ["Student Dashboard", "डैशबोर्ड में व्यक्तिगत जानकारी देखने के लिए सुरक्षित सत्र में साइन इन करें।"],
+  "/admin": ["BiharFast Admin Console Access", "प्रशासनिक क्षेत्र में प्रवेश के लिए अधिकृत लॉगिन आवश्यक है।"],
+  "/admin-login": ["BiharFast Administrator Login", "यह लॉगिन केवल BiharFast के अधिकृत प्रशासकों के लिए है।"],
+  "/admin-portal": ["BiharFast Admin Portal Access", "प्रशासनिक पोर्टल तक पहुंच सत्यापित उपयोगकर्ताओं तक सीमित है।"],
+  "/dashboard": ["BiharFast Student Dashboard", "डैशबोर्ड में व्यक्तिगत जानकारी देखने के लिए सुरक्षित सत्र में साइन इन करें।"],
 };
 
 const GENERAL_GUIDANCE = [
@@ -569,7 +569,7 @@ function renderRouteBody(route, metadata) {
 
 export function customizeHtml(template, metadata, bodyContent) {
   let html = template;
-  html = html.replace(/<title>[\s\S]*?<\/title>/i, `<title>${escapeHtml(metadata.title)}</title>`);
+  html = html.replace(/<title>[\s\S]*?<\/title>/i, `<title>${escapeHtml(formatSeoTitle(metadata.title))}</title>`);
   html = html.replace(
     /<meta\s+name=["']description["']\s+content=["'][\s\S]*?["']\s*\/?>/i,
     `<meta name="description" content="${escapeHtml(metadata.description)}" />`,
@@ -646,7 +646,7 @@ export function prerenderAll() {
 
   for (const [route, [title, description]] of Object.entries(INTERNAL_ROUTES)) {
     const internalMetadata = {
-      title: `${title} - BiharFast`,
+      title: formatSeoTitle(`${title} - BiharFast`),
       description,
       canonical: `https://biharfast.in${route}`,
       robots: "noindex, nofollow",

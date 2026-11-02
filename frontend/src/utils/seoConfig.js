@@ -7,6 +7,28 @@ export const SITE_URL = "https://biharfast.in";
 export const DEFAULT_OG_IMAGE = "https://biharfast.in/logo-512.png";
 export const DEFAULT_ROBOTS = "index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1";
 
+export function formatSeoTitle(title) {
+  const normalizedTitle = String(title ?? "").trim().replace(/\s+/g, " ");
+  if (normalizedTitle.length <= 65) return normalizedTitle;
+
+  const brandSuffix = " - BiharFast";
+  const hasBrandSuffix = normalizedTitle.endsWith(brandSuffix);
+  const suffix = hasBrandSuffix ? brandSuffix : "";
+  const titleText = hasBrandSuffix
+    ? normalizedTitle.slice(0, -brandSuffix.length).trimEnd()
+    : normalizedTitle;
+  const maxTextLength = 65 - suffix.length;
+  const titlePrefix = titleText.slice(0, maxTextLength);
+  const lastSpace = titlePrefix.lastIndexOf(" ");
+  const endsAtWordBoundary = titleText.length <= maxTextLength
+    || /\s/.test(titleText[maxTextLength] || "");
+  const shortenedText = !endsAtWordBoundary && lastSpace > 0
+    ? titlePrefix.slice(0, lastSpace)
+    : titlePrefix;
+
+  return `${shortenedText.trimEnd()}${suffix}`;
+}
+
 export const STATIC_ROUTE_METADATA = {
   "/": {
     title: "BiharFast | Bihar Student Tools, RTPS Guides & Exam Resources",
@@ -16,42 +38,42 @@ export const STATIC_ROUTE_METADATA = {
     ogType: "website"
   },
   "/bihar-district-wise-recruitment": {
-    title: "Bihar District Wise Recruitment 2026 | बिहार सभी 38 जिला भर्ती - BiharFast",
+    title: "Bihar District Recruitment Updates 2026 - BiharFast",
     description: "बिहार के सभी 38 जिलों (Araria, Begusarai, Sheikhpura, Patna, Gaya आदि) की ब्लॉक, समाहरणालय और संविदा आधारित ताजा भर्ती सूचनाएं, पात्रता और आवेदन लिंक।",
     canonical: `${SITE_URL}/bihar-district-wise-recruitment`,
     robots: DEFAULT_ROBOTS,
     ogType: "website"
   },
   "/jobs": {
-    title: "सरकारी नौकरी (Govt Jobs in Bihar 2026) | Latest Vacancies - BiharFast",
+    title: "Latest Government Jobs in Bihar 2026 - BiharFast",
     description: "बिहार की नवीनतम सरकारी नौकरियां, BPSC, CSBC, BTSC, BSSC एवं रेलवे भर्ती की विस्तृत जानकारी और डायरेक्ट ऑनलाइन आवेदन लिंक।",
     canonical: `${SITE_URL}/jobs`,
     robots: DEFAULT_ROBOTS,
     ogType: "website"
   },
   "/admit-card": {
-    title: "एडमिट कार्ड (Admit Card 2026) | Direct Hall Ticket Download - BiharFast",
+    title: "Bihar Exam Admit Card 2026 Download - BiharFast",
     description: "बिहार सरकार, BPSC, CSBC, BSEB, और प्रतियोगी परीक्षाओं के एडमिट कार्ड डाउनलोड करने के लिए आधिकारिक व डायरेक्ट लिंक।",
     canonical: `${SITE_URL}/admit-card`,
     robots: DEFAULT_ROBOTS,
     ogType: "website"
   },
   "/results": {
-    title: "परीक्षा परिणाम (Exam Results 2026) | Score Card & Merit List - BiharFast",
+    title: "Bihar Exam Results 2026 Merit List - BiharFast",
     description: "बिहार बोर्ड, BPSC, SSC, पुलिस कांस्टेबल एवं प्रतियोगी परीक्षाओं के परिणाम, कट-ऑफ और मेरिट लिस्ट सबसे पहले देखें।",
     canonical: `${SITE_URL}/results`,
     robots: DEFAULT_ROBOTS,
     ogType: "website"
   },
   "/sitemap": {
-    title: "साइटमैप (HTML Sitemap) | All BiharFast Pages & Updates - BiharFast",
+    title: "BiharFast Sitemap: Pages & Latest Updates",
     description: "BiharFast का संपूर्ण डायरेक्टरी आर्काइव। बिहार की सभी सरकारी नौकरियों, एडमिट कार्ड, रिजल्ट और योजनाओं की सूची एक जगह।",
     canonical: `${SITE_URL}/sitemap`,
     robots: DEFAULT_ROBOTS,
     ogType: "website"
   },
   "/all-updates": {
-    title: "साइटमैप (HTML Sitemap) | All BiharFast Pages & Updates - BiharFast",
+    title: "BiharFast Sitemap: Pages & Latest Updates",
     description: "BiharFast का संपूर्ण डायरेक्टरी आर्काइव। बिहार की सभी सरकारी नौकरियों, एडमिट कार्ड, रिजल्ट और योजनाओं की सूची एक जगह।",
     canonical: `${SITE_URL}/sitemap`, // Alias canonically points to /sitemap
     robots: DEFAULT_ROBOTS,
@@ -79,14 +101,14 @@ export const STATIC_ROUTE_METADATA = {
     ogType: "website"
   },
   "/useful-tools": {
-    title: "Useful Tools for Bihar Exams | Age Calculator & Photo Resizer - BiharFast",
+    title: "Student Utilities & Calculators - BiharFast",
     description: "बिहार प्रतियोगी परीक्षाओं के लिए फ्री ऑनलाइन टूल्स: उम्र पात्रता कैलकुलेटर और फॉर्म के लिए फोटो व सिग्नेचर रिसाइजर (20–50 KB)।",
     canonical: `${SITE_URL}/useful-tools`,
     robots: DEFAULT_ROBOTS,
     ogType: "website"
   },
   "/tools/photo-resizer": {
-    title: "Bihar Exam Photo & Signature Resizer | BPSC, Bihar Police, SSC - BiharFast",
+    title: "Exam Photo & Signature Resizer - BiharFast",
     description: "Resize and compress exam photos and signatures in your browser with suggested BPSC, Bihar Police, and SSC size presets. Images stay on your device.",
     canonical: `${SITE_URL}/tools/photo-resizer`,
     robots: DEFAULT_ROBOTS,
@@ -121,42 +143,42 @@ export const STATIC_ROUTE_METADATA = {
     ogType: "article"
   },
   "/bseb-inter-12th": {
-    title: "BSEB Bihar Board 12th Inter Result & Admit Card 2026 | Direct Fast Server - BiharFast",
+    title: "BSEB Inter 12th Exam Form & Routine - BiharFast",
     description: "बिहार बोर्ड 12वीं इंटर रिजल्ट 2026, एडमिट कार्ड, स्क्रूटनी एवं कंपार्टमेंटल परीक्षा की त्वरित सूचना व डायरेक्ट लिंक।",
     canonical: `${SITE_URL}/bseb-inter-12th`,
     robots: DEFAULT_ROBOTS,
     ogType: "article"
   },
   "/cuet-ug-admission": {
-    title: "CUET UG Admission 2026 | Direct NTA Application Link & Syllabus - BiharFast",
+    title: "CUET UG Admission Guide & Syllabus - BiharFast",
     description: "CUET UG 2026 एडमिशन, एग्जाम सिटी इंटीमेशन, एडमिट कार्ड एवं आंसर की की आधिकारिक सूचना और डायरेक्ट लिंक।",
     canonical: `${SITE_URL}/cuet-ug-admission`,
     robots: DEFAULT_ROBOTS,
     ogType: "article"
   },
   "/rtps-bihar": {
-    title: "RTPS Bihar | जाति, आय, निवास प्रमाण पत्र डाउनलोड व स्टेटस 2026 - BiharFast",
+    title: "RTPS Bihar Caste, Income & Niwas Guide - BiharFast",
     description: "RTPS बिहार पोर्टल (ServicePlus) से जाति, आय, निवास और EWS प्रमाण पत्र ऑनलाइन आवेदन, डाउनलोड और स्टेटस चेक करने के डायरेक्ट लिंक।",
     canonical: `${SITE_URL}/rtps-bihar`,
     robots: DEFAULT_ROBOTS,
     ogType: "article"
   },
   "/udyami-yojana": {
-    title: "बिहार मुख्यमंत्री उद्यमी योजना 2026 | ₹10 लाख लोन व अनुदान स्टेटस - BiharFast",
+    title: "Bihar Udyami Yojana Scheme Guide - BiharFast",
     description: "मुख्यमंत्री उद्यमी योजना 2026: बिहार के युवाओं, महिलाओं, SC/ST, EBC के लिए ₹10 लाख की सहायता (50% सब्सिडी), आवेदन और चयन सूची।",
     canonical: `${SITE_URL}/udyami-yojana`,
     robots: DEFAULT_ROBOTS,
     ogType: "article"
   },
   "/kyp-bihar": {
-    title: "KYP Bihar कुशल युवा कार्यक्रम 2026 | सर्टिफिकेट डाउनलोड & रजिस्ट्रेशन - BiharFast",
+    title: "Kushal Yuva Program (KYP) Guide - BiharFast",
     description: "कुशल युवा कार्यक्रम (KYP) बिहार: BSDM सर्टिफिकेट वेरिफिकेशन, ऑनलाइन रजिस्ट्रेशन और सेंटर लिस्ट की पूरी जानकारी।",
     canonical: `${SITE_URL}/kyp-bihar`,
     robots: DEFAULT_ROBOTS,
     ogType: "article"
   },
   "/student-credit-card": {
-    title: "बिहार स्टूडेंट क्रेडिट कार्ड योजना 2026 | ₹4 लाख शिक्षा ऋण आवेदन & स्टेटस - BiharFast",
+    title: "Bihar Student Credit Card (MNSSBY) - BiharFast",
     description: "बिहार स्टूडेंट क्रेडिट कार्ड (MNSSBY): उच्च शिक्षा हेतु ₹4 लाख तक का शून्य/कम ब्याज शिक्षा ऋण, पात्रता, आवेदन और कॉलेज सूची।",
     canonical: `${SITE_URL}/student-credit-card`,
     robots: DEFAULT_ROBOTS,
@@ -177,7 +199,7 @@ export const STATIC_ROUTE_METADATA = {
     ogType: "website"
   },
   "/category/bpsc-jobs": {
-    title: "BPSC Jobs and Updates - BiharFast",
+    title: "BPSC Jobs & Exam Updates - BiharFast",
     description: "Latest Bihar Public Service Commission (BPSC) recruitment, notifications, and examination updates on BiharFast.",
     canonical: `${SITE_URL}/category/bpsc-jobs`,
     robots: DEFAULT_ROBOTS,
@@ -268,21 +290,21 @@ export const STATIC_ROUTE_METADATA = {
     ogType: "website"
   },
   "/terms": {
-    title: "Terms of Use | BiharFast",
+    title: "Terms and Conditions of Service - BiharFast",
     description: "Review BiharFast terms covering educational use, intellectual property, acceptable conduct, external links, disclaimers, limitations, and contact procedures.",
     canonical: `${SITE_URL}/terms`,
     robots: DEFAULT_ROBOTS,
     ogType: "website"
   },
   "/terms-conditions": {
-    title: "Terms of Use | BiharFast",
+    title: "Terms and Conditions of Service - BiharFast",
     description: "Review BiharFast terms covering educational use, intellectual property, acceptable conduct, external links, disclaimers, limitations, and contact procedures.",
     canonical: `${SITE_URL}/terms`, // Alias points to /terms
     robots: DEFAULT_ROBOTS,
     ogType: "website"
   },
   "/terms-and-conditions": {
-    title: "Terms of Use | BiharFast",
+    title: "Terms and Conditions of Service - BiharFast",
     description: "Review BiharFast terms covering educational use, intellectual property, acceptable conduct, external links, disclaimers, limitations, and contact procedures.",
     canonical: `${SITE_URL}/terms`, // Alias points to /terms
     robots: DEFAULT_ROBOTS,

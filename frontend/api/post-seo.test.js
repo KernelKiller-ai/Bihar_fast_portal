@@ -273,6 +273,31 @@ test("uses safe title and description fallbacks when SEO fields are absent", asy
   assert.equal(getMeta(res.body, "property", "og:image"), "https://biharfast.in/logo-512.png");
 });
 
+test("caps dynamic post titles at 65 characters for crawler HTML", async () => {
+  const cases = [
+    {
+      title: "BPSC APO OMR Sheet Download Link 2026 Check Answer Key Response Sheet and Objection Details",
+    },
+    {
+      title: "BPSC Auditor Result",
+      meta_title: "BPSC Auditor Recruitment Notification, Eligibility, Application Dates, Selection Process and Official Updates 2026",
+    },
+  ];
+
+  for (const post of cases) {
+    const { res } = await runHandler({
+      apiResponse: response(200, {
+        success: true,
+        data: { ...post, content: LONG_ARTICLE },
+      }),
+    });
+    const title = getTitle(res.body);
+    assert.ok(title.length <= 65, `Expected <= 65 characters, received ${title.length}: ${title}`);
+    assert.equal(getMeta(res.body, "property", "og:title"), title);
+    assert.equal(getMeta(res.body, "name", "twitter:title"), title);
+  }
+});
+
 test("backend 404 returns explicit noindex 404 HTML without fetching the SPA shell", async () => {
   const { res, shellRequests } = await runHandler({
     slug: "missing-post",
