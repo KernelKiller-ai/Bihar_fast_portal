@@ -1,6 +1,7 @@
 import { AlertOctagon, CheckCircle2, FileWarning, Mail, ShieldAlert } from "lucide-react";
 import { Link } from "react-router-dom";
 import { getLegalPageContent } from "../data/legalPagesContent.js";
+import LegalBreadcrumbs from "../components/LegalBreadcrumbs";
 
 const content = getLegalPageContent("/disclaimer");
 const sectionIcons = [AlertOctagon, CheckCircle2, ShieldAlert, FileWarning, null, Mail];
@@ -11,7 +12,7 @@ function InlineContent({ value }) {
     if (part.type === "strong") return <strong key={index}>{part.text}</strong>;
     if (part.type === "link") return part.href.startsWith("/")
       ? <Link key={index} to={part.href} className="text-blue-700 underline">{part.text}</Link>
-      : <a key={index} href={part.href} className="text-blue-700 underline">{part.text}</a>;
+      : <a key={index} href={part.href} target={part.external ? "_blank" : undefined} rel={part.external ? "noreferrer" : undefined} className="text-blue-700 underline">{part.text}</a>;
     return <span key={index}>{part.text}</span>;
   });
 }
@@ -19,6 +20,7 @@ function InlineContent({ value }) {
 export default function Disclaimer() {
   return (
     <main className="max-w-4xl mx-auto px-4 py-10">
+      <LegalBreadcrumbs currentPage={content.title} />
       <div className="bg-white rounded-3xl p-6 sm:p-10 border border-slate-200 shadow-xs space-y-8">
         <header>
           <span className="text-xs font-bold uppercase tracking-wider text-rose-700 bg-rose-50 px-2.5 py-1 rounded-md border border-rose-200">{content.eyebrow}</span>

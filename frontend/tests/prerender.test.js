@@ -13,40 +13,40 @@ const DIST_DIR = path.resolve(__dirname, "../dist");
 const ROUTES = [
   {
     route: "/about",
-    h1: "हमारे बारे में (About BiharFast.in)",
-    headings: ["Our Mission in Practice", "Verification and Editorial Process", "Entity and Legal Identity"],
-    minWords: 250,
+    h1: "About BiharFast | Bihar Student Education & Public Information",
+    headings: ["Our Mission in Practice", "Verification and Editorial Process", "Who prepares BiharFast content", "Public welfare and responsible use"],
+    minWords: 500,
   },
   {
     route: "/contact",
     h1: "हमसे संपर्क करें (Contact & Grievance Redressal)",
     headings: [
-      "आधिकारिक ईमेल",
+      "संपादकीय और तकनीकी सहायता",
       "प्रतिक्रिया समय-सीमा (Response Timeline):",
-      "Grievance Redressal Policy",
+      "Grievance Redressal और संपादकीय सुधार",
       "Content Disclaimer & Verification Advisory",
-      "Working Hours & Location",
+      "Support team and contact scope",
       "अपना संदेश प्रेषित करें",
     ],
-    minWords: 250,
+    minWords: 500,
   },
   {
     route: "/privacy-policy",
     h1: "Privacy Policy",
-    headings: ["1. Information We Collect", "3. Cookies, Google AdSense, and Third-Party Advertising Compliance", "9. Children's Privacy and Policy Updates"],
-    minWords: 350,
+    headings: ["1. Information We Collect", "3. Cookies, Google AdSense, and Third-Party Advertising", "6. Client-side tools: photos and calculator inputs", "10. Children, international processing, and policy updates"],
+    minWords: 500,
   },
   {
     route: "/terms",
     h1: "Terms & Conditions of Use",
     headings: ["1. Nature of Service and Educational Purpose", "3. Prohibited User Activities", "7. Governing Law and Dispute Resolution"],
-    minWords: 400,
+    minWords: 500,
   },
   {
     route: "/disclaimer",
     h1: "BiharFast Disclaimer",
     headings: ["Strict Non-Government Declaration", "No Employment Fee and Anti-Fraud Warning", "Content Takedown and Grievance Redressal"],
-    minWords: 250,
+    minWords: 500,
   },
 ];
 
@@ -116,6 +116,32 @@ test("all configured public routes have substantive semantic initial HTML", () =
   }
 });
 
+test("evergreen homepage prerender highlights tools and archived recruitment notices", () => {
+  const root = visibleText(readRoot(readPage("/")));
+  for (const phrase of [
+    "परीक्षा फोटो रीसाइज़र",
+    "छात्र क्रेडिट कार्ड EMI कैलकुलेटर",
+    "RTPS सेवा मार्गदर्शिका",
+    "CUET UG PYQ संसाधन",
+    "ऐतिहासिक परीक्षा पैटर्न",
+  ]) {
+    assert.ok(root.includes(phrase), `Homepage prerender is missing "${phrase}"`);
+  }
+});
+
+test("both exam utility routes prerender at least 500 words", () => {
+  const tools = [
+    ["/tools/photo-resizer", "Exam Photo and Signature Resizer"],
+    ["/tools/credit-card-calculator", "Student Credit Card"],
+  ];
+  for (const [route, heading] of tools) {
+    const root = readRoot(readPage(route));
+    const words = wordCount(root);
+    assert.ok(words >= 500, `${route} has only ${words} initial-HTML words`);
+    assert.ok(visibleText(root).includes(heading), `${route} is missing its expected guide heading`);
+  }
+});
+
 test("internal route snapshots are explicitly noindex", () => {
   for (const route of ["/admin", "/admin-login", "/admin-portal", "/dashboard"]) {
     const file = path.join(DIST_DIR, route.slice(1), "index.html");
@@ -126,11 +152,35 @@ test("internal route snapshots are explicitly noindex", () => {
   }
 });
 
-test("privacy initial HTML includes Google AdSense and DART cookie disclosures", () => {
+test("post detail page includes the permanent notice archive banner", () => {
+  const component = fs.readFileSync(path.resolve(__dirname, "../src/pages/PostDetail.jsx"), "utf8");
+  assert.match(component, /Notice Archive:<\/strong>\s*This notification record is maintained for historical examination pattern, syllabus, and eligibility reference\./);
+});
+
+test("privacy initial HTML discloses advertising, analytics, server logs, and local-only tools", () => {
   const rootText = visibleText(readRoot(readPage("/privacy-policy")));
-  assert.match(rootText, /Google/);
+  assert.match(rootText, /Google Analytics 4/);
   assert.match(rootText, /AdSense/);
-  assert.match(rootText, /DART cookie/i);
+  assert.match(rootText, /advertising cookies/i);
+  assert.match(rootText, /server or access logs/i);
+  assert.match(rootText, /does not upload, receive, or store your selected photo or signature/i);
+  assert.match(rootText, /are not sent to a BiharFast server/i);
+});
+
+test("legal policy pages render breadcrumb navigation in initial HTML", () => {
+  for (const route of ROUTES) {
+    const root = readRoot(readPage(route.route));
+    assert.match(root, /<nav aria-label="Breadcrumb">/i, `${route.route} is missing breadcrumbs`);
+    assert.match(root, /<li aria-current="page">/i, `${route.route} is missing its current breadcrumb`);
+  }
+});
+
+test("disclaimer contains the required independent-government statement and official verification links", () => {
+  const root = visibleText(readRoot(readPage("/disclaimer")));
+  assert.match(root, /BiharFast \(biharfast\.in\) is an independent private informational portal and is NOT affiliated with, authorized by, or associated with the Government of Bihar or any government department\./);
+  assert.match(root, /bpsc\.bih\.nic\.in/);
+  assert.match(root, /csbc\.bih\.nic\.in/);
+  assert.match(root, /onlinebseb\.in/);
 });
 
 test("core static page output contains no raw Markdown syntax", () => {

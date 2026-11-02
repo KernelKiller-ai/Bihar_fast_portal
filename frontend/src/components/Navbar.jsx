@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import { Sparkles } from "lucide-react";
+import { ChevronDown, Sparkles } from "lucide-react";
 
 export default function Navbar() {
   return (
@@ -107,7 +107,17 @@ export default function Navbar() {
             <Link to="/results" className="min-h-9 rounded-md px-3 py-2 text-[#475569] transition hover:bg-[#F1F5F9] hover:text-[#0B2545]">Results</Link>
             <Link to="/all-updates" className="min-h-9 rounded-md px-3 py-2 text-[#475569] transition hover:bg-[#F1F5F9] hover:text-[#0B2545]">All Updates</Link>
             <Link to="/rtps-bihar" className="min-h-9 rounded-md px-3 py-2 text-[#475569] transition hover:bg-[#F1F5F9] hover:text-[#0B2545]">RTPS Services</Link>
-            <Link to="/useful-tools" className="min-h-9 rounded-md px-3 py-2 text-[#475569] transition hover:bg-[#F1F5F9] hover:text-[#0B2545]">Useful Tools</Link>
+            <details className="group flex items-center gap-1">
+              <summary className="flex min-h-9 cursor-pointer list-none items-center gap-1 rounded-md px-3 py-2 text-[#475569] transition hover:bg-[#F1F5F9] hover:text-[#0B2545]">
+                Utilities / Tools
+                <ChevronDown size={13} className="transition-transform group-open:rotate-180" aria-hidden="true" />
+              </summary>
+              <div className="flex items-center gap-1">
+                <Link to="/useful-tools" className="min-h-9 rounded-md px-3 py-2 text-[#475569] transition hover:bg-[#F1F5F9] hover:text-[#0B2545]">All tools</Link>
+                <Link to="/tools/photo-resizer" className="min-h-9 rounded-md px-3 py-2 text-[#475569] transition hover:bg-[#F1F5F9] hover:text-[#0B2545]">Exam Photo Resizer</Link>
+                <Link to="/tools/credit-card-calculator" className="min-h-9 rounded-md px-3 py-2 text-[#475569] transition hover:bg-[#F1F5F9] hover:text-[#0B2545]">Student Credit Card Calculator</Link>
+              </div>
+            </details>
           </div>
         </div>
       </div>

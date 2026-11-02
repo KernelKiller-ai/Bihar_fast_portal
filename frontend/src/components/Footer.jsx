@@ -250,6 +250,21 @@ export default function Footer() {
                 </Link>
               </li>
             </ul>
+            <div className="mt-5 border-t border-slate-200 pt-4">
+              <h3 className="mb-2 text-xs font-extrabold text-slate-800">Utilities / Tools</h3>
+              <ul className="space-y-2.5 text-xs font-medium text-slate-600">
+                <li>
+                  <Link to="/tools/photo-resizer" className="hover:text-blue-700 flex items-center gap-2 transition">
+                    <Wrench size={13} className="text-slate-400" /> Exam Photo Resizer
+                  </Link>
+                </li>
+                <li>
+                  <Link to="/tools/credit-card-calculator" className="hover:text-blue-700 flex items-center gap-2 transition">
+                    <Wrench size={13} className="text-slate-400" /> Student Credit Card Calculator
+                  </Link>
+                </li>
+              </ul>
+            </div>
           </div>
 
           {/* Column 3: Quick Links & Archives (Span 2) */}

@@ -1,5 +1,6 @@
 import { Link } from "react-router-dom";
 import { getLegalPageContent } from "../data/legalPagesContent.js";
+import LegalBreadcrumbs from "../components/LegalBreadcrumbs";
 
 const content = getLegalPageContent("/terms");
 
@@ -17,6 +18,7 @@ function InlineContent({ value }) {
 export default function Terms() {
   return (
     <main className="max-w-4xl mx-auto px-4 py-10">
+      <LegalBreadcrumbs currentPage={content.title} />
       <div className="bg-white rounded-3xl p-6 sm:p-10 border border-slate-200 shadow-xs space-y-6">
         <header>
           <span className="text-xs font-bold uppercase tracking-wider text-slate-700 bg-slate-100 px-2.5 py-1 rounded-md">{content.eyebrow}</span>

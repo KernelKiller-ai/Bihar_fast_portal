@@ -1,6 +1,7 @@
 import { BookOpenCheck, Compass, HeartHandshake, Mail, ShieldCheck, Target, Users, Zap } from "lucide-react";
 import { Link } from "react-router-dom";
 import { getLegalPageContent } from "../data/legalPagesContent.js";
+import LegalBreadcrumbs from "../components/LegalBreadcrumbs";
 
 const content = getLegalPageContent("/about");
 
@@ -19,6 +20,7 @@ function InlineContent({ value }) {
 
 export default function About() {
   const [intro, values, mission, verification, identity, promises, platform, support] = content.sections;
+  const additionalSections = content.sections.slice(8);
   const valueIcons = [ShieldCheck, Zap, Users];
   const promiseStyles = [
     "bg-emerald-50 border-emerald-200",
@@ -28,6 +30,7 @@ export default function About() {
 
   return (
     <main className="max-w-4xl mx-auto px-4 py-10">
+      <LegalBreadcrumbs currentPage={content.title} />
       <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-6 sm:p-10 space-y-8">
         <header className="border-b border-slate-100 pb-6">
           <span className="text-[11px] font-black uppercase tracking-wider bg-blue-50 text-[#0B4F8A] px-3 py-1 rounded-full border border-blue-200">
@@ -101,6 +104,17 @@ export default function About() {
             {content.footerLinks.map((link) => <Link key={link.href} to={link.href} className="text-blue-700 hover:underline">{link.text}</Link>)}
           </div>
         </section>
+
+        {additionalSections.map((section) => (
+          <section key={section.heading} className="space-y-3">
+            <h2 className="text-base sm:text-lg font-black text-slate-900">{section.heading}</h2>
+            {section.paragraphs.map((paragraph, index) => (
+              <p key={index} className="text-xs leading-relaxed text-slate-600 sm:text-sm">
+                <InlineContent value={paragraph} />
+              </p>
+            ))}
+          </section>
+        ))}
 
         <div className="pt-2">
           <Link to="/" className="text-xs font-bold text-blue-600 hover:underline">← मुख्य पृष्ठ पर लौटें</Link>

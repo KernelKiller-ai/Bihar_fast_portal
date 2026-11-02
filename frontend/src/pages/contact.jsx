@@ -1,7 +1,8 @@
 import { useState } from "react";
-import { Mail, MapPin, Send, MessageSquare, Clock, ShieldCheck, CheckCircle2, AlertCircle, Loader2 } from "lucide-react";
+import { Mail, Send, MessageSquare, Clock, ShieldCheck, CheckCircle2, AlertCircle, Loader2 } from "lucide-react";
 import { Link } from "react-router-dom";
 import { getLegalPageContent } from "../data/legalPagesContent.js";
+import LegalBreadcrumbs from "../components/LegalBreadcrumbs";
 
 const content = getLegalPageContent("/contact");
 
@@ -61,7 +62,8 @@ export default function Contact() {
   };
 
   return (
-    <div className="max-w-4xl mx-auto px-4 py-10">
+    <main className="max-w-4xl mx-auto px-4 py-10">
+      <LegalBreadcrumbs currentPage={content.title} />
       <div className="bg-white rounded-3xl p-6 sm:p-10 border border-slate-200 shadow-xs space-y-8">
         <div>
           <span className="text-xs font-bold uppercase tracking-wider text-emerald-700 bg-emerald-50 px-2.5 py-1 rounded-md border border-emerald-200">
@@ -77,7 +79,7 @@ export default function Contact() {
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           {content.contactCards.map((card, index) => {
-            const Icon = [Mail, MessageSquare, MapPin][index];
+            const Icon = [Mail, MessageSquare, ShieldCheck][index];
             const color = ["bg-blue-600", "bg-emerald-600", "bg-purple-600"][index];
             return (
               <div key={card.title} className="p-4 rounded-2xl bg-slate-50 border border-slate-200 text-center">
@@ -118,10 +120,28 @@ export default function Contact() {
           <h3 className="text-sm font-bold text-slate-900 flex items-center gap-1.5">
             <Send size={15} className="text-[#0B4F8A]" /> {content.form.heading}
           </h3>
+          <label htmlFor="contact-subject" className="block text-xs font-bold text-slate-700">
+            {content.form.subject}
+          </label>
+          <select
+            id="contact-subject"
+            name="subject"
+            required
+            value={formData.subject}
+            onChange={handleChange}
+            disabled={isSubmitting}
+            className="min-h-11 w-full rounded-xl border border-slate-300 bg-white p-3 text-xs focus:border-blue-600 focus:outline-none"
+          >
+            <option value="" disabled>{content.form.subjectPlaceholder}</option>
+            {content.form.feedbackOptions.map((option) => (
+              <option key={option.value} value={option.value}>{option.label}</option>
+            ))}
+          </select>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <input
               type="text"
               name="name"
+              aria-label={content.form.name}
               placeholder={content.form.name}
               required
               value={formData.name}
@@ -132,6 +152,7 @@ export default function Contact() {
             <input
               type="email"
               name="email"
+              aria-label={content.form.email}
               placeholder={content.form.email}
               required
               value={formData.email}
@@ -140,17 +161,9 @@ export default function Contact() {
               className="w-full text-xs p-3 rounded-xl border border-slate-300 focus:outline-none focus:border-blue-600"
             />
           </div>
-          <input
-            type="text"
-            name="subject"
-            placeholder={content.form.subject}
-            value={formData.subject}
-            onChange={handleChange}
-            disabled={isSubmitting}
-            className="w-full text-xs p-3 rounded-xl border border-slate-300 focus:outline-none focus:border-blue-600"
-          />
           <textarea
             name="message"
+            aria-label={content.form.message}
             rows={4}
             placeholder={content.form.message}
             required
@@ -190,6 +203,6 @@ export default function Contact() {
           </span>
         </div>
       </div>
-    </div>
+    </main>
   );
 }
