@@ -1,7 +1,7 @@
 /**
  * Automated Regression Test Suite: Static SEO Metadata & Prerender Verification
  * Validates:
- * 1. Completeness and uniqueness of STATIC_ROUTE_METADATA for all 30 sitemap routes
+ * 1. Completeness and uniqueness of STATIC_ROUTE_METADATA for all expected public routes
  * 2. Absolute canonical URLs on https://biharfast.in
  * 3. Absence of duplicate title, description, or canonical tags in prerendered HTML
  * 4. Proper self-referencing canonical on root '/'
@@ -16,7 +16,7 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const DIST_DIR = path.resolve(__dirname, "../dist");
 
-const EXPECTED_30_CANONICAL_ROUTES = [
+const EXPECTED_CANONICAL_ROUTES = [
   "/",
   "/jobs",
   "/admit-card",
@@ -24,6 +24,8 @@ const EXPECTED_30_CANONICAL_ROUTES = [
   "/sitemap",
   "/mock-test",
   "/useful-tools",
+  "/tools/photo-resizer",
+  "/tools/credit-card-calculator",
   "/upcoming-2026",
   "/download",
   "/bseb-matric-10th",
@@ -52,26 +54,26 @@ const EXPECTED_30_CANONICAL_ROUTES = [
 function runTests() {
   console.log("Running Static SEO & Prerender Test Suite...");
 
-  // Test 1: All 30 routes exist in config
-  for (const route of EXPECTED_30_CANONICAL_ROUTES) {
+  // Test 1: Every expected route exists in config
+  for (const route of EXPECTED_CANONICAL_ROUTES) {
     const meta = STATIC_ROUTE_METADATA[route];
     assert.ok(meta, `Missing metadata configuration for route: ${route}`);
     assert.ok(meta.title && meta.title.length > 10, `Title too short or missing for route: ${route}`);
     assert.ok(meta.description && meta.description.length > 20, `Description too short or missing for route: ${route}`);
     assert.ok(meta.canonical.startsWith("https://biharfast.in"), `Canonical must be absolute on https://biharfast.in for route: ${route}`);
   }
-  console.log("✔ Test 1 Passed: All 30 canonical routes have complete metadata config.");
+  console.log("✔ Test 1 Passed: All expected canonical routes have complete metadata config.");
 
   // Test 2: Titles among the 30 canonical routes are unique (no accidental duplicate titles)
   const seenTitles = new Map();
-  for (const route of EXPECTED_30_CANONICAL_ROUTES) {
+  for (const route of EXPECTED_CANONICAL_ROUTES) {
     const title = STATIC_ROUTE_METADATA[route].title;
     if (seenTitles.has(title)) {
       assert.fail(`Duplicate title detected between '${seenTitles.get(title)}' and '${route}': "${title}"`);
     }
     seenTitles.set(title, route);
   }
-  console.log("✔ Test 2 Passed: All 30 canonical routes have unique page titles.");
+  console.log("✔ Test 2 Passed: All expected canonical routes have unique page titles.");
 
   // Test 3: getMetadataForPath handles trailing slashes and aliases properly
   assert.equal(getMetadataForPath("/about").canonical, "https://biharfast.in/about");
@@ -84,7 +86,7 @@ function runTests() {
 
   // Test 4: Verify prerendered HTML in dist/ (if dist exists)
   if (fs.existsSync(DIST_DIR)) {
-    for (const route of EXPECTED_30_CANONICAL_ROUTES) {
+    for (const route of EXPECTED_CANONICAL_ROUTES) {
       let htmlPath = route === "/"
         ? path.join(DIST_DIR, "index.html")
         : path.join(DIST_DIR, route.slice(1), "index.html");
@@ -118,7 +120,7 @@ function runTests() {
       const descMatches = content.match(/<meta\s+name=["']description["']/gi) || [];
       assert.equal(descMatches.length, 1, `Expected exactly 1 <meta name="description"> tag in ${htmlPath}, found ${descMatches.length}`);
     }
-    console.log("✔ Test 4 Passed: Prerendered HTML verified across all 30 routes (0 duplicates, exact metadata).");
+    console.log("✔ Test 4 Passed: Prerendered HTML verified across all expected routes (0 duplicates, exact metadata).");
   } else {
     console.log("⚠ Dist directory not found, skipping Test 4 (run after build).");
   }
@@ -150,4 +152,3 @@ function runTests() {
 }
 
 runTests();
-

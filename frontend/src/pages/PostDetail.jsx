@@ -291,6 +291,10 @@ export default function PostDetail({ notices = [] }) {
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 py-4">
+      <div role="note" className="mb-5 rounded-xl border border-amber-300 bg-amber-50 px-4 py-3 text-sm leading-relaxed text-amber-950">
+        <strong>Notice Archive:</strong> This notification record is maintained for historical examination pattern, syllabus, and eligibility reference.
+      </div>
+
       {/* Featured Thumbnail (if available) */}
       {post?.thumbnail_url && (
         <img

@@ -5,8 +5,6 @@ import DownloadAppBanner from "./components/DownloadAppBanner";
 import TopBanner from "./components/TopBanner";
 import NotificationCard from "./components/NotificationCard";
 import ScrollToTop from "./components/ScrollToTop";
-import ImageResizer from "./components/ImageResizer";
-import AgeCalculator from "./components/AgeCalculator";
 import Footer from "./components/Footer";
 import { generateSlug } from "./utils/slug";
 import SiteMapPage from "./pages/SiteMapPage";
@@ -15,10 +13,9 @@ import { API_BASE_URL } from "./api/config";
 
 // Icons
 import { 
-  Camera, Calculator, Flame, Sparkles, Briefcase, 
-  Search, ArrowRight, Award, IdCard, Send, MessageSquare, 
-  ExternalLink, Zap, TrendingUp, ShieldCheck, Loader2,
-  Wrench, CheckCircle2, Trophy, Clock, KeyRound, CalendarDays
+  Camera, Calculator, Sparkles, Briefcase, Search, ArrowRight,
+  Send, MessageSquare, ExternalLink, Zap, ShieldCheck, Loader2,
+  CheckCircle2, Trophy, Clock, FileText
 } from "lucide-react";
 
 // Lazy Loaded Pages (Bundle Size Optimization)
@@ -39,6 +36,8 @@ const StudentDashboard = lazy(() => import("./pages/StudentDashboard"));
 const CategoryPage = lazy(() => import("./pages/CategoryPage"));
 const UsefulToolsPage = lazy(() => import("./pages/UsefulToolsPage"));
 const DistrictRecruitment = lazy(() => import("./pages/DistrictRecruitment"));
+const ExamImageResizer = lazy(() => import("./pages/tools/ExamImageResizer"));
+const StudentCreditCardCalculator = lazy(() => import("./pages/tools/StudentCreditCardCalculator"));
 
 // Policy Pages (Lazy Loaded)
 const About = lazy(() => import("./pages/about"));
@@ -59,24 +58,6 @@ function AccessDeniedNotice({ message }) {
   );
 }
 
-// Only dynamic circular tabs
-const CATEGORY_TABS = [
-  { id: "all", label: "All Updates", icon: Sparkles },
-  { id: "results", label: "Results", icon: Award },
-  { id: "admit_card", label: "Admit Card", icon: IdCard },
-  { id: "jobs", label: "Govt Jobs", icon: Briefcase },
-  { id: "answer-key", label: "Answer Key", icon: KeyRound },
-  { id: "exam-calendar", label: "Exam Calendar", icon: CalendarDays },
-];
-
-const FILTER_CATEGORY_ALIASES = {
-  jobs: ["jobs", "job"],
-  results: ["results", "result"],
-  admit_card: ["admit_card", "admit"],
-  "answer-key": ["answer-key", "answer_key", "answerkey"],
-  "exam-calendar": ["exam-calendar", "exam_calendar", "calendar"],
-};
-
 // Cleaned Direct Links (Official Government Recruitment Boards Only)
 const DIRECT_LINKS = [
   { name: "BPSC Public Service", url: "https://bpsc.bihar.gov.in", tag: "Civil Services" },
@@ -89,8 +70,6 @@ const DIRECT_LINKS = [
 
 export default function App() {
   const location = useLocation();
-  const [activeTab, setActiveTab] = useState("all");
-  const [activeTool, setActiveTool] = useState(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [portalItems, setPortalItems] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -170,11 +149,7 @@ export default function App() {
     fetchLiveNotices();
   }, []);
 
-  const filteredData = portalItems.filter((item) => {
-    const cat = (item.category || "").toLowerCase();
-    const acceptedCategories = FILTER_CATEGORY_ALIASES[activeTab] || [activeTab];
-    const matchesTab = activeTab === "all" || acceptedCategories.includes(cat);
-      
+  const archivedNotices = portalItems.filter((item) => {
     const q = searchQuery.toLowerCase().trim();
     const matchesSearch = 
       !q ||
@@ -182,13 +157,8 @@ export default function App() {
       item.department?.toLowerCase().includes(q) ||
       (item.eligibility && item.eligibility.toLowerCase().includes(q));
 
-    return matchesTab && matchesSearch;
+    return item.category === "jobs" && matchesSearch;
   });
-
-  const liveScrapedItems = portalItems.filter(
-    (i) => i.department === "BPSC" || i.department === "CSBC" || i.department?.includes("BPSSC") || i.department === "BCECEB" || i.department === "BSSC"
-  );
-  const topAlertItem = liveScrapedItems.length > 0 ? liveScrapedItems[0] : portalItems[0] || null;
 
   return (
     <div className="flex min-h-screen w-full min-w-0 max-w-full flex-col justify-between overflow-x-hidden bg-[#F8FAFC] font-sans text-[#0F172A] antialiased">
@@ -232,10 +202,10 @@ export default function App() {
 
                           <div className="space-y-1">
                             <h1 className="text-2xl font-bold leading-tight tracking-tight text-[#0B2545] sm:text-4xl lg:text-[38px]">
-                              Bihar’s Fastest Gateway to Jobs &amp; Public Services.
+                              Practical Study &amp; Public-Service Tools for Bihar
                             </h1>
                             <p className="pt-1 text-xs font-medium leading-relaxed text-[#475569] sm:text-sm">
-                              – सटीक जानकारी, बेहतर बिहार – | State &amp; Central Vacancies, Board Results &amp; Useful Tools
+                              Free student utilities, exam resources and clear guides to Bihar citizen services.
                             </p>
                           </div>
 
@@ -244,10 +214,10 @@ export default function App() {
                               <Search className="ml-2 shrink-0 text-[#64748B] sm:ml-3" size={19} />
                               <input
                                 type="text"
-                                placeholder="Search jobs, results, admit cards..."
+                                placeholder="Search archived recruitment notices..."
                                 value={searchQuery}
                                 onChange={(e) => setSearchQuery(e.target.value)}
-                                aria-label="Search notices"
+                                aria-label="Search archived recruitment notices"
                                 className="min-w-0 w-full flex-1 px-2 py-2 text-xs font-medium text-[#0F172A] placeholder:text-[#64748B] focus:outline-none sm:px-3 sm:text-sm"
                               />
                               {searchQuery && (
@@ -263,7 +233,7 @@ export default function App() {
                               <button
                                 type="button"
                                 onClick={() => {
-                                  const el = document.getElementById("active-circulars-section");
+                                  const el = document.getElementById("archived-recruitment-section");
                                   if (el) el.scrollIntoView({ behavior: "smooth" });
                                 }}
                                 className="min-h-10 shrink-0 rounded-md bg-[#0B2545] px-4 text-xs font-semibold text-white transition hover:bg-[#091E3A] sm:px-6 sm:text-sm"
@@ -273,68 +243,22 @@ export default function App() {
                             </div>
                           </div>
 
-                          {/* Quick Navigation Icons */}
-                          <div className="mx-auto grid max-w-3xl grid-cols-2 gap-2 pt-2 sm:grid-cols-3 lg:mx-0 lg:grid-cols-6">
-                            <Link
-                              to="/jobs"
-                              onClick={() => { setActiveTab("jobs"); setSearchQuery(""); }}
-                              className="group flex min-h-24 flex-col items-start justify-center rounded-lg border border-[#E2E8F0] bg-white p-3 text-left transition hover:border-[#CBD5E1] hover:bg-[#F8FAFC]"
-                            >
-                              <div className="flex h-9 w-9 items-center justify-center rounded-md bg-[#EFF4FF] text-[#0B2545] transition group-hover:bg-[#DCE9FF]">
-                                <Briefcase size={17} />
-                              </div>
-                              <span className="mt-2 text-xs font-semibold leading-relaxed text-[#0F172A]">Government Jobs</span>
+                          <div className="mx-auto grid max-w-3xl grid-cols-2 gap-2 pt-2 sm:grid-cols-4 lg:mx-0">
+                            <Link to="/tools/photo-resizer" className="group flex min-h-24 flex-col items-start justify-center rounded-lg border border-[#E2E8F0] bg-white p-3 text-left transition hover:border-[#CBD5E1] hover:bg-[#F8FAFC]">
+                              <span className="flex h-9 w-9 items-center justify-center rounded-md bg-[#EFF4FF] text-[#0B2545]"><Camera size={17} /></span>
+                              <span className="mt-2 text-xs font-semibold leading-relaxed text-[#0F172A]">Exam Photo Resizer</span>
                             </Link>
-
-                            <Link
-                              to="/admit-card"
-                              className="group flex min-h-24 flex-col items-start justify-center rounded-lg border border-[#E2E8F0] bg-white p-3 text-left transition hover:border-[#CBD5E1] hover:bg-[#F8FAFC]"
-                            >
-                              <div className="flex h-9 w-9 items-center justify-center rounded-md bg-[#FEF3C7] text-[#92400E] transition group-hover:bg-[#FDE68A]">
-                                <IdCard size={17} />
-                              </div>
-                              <span className="mt-2 text-xs font-semibold leading-relaxed text-[#0F172A]">Admit Cards</span>
+                            <Link to="/tools/credit-card-calculator" className="group flex min-h-24 flex-col items-start justify-center rounded-lg border border-[#E2E8F0] bg-white p-3 text-left transition hover:border-[#CBD5E1] hover:bg-[#F8FAFC]">
+                              <span className="flex h-9 w-9 items-center justify-center rounded-md bg-[#ECFDF5] text-[#15803D]"><Calculator size={17} /></span>
+                              <span className="mt-2 text-xs font-semibold leading-relaxed text-[#0F172A]">Student Credit Card Calculator</span>
                             </Link>
-
-                            <Link
-                              to="/mock-test"
-                              className="group flex min-h-24 flex-col items-start justify-center rounded-lg border border-[#E2E8F0] bg-white p-3 text-left transition hover:border-[#CBD5E1] hover:bg-[#F8FAFC]"
-                            >
-                              <div className="flex h-9 w-9 items-center justify-center rounded-md bg-[#FFF7ED] text-[#C2410C] transition group-hover:bg-[#FFEDD5]">
-                                <Trophy size={17} />
-                              </div>
-                              <span className="mt-2 text-xs font-semibold leading-relaxed text-[#0F172A]">Mock Tests</span>
+                            <Link to="/rtps-bihar" className="group flex min-h-24 flex-col items-start justify-center rounded-lg border border-[#E2E8F0] bg-white p-3 text-left transition hover:border-[#CBD5E1] hover:bg-[#F8FAFC]">
+                              <span className="flex h-9 w-9 items-center justify-center rounded-md bg-[#ECFDF5] text-[#15803D]"><ShieldCheck size={17} /></span>
+                              <span className="mt-2 text-xs font-semibold leading-relaxed text-[#0F172A]">RTPS Service Guide</span>
                             </Link>
-
-                            <Link
-                              to="/rtps-bihar"
-                              className="group flex min-h-24 flex-col items-start justify-center rounded-lg border border-[#E2E8F0] bg-white p-3 text-left transition hover:border-[#CBD5E1] hover:bg-[#F8FAFC]"
-                            >
-                              <div className="flex h-9 w-9 items-center justify-center rounded-md bg-[#ECFDF5] text-[#15803D] transition group-hover:bg-[#D1FAE5]">
-                                <ShieldCheck size={17} />
-                              </div>
-                              <span className="mt-2 text-xs font-semibold leading-relaxed text-[#0F172A]">RTPS Services</span>
-                            </Link>
-
-                            <Link
-                              to="/results"
-                              onClick={() => { setActiveTab("results"); setSearchQuery(""); }}
-                              className="group flex min-h-24 flex-col items-start justify-center rounded-lg border border-[#E2E8F0] bg-white p-3 text-left transition hover:border-[#CBD5E1] hover:bg-[#F8FAFC]"
-                            >
-                              <div className="flex h-9 w-9 items-center justify-center rounded-md bg-[#EDE9FE] text-[#6D28D9] transition group-hover:bg-[#DDD6FE]">
-                                <Award size={17} />
-                              </div>
-                              <span className="mt-2 text-xs font-semibold leading-relaxed text-[#0F172A]">Exam Results</span>
-                            </Link>
-
-                            <Link
-                              to="/useful-tools"
-                              className="group flex min-h-24 flex-col items-start justify-center rounded-lg border border-[#E2E8F0] bg-white p-3 text-left transition hover:border-[#CBD5E1] hover:bg-[#F8FAFC]"
-                            >
-                              <div className="flex h-9 w-9 items-center justify-center rounded-md bg-[#F1F5F9] text-[#475569] transition group-hover:bg-[#E2E8F0]">
-                                <Wrench size={17} />
-                              </div>
-                              <span className="mt-2 text-xs font-semibold leading-relaxed text-[#0F172A]">Useful Tools</span>
+                            <Link to="/cuet-ug-admission" className="group flex min-h-24 flex-col items-start justify-center rounded-lg border border-[#E2E8F0] bg-white p-3 text-left transition hover:border-[#CBD5E1] hover:bg-[#F8FAFC]">
+                              <span className="flex h-9 w-9 items-center justify-center rounded-md bg-[#FFF7ED] text-[#C2410C]"><FileText size={17} /></span>
+                              <span className="mt-2 text-xs font-semibold leading-relaxed text-[#0F172A]">CUET UG PYQ Archive</span>
                             </Link>
                           </div>
                         </div>
@@ -353,14 +277,14 @@ export default function App() {
                                 Independent information portal
                               </span>
                               <h2 className="text-lg font-black text-white mt-3">
-                                सभी सरकारी भर्तियों और सेवाओं की सीधी जानकारी
+                                पढ़ाई और नागरिक सेवाओं के लिए उपयोगी मार्गदर्शन
                               </h2>
                               <p className="mt-1.5 text-xs font-medium leading-relaxed text-slate-200">
-                                BPSC, BSSC, CSBC और सार्वजनिक सेवाओं से जुड़ी जानकारी व आधिकारिक स्रोतों के लिंक एक जगह देखें।
+                                बिहार के विद्यार्थियों और नागरिकों के लिए व्यावहारिक टूल, परीक्षा संसाधन और आधिकारिक स्रोतों के लिंक एक जगह देखें।
                               </p>
                             </div>
                             <div className="flex flex-wrap items-center justify-between gap-2 border-t border-white/15 pt-4 text-xs font-semibold text-slate-200">
-                              <span>Official source links</span>
+                              <span>Independent educational utility hub</span>
                               <Link to="/sitemap" className="text-white hover:underline flex items-center gap-1">
                                 सभी लिंक्स देखें <ArrowRight size={13} />
                               </Link>
@@ -507,140 +431,37 @@ export default function App() {
                       </Link>
                     </div>
 
-                    {topAlertItem && (
-                      <div className="mb-6 flex flex-col items-stretch justify-between gap-3 rounded-lg border border-[#FED7AA] bg-[#FFF7ED] p-3.5 text-[#7C2D12] sm:flex-row sm:items-center sm:p-4">
-                        <div className="flex min-w-0 items-center gap-3 text-xs font-medium leading-relaxed sm:text-sm">
-                          <span className="flex shrink-0 items-center justify-center rounded-md bg-[#FFEDD5] p-2">
-                            <Flame size={18} className="text-[#C2410C]" />
-                          </span>
-                          <span className="min-w-0 break-words">
-                            Notice: {topAlertItem.department && <strong className="font-black">{topAlertItem.department} - </strong>}
-                            {topAlertItem.title}
-                          </span>
-                        </div>
-                        <Link 
-                          to={`/post/${generateSlug(topAlertItem)}`}
-                          className="inline-flex min-h-11 shrink-0 items-center justify-center gap-1.5 rounded-md border border-[#FDBA74] bg-white px-4 text-xs font-semibold text-[#9A3412] transition hover:bg-[#FFEDD5]"
-                        >
-                          View Notice <ArrowRight size={14} />
-                        </Link>
-                      </div>
-                    )}
-
                     <div className="grid grid-cols-1 gap-6 lg:grid-cols-12">
                       <div className="lg:col-span-8 space-y-6">
-                        <div id="cyber-tools-section" className="rounded-lg border border-[#E2E8F0] bg-white p-5 shadow-sm">
-                          <div className="flex items-center justify-between mb-4">
-                            <div>
-                              <span className="text-[10px] font-black uppercase tracking-wider bg-emerald-100 text-emerald-900 border border-emerald-300 px-2.5 py-0.5 rounded-full">
-                                100% Free Online Utilities
-                              </span>
-                              <h2 className="text-base sm:text-lg font-black text-slate-900 mt-1">
-                                Smart Cyber Tools (Instant Self-Apply)
-                              </h2>
-                            </div>
-                            <span className="text-xs bg-slate-100 text-slate-800 font-bold px-2.5 py-1 rounded-lg border border-slate-300">
-                              Private & Fast
-                            </span>
+                        <section className="rounded-lg border border-[#E2E8F0] bg-white p-5 shadow-sm">
+                          <span className="text-[10px] font-black uppercase tracking-wider bg-blue-100 text-blue-900 border border-blue-200 px-2.5 py-0.5 rounded-full">
+                            Learning &amp; public services
+                          </span>
+                          <h2 className="text-base sm:text-lg font-black text-slate-900 mt-2">
+                            Explore Bihar student and citizen guides
+                          </h2>
+                          <p className="mt-1 text-xs leading-relaxed text-slate-600">
+                            Start with a practical guide, compare official instructions, and use the relevant department portal for applications or final decisions.
+                          </p>
+                          <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2">
+                            <Link to="/bseb-matric-10th" className="rounded-xl border border-slate-200 p-4 transition hover:border-blue-300 hover:bg-blue-50/40">
+                              <span className="text-sm font-bold text-slate-900">BSEB Matric Exam Hub</span>
+                              <span className="mt-1 block text-xs text-slate-600">Exam dates, model papers and result guidance</span>
+                            </Link>
+                            <Link to="/bseb-inter-12th" className="rounded-xl border border-slate-200 p-4 transition hover:border-blue-300 hover:bg-blue-50/40">
+                              <span className="text-sm font-bold text-slate-900">BSEB Inter Exam Hub</span>
+                              <span className="mt-1 block text-xs text-slate-600">Class 12 examination and result resources</span>
+                            </Link>
+                            <Link to="/student-credit-card" className="rounded-xl border border-slate-200 p-4 transition hover:border-blue-300 hover:bg-blue-50/40">
+                              <span className="text-sm font-bold text-slate-900">Student Credit Card Guide</span>
+                              <span className="mt-1 block text-xs text-slate-600">MNSSBY eligibility and application steps</span>
+                            </Link>
+                            <Link to="/mock-test" className="rounded-xl border border-slate-200 p-4 transition hover:border-blue-300 hover:bg-blue-50/40">
+                              <span className="text-sm font-bold text-slate-900">Practice Mock Tests</span>
+                              <span className="mt-1 block text-xs text-slate-600">Timed practice and exam preparation</span>
+                            </Link>
                           </div>
-
-                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
-                            <button
-                              type="button"
-                              onClick={() => setActiveTool(activeTool === "resizer" ? null : "resizer")}
-                              className={`p-4 rounded-xl border-2 flex items-center gap-3.5 transition-all text-left cursor-pointer ${
-                                activeTool === "resizer"
-                                  ? "bg-amber-50 border-amber-500 shadow-sm"
-                                  : "bg-slate-50 hover:bg-slate-100/80 border-slate-200"
-                              }`}
-                            >
-                              <div className="p-3 rounded-xl bg-blue-700 text-white shadow-xs shrink-0">
-                                <Camera size={22} />
-                              </div>
-                              <div>
-                                <p className="text-xs sm:text-sm font-black text-slate-900 leading-tight">Photo & Sign Resizer</p>
-                                <p className="text-[11px] text-slate-600 font-semibold mt-0.5">
-                                  Compress to 20–50 KB for official forms
-                                </p>
-                              </div>
-                            </button>
-
-                            <button
-                              type="button"
-                              onClick={() => setActiveTool(activeTool === "calculator" ? null : "calculator")}
-                              className={`p-4 rounded-xl border-2 flex items-center gap-3.5 transition-all text-left cursor-pointer ${
-                                activeTool === "calculator"
-                                  ? "bg-amber-50 border-amber-500 shadow-sm"
-                                  : "bg-slate-50 hover:bg-slate-100/80 border-slate-200"
-                              }`}
-                            >
-                              <div className="p-3 rounded-xl bg-emerald-700 text-white shadow-xs shrink-0">
-                                <Calculator size={22} />
-                              </div>
-                              <div>
-                                <p className="text-xs sm:text-sm font-black text-slate-900 leading-tight">Age Eligibility Calculator</p>
-                                <p className="text-[11px] text-slate-600 font-semibold mt-0.5">
-                                  Calculate cutoff age & category relaxation
-                                </p>
-                              </div>
-                            </button>
-                          </div>
-                        </div>
-
-                        {activeTool === "resizer" && <ImageResizer onClose={() => setActiveTool(null)} />}
-                        {activeTool === "calculator" && <AgeCalculator onClose={() => setActiveTool(null)} />}
-
-                        {/* Category Filter Tabs */}
-                        <div className="flex items-center gap-2 overflow-x-auto scroll-smooth touch-pan-x overscroll-x-contain pb-2 scrollbar-none">
-                          {CATEGORY_TABS.map((tab) => {
-                            const Icon = tab.icon;
-                            const isActive = activeTab === tab.id;
-                            const tabPath = tab.id === "all" ? "/" : tab.id === "jobs" ? "/jobs" : tab.id === "results" ? "/results" : tab.id === "admit_card" ? "/admit-card" : "/sitemap";
-                            return (
-                              <Link
-                                key={tab.id}
-                                to={tabPath}
-                                onClick={() => setActiveTab(tab.id)}
-                                className={`text-xs font-black px-4 py-2.5 rounded-xl whitespace-nowrap shrink-0 transition-all flex items-center gap-2 border cursor-pointer ${
-                                  isActive
-                                    ? "bg-[#0B2545] text-white border-[#0B2545] shadow-sm"
-                                    : "bg-white text-[#475569] border-[#E2E8F0] hover:bg-[#F8FAFC]"
-                                }`}
-                              >
-                                <Icon size={15} className={isActive ? "text-[#FDBA74]" : "text-[#64748B]"} />
-                                {tab.label}
-                              </Link>
-                            );
-                          })}
-                        </div>
-
-                        <div id="active-circulars-section" className="space-y-4 scroll-mt-36">
-                          <div className="flex flex-wrap items-center justify-between gap-2 px-1 text-xs font-black text-[#334155]">
-                            <h2 className="flex items-center gap-1.5 text-sm font-bold text-[#0B2545]">
-                              <TrendingUp size={18} className="text-[#E65100]" />
-                              Notices &amp; Updates
-                            </h2>
-                            <span className="flex items-center gap-1.5 rounded-md border border-[#E2E8F0] bg-white px-3 py-1 font-semibold text-[#475569]">
-                              {loading && <Loader2 size={13} className="animate-spin text-[#0B2545]" />}
-                              {filteredData.length} Notices
-                            </span>
-                          </div>
-
-                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                            {filteredData.map((item) => (
-                              <NotificationCard
-                                key={item.id || item.slug}
-                                item={item}
-                              />
-                            ))}
-                          </div>
-
-                          {!loading && filteredData.length === 0 && (
-                            <div className="rounded-lg border border-[#E2E8F0] bg-white p-10 text-center text-sm font-medium text-[#475569] shadow-sm">
-                              No notifications matched your search query. Try another keyword.
-                            </div>
-                          )}
-                        </div>
+                        </section>
                       </div>
 
                       <aside className="lg:col-span-4 space-y-6">
@@ -772,14 +593,61 @@ export default function App() {
 
                         <div className="bg-amber-50 border border-amber-300 rounded-2xl p-4 text-xs">
                           <p className="font-black text-amber-950 mb-1 flex items-center gap-1">
-                            <Sparkles size={14} className="text-amber-700" /> Bihar&apos;s Cleanest Job Portal
+                            <Sparkles size={14} className="text-amber-700" /> Independent information portal
                           </p>
                           <p className="text-amber-900 leading-relaxed text-[11px] font-semibold">
-                            Authentic updates and direct links pointing straight to official government departments and commission servers.
+                            Use these guides as a starting point and verify current requirements with the responsible department.
                           </p>
                         </div>
                       </aside>
                     </div>
+
+                    <section id="archived-recruitment-section" className="mt-10 scroll-mt-24">
+                      <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6">
+                        <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+                          <div>
+                            <span className="inline-flex rounded-full border border-amber-200 bg-amber-50 px-2.5 py-1 text-[10px] font-black uppercase tracking-wide text-amber-900">
+                              Historical reference only
+                            </span>
+                            <h2 className="mt-2 flex items-center gap-2 text-lg font-black text-[#0B2545] sm:text-xl">
+                              <Briefcase size={20} className="text-[#E65100]" />
+                              Archived Recruitment Notices
+                            </h2>
+                            <p className="mt-1 max-w-3xl text-xs leading-relaxed text-slate-600">
+                              These records are kept for historical examination patterns, syllabus and eligibility reference. They may be closed or outdated; verify any current vacancy, date or requirement on the official department website before acting.
+                            </p>
+                          </div>
+                          <span className="shrink-0 rounded-md border border-slate-200 bg-slate-50 px-3 py-1.5 text-xs font-semibold text-slate-600">
+                            {loading && <Loader2 size={13} className="mr-1 inline animate-spin text-[#0B2545]" />}
+                            {archivedNotices.length} archived notices
+                          </span>
+                        </div>
+
+                        <div className="relative mt-4 max-w-xl">
+                          <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500" size={16} />
+                          <input
+                            type="search"
+                            value={searchQuery}
+                            onChange={(event) => setSearchQuery(event.target.value)}
+                            placeholder="Search by post, department or qualification"
+                            aria-label="Search archived recruitment notices"
+                            className="min-h-11 w-full rounded-lg border border-slate-300 bg-white pl-10 pr-3 text-sm text-slate-900 placeholder:text-slate-500 focus:border-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-700/15"
+                          />
+                        </div>
+
+                        {archivedNotices.length > 0 ? (
+                          <div className="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2">
+                            {archivedNotices.map((item) => (
+                              <NotificationCard key={item.id || item.slug} item={item} />
+                            ))}
+                          </div>
+                        ) : (
+                          <div className="mt-4 rounded-lg border border-slate-200 bg-slate-50 p-8 text-center text-sm font-medium text-slate-600">
+                            {loading ? "Loading archived notices..." : "No archived recruitment notices matched your search."}
+                          </div>
+                        )}
+                      </div>
+                    </section>
                   </main>
                 </>
               }
@@ -793,6 +661,8 @@ export default function App() {
             <Route path="/results" element={<SiteMapPage notices={portalItems} category="results" />} />
             <Route path="/category/:slug" element={<CategoryPage notices={portalItems} loading={loading} />} />
             <Route path="/useful-tools" element={<UsefulToolsPage />} />
+            <Route path="/tools/photo-resizer" element={<ExamImageResizer />} />
+            <Route path="/tools/credit-card-calculator" element={<StudentCreditCardCalculator />} />
             
             {/* Policy & Compliance Dual Routing */}
             <Route path="/about" element={<About />} />

@@ -13,20 +13,24 @@ const INJECTION_POINT = "<!-- PRERENDER_INJECTION_POINT -->";
 
 const ROUTE_CONTENT = {
   "/": {
-    title: "बिहार सरकारी नौकरी, परीक्षा और नागरिक सेवाओं का मार्गदर्शक",
-    intro: "BiharFast बिहार के विद्यार्थियों, नौकरी के अभ्यर्थियों और नागरिकों के लिए भर्ती, परीक्षा, परिणाम और सरकारी सेवाओं की जानकारी एक जगह व्यवस्थित करता है। इस शुरुआती पृष्ठ से आप विभागीय अपडेट खोज सकते हैं, विषय के अनुसार हब खोल सकते हैं और आवेदन से पहले आधिकारिक अधिसूचना तक पहुंच सकते हैं।",
+    title: "बिहार के विद्यार्थियों और नागरिकों के लिए उपयोगी टूल व मार्गदर्शिका",
+    intro: "BiharFast बिहार के विद्यार्थियों और नागरिकों के लिए पढ़ाई, परीक्षा तैयारी और सार्वजनिक सेवाओं से जुड़े व्यावहारिक डिजिटल टूल तथा सरल मार्गदर्शिकाएं एक जगह उपलब्ध कराता है। इस होमपेज से परीक्षा फोटो और हस्ताक्षर तैयार करें, MNSSBY छात्र क्रेडिट कार्ड की अनुमानित किस्त समझें, RTPS प्रमाणपत्र प्रक्रिया देखें और CUET UG के आधिकारिक PYQ संसाधनों तक पहुंचें। BiharFast एक स्वतंत्र सूचना पोर्टल है, सरकारी वेबसाइट नहीं।",
     details: [
-      "किसी भर्ती या परीक्षा की सूचना पढ़ते समय पदों की संख्या, पात्रता, आयु सीमा, आरक्षण, आवेदन शुल्क और तारीखों को मूल विज्ञापन से मिलाएं। संक्षिप्त सारांश खोज और शुरुआती समझ में मदद करता है, लेकिन विभागीय नोटिस ही अंतिम नियम बताता है।",
-      "नागरिक सेवाओं और छात्र योजनाओं के हब में पात्रता तथा आवेदन के सामान्य चरण समझाए जाते हैं। पोर्टल को सरकारी वेबसाइट न समझें; आवेदन, भुगतान, प्रमाणपत्र या व्यक्तिगत दस्तावेज जमा करने के लिए केवल संबंधित विभाग का अधिकृत पोर्टल इस्तेमाल करें।",
+      "परीक्षा फोटो रीसाइज़र आपके ब्राउज़र में Canvas तकनीक से फोटो या हस्ताक्षर का आकार बदलता और संपीड़ित करता है। किसी भर्ती फॉर्म में अपलोड करने से पहले अधिसूचना में दिए गए फाइल प्रारूप, पिक्सेल आयाम, हस्ताक्षर की दिशा और न्यूनतम तथा अधिकतम फाइल आकार को ध्यान से पढ़ें। अलग-अलग आयोगों और आवेदन चक्रों के नियम बदल सकते हैं, इसलिए एक टूल प्रीसेट को हर फॉर्म की स्वीकृति की गारंटी न समझें। निजी दस्तावेजों के लिए केवल अपने डिवाइस पर भरोसेमंद फाइल चुनें और डाउनलोड की गई कॉपी को स्वयं जांचें।",
+      "MNSSBY छात्र क्रेडिट कार्ड कैलकुलेटर चुनी गई ऋण राशि, पाठ्यक्रम अवधि और मोरेटोरियम के आधार पर अनुमानित ब्याज तथा किस्त समझने में सहायता करता है। यह वित्तीय अनुमान है, स्वीकृति पत्र या बैंक की आधिकारिक गणना नहीं। ब्याज नियम, सब्सिडी, भुगतान शर्तें और पात्रता वर्तमान बिहार सरकार दिशा-निर्देश तथा ऋण प्रदाता के दस्तावेजों से सत्यापित करें। आवेदन या भुगतान से पहले आधिकारिक योजना पोर्टल पर जानकारी दोबारा जांचें और किसी एजेंट को शुल्क देकर लाभ की गारंटी न लें।",
+      "RTPS Bihar सेवा गाइड जाति, आय और निवास प्रमाणपत्र जैसी सेवाओं के सामान्य आवेदन चरण, दस्तावेज जांच और आवेदन स्थिति देखने की प्रक्रिया समझाता है। प्रमाणपत्र का प्रकार, अंचल, सेवा स्तर, आवश्यक प्रमाण और समय-सीमा आवेदक की परिस्थिति के अनुसार बदल सकते हैं। मूल आवेदन, शुल्क भुगतान, दस्तावेज जमा और प्रमाणपत्र डाउनलोड के लिए विभाग के अधिकृत ServicePlus पोर्टल का उपयोग करें; आवेदन संख्या तथा रसीद सुरक्षित रखें।",
+      "CUET UG PYQ संसाधन, पाठ्यक्रम और संबंधित परीक्षा सामग्री को संबंधित परीक्षा तथा प्रवेश वर्ष के अनुसार जांचें। उपलब्ध आधिकारिक सूचना बदल सकती है; NTA या विश्वविद्यालय की वेबसाइट पर नवीनतम पाठ्यक्रम, आवेदन समय-सारणी और प्रश्नपत्र की पुष्टि करें। परीक्षा तैयारी में पुराने प्रश्नपत्र अभ्यास के लिए उपयोगी हैं, लेकिन वे आगामी परीक्षा में प्रश्नों या परिणाम की गारंटी नहीं देते।",
+      "होमपेज के निचले हिस्से में संग्रहित भर्ती सूचनाएं केवल ऐतिहासिक परीक्षा पैटर्न, पाठ्यक्रम और पात्रता संदर्भ के लिए रखी जाती हैं। कोई पुरानी अधिसूचना सक्रिय अवसर या वर्तमान आवेदन समय-सीमा का प्रमाण नहीं है। आवेदन करने से पहले विभागीय विज्ञापन, संशोधन, परीक्षा कैलेंडर और आधिकारिक पोर्टल पर मौजूदा स्थिति अवश्य देखें।",
     ],
-    checklist: ["नौकरी, एडमिट कार्ड और परिणाम के अलग-अलग पृष्ठ खोलें।", "परीक्षा के नाम और वर्ष को मूल सूचना से मिलाएं।", "अंतिम तारीख और आवेदन स्थिति विभागीय पोर्टल पर जांचें।", "लिंक या तथ्य में त्रुटि मिले तो BiharFast से संपर्क करें।"],
-    steps: ["अपनी जरूरत के अनुसार विषय या विभाग चुनें।", "सारांश के साथ आधिकारिक नोटिस भी पढ़ें।", "अर्हता पूरी होने पर ही आवेदन आगे बढ़ाएं।", "रसीद, आवेदन संख्या और जमा फॉर्म सुरक्षित रखें।"],
+    checklist: ["फोटो, हस्ताक्षर और दस्तावेज की वर्तमान फॉर्म-विशिष्ट शर्तें पढ़ें।", "कैलकुलेटर के अनुमान को योजना के आधिकारिक ब्याज और पुनर्भुगतान नियमों से मिलाएं।", "RTPS आवेदन के लिए अधिकृत पोर्टल तथा वर्तमान दस्तावेज सूची जांचें।", "PYQ और परीक्षा पाठ्यक्रम के लिए संबंधित परीक्षा निकाय का स्रोत देखें।", "आर्काइव नोटिस को वर्तमान भर्ती घोषणा न मानें।"],
+    steps: ["अपनी जरूरत के अनुसार परीक्षा टूल या नागरिक सेवा गाइड खोलें।", "उपलब्ध निर्देश पढ़ें और जरूरी विवरण तैयार करें।", "हर तारीख, पात्रता और फाइल नियम को आधिकारिक स्रोत से सत्यापित करें।", "आवेदन केवल विभागीय पोर्टल पर पूरा करें और रसीद या डाउनलोड सुरक्षित रखें।"],
     faq: [
-      ["क्या BiharFast सरकारी वेबसाइट है?", "नहीं। BiharFast एक स्वतंत्र सूचना पोर्टल है; सरकारी आवेदन और प्रमाणपत्र सेवाएं संबंधित विभाग के अधिकृत पोर्टल पर ही मिलती हैं।"],
-      ["क्या यहां दी गई हर तारीख अंतिम है?", "नहीं। विभाग संशोधन जारी कर सकता है, इसलिए आवेदन या यात्रा से पहले ताजा आधिकारिक सूचना अवश्य जांचें।"],
-      ["किस तरह अपडेट खोजूं?", "ऊपर दिए गए भर्ती, परिणाम, एडमिट कार्ड, परीक्षा और नागरिक सेवा हब से संबंधित विषय चुनें।"],
+      ["क्या BiharFast सरकारी वेबसाइट है?", "नहीं। यह स्वतंत्र शैक्षिक और सार्वजनिक-सेवा सूचना पोर्टल है; सरकारी आवेदन संबंधित विभाग के अधिकृत पोर्टल पर ही करें।"],
+      ["क्या फोटो या कैलकुलेटर का डेटा सर्वर पर जाता है?", "ये टूल ब्राउज़र में चलते हैं और चुनी गई फोटो या गणना इनपुट को BiharFast सर्वर पर अपलोड या संग्रहित नहीं करते।"],
+      ["क्या संग्रहित भर्ती नोटिस अभी खुले हैं?", "जरूरी नहीं। आर्काइव रिकॉर्ड केवल ऐतिहासिक संदर्भ हैं; किसी भी वर्तमान अवसर की विभागीय वेबसाइट पर पुष्टि करें।"],
+      ["कैलकुलेटर से मिली EMI अंतिम है?", "नहीं। यह अनुमान है; स्वीकृति, ब्याज और किस्त की पुष्टि योजना एवं ऋण प्रदाता के नवीनतम आधिकारिक नियमों से करें।"],
     ],
-    links: [["/jobs", "नवीनतम भर्ती"], ["/results", "परीक्षा परिणाम"], ["/admit-card", "एडमिट कार्ड"], ["/useful-tools", "उपयोगी टूल"]],
+    links: [["/tools/photo-resizer", "परीक्षा फोटो रीसाइज़र"], ["/tools/credit-card-calculator", "छात्र क्रेडिट कार्ड EMI कैलकुलेटर"], ["/rtps-bihar", "RTPS सेवा मार्गदर्शिका"], ["/cuet-ug-admission", "CUET UG PYQ संसाधन"], ["/mock-test", "अभ्यास मॉक टेस्ट"], ["/about", "BiharFast के बारे में"]],
   },
   "/bihar-district-wise-recruitment": {
     title: "बिहार जिला-वार भर्ती और स्थानीय नियुक्ति मार्गदर्शिका",
@@ -139,6 +143,46 @@ const ROUTE_CONTENT = {
       ["क्या अपलोड की गई फाइल सर्वर पर रखी जाती है?", "टूल की वर्तमान तकनीकी व्यवस्था और गोपनीयता सूचना पढ़ें; संवेदनशील दस्तावेज साझा करने से पहले सावधानी बरतें।"],
     ],
     links: [["/jobs", "भर्ती नियम देखें"], ["/bihar-district-wise-recruitment", "जिला भर्ती"], ["/contact", "संपर्क सहायता"]],
+  },
+  "/tools/photo-resizer": {
+    title: "Exam Photo and Signature Resizer for BPSC, Bihar Police, and SSC",
+    intro: "Prepare a JPEG photo or signature for an exam application with an in-browser image resizer. Suggested presets cover BPSC Photo (20–50 KB), BPSC Sign (10–20 KB), Bihar Police Photo (25–50 KB), Bihar Police Sign (10–20 KB), and SSC (20–50 KB). Select a target, inspect the preview, and download the result. The image is processed locally and is not sent to a BiharFast image-processing server.",
+    focusHeading: "How to prepare an exam image",
+    details: [
+      "Always read the current official recruitment notice before choosing a file. BPSC, BTSC, Bihar Police, and SSC instructions can vary by recruitment cycle and post. Check the accepted file type, minimum and maximum size, pixel dimensions, aspect ratio, background, and whether the form requires a recent photograph, a scanned signature, a live capture, or a handwritten declaration. These presets are practical size targets only and cannot validate every portal rule.",
+      "Use a recent, unfiltered photograph with even lighting, a plain background, and the complete face visible. For a signature, write in dark ink on clean white paper and leave a small margin around the strokes. Avoid shadows, glare, borders, extra people, and blurred or stretched images. The resizer keeps the original proportions and converts the output to JPEG; it does not invent detail or guarantee a particular crop or pixel size.",
+      "Move the target-size slider within the selected preset's range. A target near the upper end usually preserves more detail, while a smaller target may require stronger compression. A small or simple source image can finish below the requested range because image data cannot be added honestly to meet a minimum. Review the output size and open the downloaded file before uploading it. If the image is blurry or incorrectly framed, start again with a clearer source instead of repeatedly compressing it.",
+      "The Canvas API runs in your browser, so the selected image stays on your device during processing. Choose a standard JPG, PNG, or WebP under 15 MB. Animated images are flattened to a still JPEG and transparent areas are shown on white. Keep a safe copy of the original, especially when using a shared device, and do not upload sensitive records to unofficial services.",
+    ],
+    checklist: ["Read the latest recruitment notice and exact image limits.", "Select the matching photo or signature preset.", "Inspect orientation, crop, clarity, and final file size.", "Use the recruiting authority's upload preview as the final check."],
+    steps: ["Choose BPSC, Bihar Police, or SSC size guidance.", "Select a clear image from your device.", "Adjust the target-size slider and review the preview.", "Download the JPEG and verify it against the official form."],
+    faq: [
+      ["Are these official BPSC, BTSC, Bihar Police, or SSC specifications?", "No. They are suggested size ranges for preparation. The current notice and upload form for the specific recruitment are authoritative."],
+      ["Will the output always be inside the selected range?", "Not always. A low-detail source may be smaller than the minimum, and an unusually complex image may not compress enough. Use a clearer source and follow the portal's actual size limit."],
+      ["Is my selected image uploaded?", "No. The Canvas-based compression runs locally in the browser; this tool does not upload the image to a BiharFast processing server."],
+    ],
+    links: [["/useful-tools", "All exam utilities"], ["/tools/credit-card-calculator", "Student Credit Card calculator"], ["/jobs", "Recruitment updates"]],
+  },
+  "/tools/credit-card-calculator": {
+    title: "Bihar Student Credit Card EMI and Moratorium Calculator",
+    intro: "Estimate a Bihar Student Credit Card repayment plan with this independent MNSSBY calculator. Enter a loan amount up to ₹4 lakh, course duration, an additional moratorium period, and the applicable applicant category. The estimate displays moratorium interest, an indicative monthly EMI, and total interest. It is a budgeting aid only; official eligibility, sanction, lender terms, and repayment schedules always take precedence.",
+    focusHeading: "How to use the MNSSBY estimate",
+    details: [
+      "The calculator applies 4% annual interest for male applicants and 1% for women or Divyang applicants. It first estimates simple interest on the full selected principal during the course and the additional moratorium period. It then adds that amount to the balance and estimates a monthly reducing-balance EMI over seven years. This explicitly stated model is not an official loan ledger. It assumes the full loan amount is disbursed at once; actual eligible costs may be released in stages and the sanctioned schedule may differ.",
+      "The Bihar Student Credit Card scheme is part of the Mukhyamantri Nishchay Swayam Sahayata Bhatta Yojana programme. It is intended to support eligible students from Bihar pursuing higher education. Residence, previous qualification, age, course, institution, expense limits, and other conditions are controlled by current scheme rules. Course and institution lists or applicant conditions can change, so check the live MNSSBY portal and ask the assigned District Registration and Counselling Centre (DRCC) before relying on an estimate.",
+      "A common application journey begins with registration on the official MNSSBY portal using contact details the student can access. Complete the Student Credit Card form carefully, enter the course and institution as they appear on admission records, upload legible copies in the accepted format, and keep the acknowledgement or application number. Follow the portal instructions for the assigned DRCC appointment and bring original records when requested. Respond to correction requests through the official channel and track status with the saved application details.",
+      "Prepare identity proof such as Aadhaar or another accepted document, Bihar residence proof, recent photograph, Class 10 and Class 12 marksheets or certificates, and an admission letter or enrolment proof. Keep the institution's course and fee structure, bank account details, and contact information ready. Depending on the case, the portal may request income, caste, disability, or other relevant certificates and records for a parent or co-applicant. The current portal checklist is definitive; this general list is not a guarantee of eligibility or a complete document list.",
+      "After verification, the application may be reviewed by scheme officials and a participating financial institution. Approval is not automatic. Read the sanction papers for the approved amount, use of funds, rate, moratorium, repayment start date, and any concession or conditions before accepting the loan. Confirm how the lender accrues interest and whether timely repayment affects a concession. Do not share OTPs, passwords, or banking credentials with unofficial callers or pay an agent who promises approval.",
+    ],
+    checklist: ["Confirm current residence, course, institution, and age rules.", "Prepare admission, education, identity, residence, and bank records.", "Keep the application number and DRCC verification instructions.", "Compare this estimate with the written sanction and lender schedule."],
+    steps: ["Read current MNSSBY guidance on the official portal.", "Register and submit accurate course and student details.", "Attend document verification as instructed by the DRCC.", "Track the application and review written repayment terms before acceptance."],
+    faq: [
+      ["Does every student receive the full ₹4 lakh?", "No. ₹4 lakh is the maximum loan amount requested for this calculator; eligibility, eligible costs, verification, and approval determine any actual sanction."],
+      ["Is this an official EMI quotation?", "No. It is an estimate using stated assumptions. The official lender schedule and current scheme rules determine the actual amount due."],
+      ["Which documents should I submit?", "Use the current portal checklist. Common records include identity, Bihar residence, marksheets, admission proof, fee details, bank information, and any case-specific certificates."],
+      ["Where can I verify the process?", "Use the official MNSSBY portal and the assigned DRCC. Do not rely on an unofficial agent or an old checklist."],
+    ],
+    links: [["/student-credit-card", "Student Credit Card scheme guide"], ["/tools/photo-resizer", "Exam Photo Resizer"], ["/useful-tools", "All utilities"]],
   },
   "/upcoming-2026": {
     title: "बिहार आगामी भर्ती और परीक्षा कैलेंडर पढ़ने की मार्गदर्शिका",
@@ -448,7 +492,8 @@ function renderLegalPage(content) {
     `<a href="${escapeHtml(link.href)}">${escapeHtml(link.text)}</a>`
   ).join(" ");
 
-  return `<main class="max-w-4xl mx-auto px-4 py-10"><article><header>${header}</header>${sections}<nav>${footerLinks}</nav></article></main>`;
+  const breadcrumbs = `<nav aria-label="Breadcrumb"><ol><li><a href="/">Home</a></li><li aria-hidden="true">/</li><li aria-current="page">${escapeHtml(content.title)}</li></ol></nav>`;
+  return `<main class="max-w-4xl mx-auto px-4 py-10">${breadcrumbs}<article><header>${header}</header>${sections}<nav>${footerLinks}</nav></article></main>`;
 }
 
 function renderStructuredPage(route, content) {

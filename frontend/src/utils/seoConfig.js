@@ -9,8 +9,8 @@ export const DEFAULT_ROBOTS = "index, follow, max-image-preview:large, max-snipp
 
 export const STATIC_ROUTE_METADATA = {
   "/": {
-    title: "BiharFast™: बिहार सरकारी नौकरी, एडमिट कार्ड व परीक्षा परिणाम | Direct Official Link",
-    description: "⚡ बिहार की सभी सरकारी भर्तियां (BPSC, CSBC, SSC, Railway), एडमिट कार्ड, रिजल्ट व मेरिट लिस्ट सबसे तेज। सीधे ऑफिशियल PDF व ऑनलाइन आवेदन लिंक 1-क्लिक में पाएं।",
+    title: "BiharFast | Bihar Student Tools, RTPS Guides & Exam Resources",
+    description: "Free Bihar student utilities: exam photo resizer, MNSSBY student credit card calculator, RTPS service guide and CUET UG PYQ resources, with official-source verification guidance.",
     canonical: `${SITE_URL}/`,
     robots: DEFAULT_ROBOTS,
     ogType: "website"
@@ -82,6 +82,20 @@ export const STATIC_ROUTE_METADATA = {
     title: "Useful Tools for Bihar Exams | Age Calculator & Photo Resizer - BiharFast",
     description: "बिहार प्रतियोगी परीक्षाओं के लिए फ्री ऑनलाइन टूल्स: उम्र पात्रता कैलकुलेटर और फॉर्म के लिए फोटो व सिग्नेचर रिसाइजर (20–50 KB)।",
     canonical: `${SITE_URL}/useful-tools`,
+    robots: DEFAULT_ROBOTS,
+    ogType: "website"
+  },
+  "/tools/photo-resizer": {
+    title: "Bihar Exam Photo & Signature Resizer | BPSC, Bihar Police, SSC - BiharFast",
+    description: "Resize and compress exam photos and signatures in your browser with suggested BPSC, Bihar Police, and SSC size presets. Images stay on your device.",
+    canonical: `${SITE_URL}/tools/photo-resizer`,
+    robots: DEFAULT_ROBOTS,
+    ogType: "website"
+  },
+  "/tools/credit-card-calculator": {
+    title: "Bihar Student Credit Card EMI Calculator | MNSSBY - BiharFast",
+    description: "Estimate Bihar Student Credit Card EMI, moratorium interest, and total repayment with an independent MNSSBY calculator and application guide.",
+    canonical: `${SITE_URL}/tools/credit-card-calculator`,
     robots: DEFAULT_ROBOTS,
     ogType: "website"
   },
@@ -212,71 +226,71 @@ export const STATIC_ROUTE_METADATA = {
     ogType: "website"
   },
   "/about": {
-    title: "हमारे बारे में (About BiharFast.in) - BiharFast",
-    description: "BiharFast.in के बारे में जानें। बिहार का स्वतंत्र और भरोसेमंद शैक्षणिक व रोजगार सूचना पोर्टल, जो छात्रों और नागरिकों को सटीक अपडेट देता है।",
+    title: "About BiharFast | Bihar Student Education & Public Information",
+    description: "Learn about BiharFast's mission as an independent educational utility and state administrative guide for Bihar students, including our editorial and source-verification standards.",
     canonical: `${SITE_URL}/about`,
     robots: DEFAULT_ROBOTS,
     ogType: "website"
   },
   "/about-us": {
-    title: "हमारे बारे में (About BiharFast.in) - BiharFast",
-    description: "BiharFast.in के बारे में जानें। बिहार का स्वतंत्र और भरोसेमंद शैक्षणिक व रोजगार सूचना पोर्टल, जो छात्रों और नागरिकों को सटीक अपडेट देता है।",
+    title: "About BiharFast | Bihar Student Education & Public Information",
+    description: "Learn about BiharFast's mission as an independent educational utility and state administrative guide for Bihar students, including our editorial and source-verification standards.",
     canonical: `${SITE_URL}/about`, // Alias canonically points to /about
     robots: DEFAULT_ROBOTS,
     ogType: "website"
   },
   "/contact": {
-    title: "संपर्क करें (Contact & Grievance Redressal) - BiharFast",
-    description: "BiharFast टीम से संपर्क करें। किसी भी सुझाव, त्रुटि सुधार या शिकायत निवारण के लिए हमारी सपोर्ट टीम से जुड़ें।",
+    title: "Contact BiharFast | Feedback & Grievance Redressal",
+    description: "Contact BiharFast for feedback, factual corrections, technical support, privacy requests, copyright concerns, and grievances. Expected acknowledgement: 24–48 hours.",
     canonical: `${SITE_URL}/contact`,
     robots: DEFAULT_ROBOTS,
     ogType: "website"
   },
   "/contact-us": {
-    title: "संपर्क करें (Contact & Grievance Redressal) - BiharFast",
-    description: "BiharFast टीम से संपर्क करें। किसी भी सुझाव, त्रुटि सुधार या शिकायत निवारण के लिए हमारी सपोर्ट टीम से जुड़ें।",
+    title: "Contact BiharFast | Feedback & Grievance Redressal",
+    description: "Contact BiharFast for feedback, factual corrections, technical support, privacy requests, copyright concerns, and grievances. Expected acknowledgement: 24–48 hours.",
     canonical: `${SITE_URL}/contact`, // Alias canonically points to /contact
     robots: DEFAULT_ROBOTS,
     ogType: "website"
   },
   "/privacy-policy": {
-    title: "गोपनीयता नीति (Privacy Policy) - BiharFast",
-    description: "BiharFast की प्राइवेसी पॉलिसी: जानें कि हम उपयोगकर्ताओं के डेटा की सुरक्षा, कुकीज और गोपनीयता का कैसे ध्यान रखते हैं।",
+    title: "Privacy Policy | Cookies, Google AdSense & Data Protection",
+    description: "Read how BiharFast handles contact details, server logs, Google Analytics, AdSense cookies, notifications, privacy requests, and locally processed photo-resizer and calculator inputs.",
     canonical: `${SITE_URL}/privacy-policy`,
     robots: DEFAULT_ROBOTS,
     ogType: "website"
   },
   "/privacy": {
-    title: "गोपनीयता नीति (Privacy Policy) - BiharFast",
-    description: "BiharFast की प्राइवेसी पॉलिसी: जानें कि हम उपयोगकर्ताओं के डेटा की सुरक्षा, कुकीज और गोपनीयता का कैसे ध्यान रखते हैं।",
+    title: "Privacy Policy | Cookies, Google AdSense & Data Protection",
+    description: "Read how BiharFast handles contact details, server logs, Google Analytics, AdSense cookies, notifications, privacy requests, and locally processed photo-resizer and calculator inputs.",
     canonical: `${SITE_URL}/privacy-policy`, // Alias points to /privacy-policy
     robots: DEFAULT_ROBOTS,
     ogType: "website"
   },
   "/terms": {
-    title: "उपयोग की शर्तें (Terms & Conditions) - BiharFast",
-    description: "BiharFast.in के नियम और शर्तें: वेबसाइट के उपयोग, सामग्री अधिकार और कानूनी दिशा-निर्देशों की जानकारी।",
+    title: "Terms of Use | BiharFast",
+    description: "Review BiharFast terms covering educational use, intellectual property, acceptable conduct, external links, disclaimers, limitations, and contact procedures.",
     canonical: `${SITE_URL}/terms`,
     robots: DEFAULT_ROBOTS,
     ogType: "website"
   },
   "/terms-conditions": {
-    title: "उपयोग की शर्तें (Terms & Conditions) - BiharFast",
-    description: "BiharFast.in के नियम और शर्तें: वेबसाइट के उपयोग, सामग्री अधिकार और कानूनी दिशा-निर्देशों की जानकारी।",
+    title: "Terms of Use | BiharFast",
+    description: "Review BiharFast terms covering educational use, intellectual property, acceptable conduct, external links, disclaimers, limitations, and contact procedures.",
     canonical: `${SITE_URL}/terms`, // Alias points to /terms
     robots: DEFAULT_ROBOTS,
     ogType: "website"
   },
   "/terms-and-conditions": {
-    title: "उपयोग की शर्तें (Terms & Conditions) - BiharFast",
-    description: "BiharFast.in के नियम और शर्तें: वेबसाइट के उपयोग, सामग्री अधिकार और कानूनी दिशा-निर्देशों की जानकारी।",
+    title: "Terms of Use | BiharFast",
+    description: "Review BiharFast terms covering educational use, intellectual property, acceptable conduct, external links, disclaimers, limitations, and contact procedures.",
     canonical: `${SITE_URL}/terms`, // Alias points to /terms
     robots: DEFAULT_ROBOTS,
     ogType: "website"
   },
   "/disclaimer": {
-    title: "अस्वीकरण (Disclaimer & Non-Government Notice) - BiharFast",
-    description: "BiharFast का स्पष्ट अस्वीकरण: यह एक स्वतंत्र सूचना पोर्टल है और किसी भी सरकारी निकाय से संबद्ध नहीं है।",
+    title: "Government Affiliation Disclaimer | BiharFast",
+    description: "BiharFast is an independent private informational portal, not affiliated with the Government of Bihar. Verify exam dates, eligibility, and instructions on official portals.",
     canonical: `${SITE_URL}/disclaimer`,
     robots: DEFAULT_ROBOTS,
     ogType: "website"
@@ -294,4 +308,3 @@ export function getMetadataForPath(pathname) {
     : pathname;
   return STATIC_ROUTE_METADATA[normalized] || null;
 }
-
